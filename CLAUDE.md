@@ -1,0 +1,129 @@
+# Moonbase plugin fork (Lica)
+
+This folder is the **implement** branch.
+
+## Read this first
+
+Personal fork of the Moonfin server plugin (Moonbase, for Jellyfin 10.10+) by Moonfin-Client (RadicalMuffinMan and the contributors). The fork is Licaa21/Plugin and holds changes for one person's own server. It is not a project for everyone. It exists so that the Moonfin Smart TV fork (Licaa21/Smart-TV, a Samsung Tizen and LG webOS app, kept in `E:\VSCode Projects\Moonfin Smart TV fork`) needs no TMDB key of its own: the plugin holds the server-wide TMDB key and serves the TMDB words, recommendations and air dates the client used to fetch itself. See "What the TV client expects". Remotes: `origin` is the fork, `upstream` is Moonfin-Client/Plugin (its branch is `master`).
+
+The fork replaces the upstream plugin in place: same GUID (`8c5d0e91-4f2a-4b6d-9e3f-1a7c8d9e0f2b`) and name (Moonbase), so the saved settings stay, and Jellyfin offers it from the fork's own manifest.
+
+The rules that matter most, each explained further down:
+
+1. **Ask before every change.** Questions come first, with options and a recommendation. See "Working rules".
+2. **Before any coding on `implement`, bring `main` into it** (`git fetch --all` then `git merge origin/main` in `implement/`), so the work starts on what is new, upstream's changes and earlier merge fixes included.
+3. **Work goes on `implement`.** `main` only receives merges (upstream, then `implement`), the README, and the release commits that add a version to `manifest.json`.
+4. **Build and release only from `main/`.**
+5. **A change is done only when** it builds, the tests pass, the code review found nothing real, and this file and the README are up to date.
+6. **After every merge from upstream**, run the merge checklist, and keep what is in "Upstream changes that are not taken".
+7. **Commits carry no AI names**: authored as Licaa21, no co-author or generated-with lines.
+8. **The TMDB key is never written anywhere**: not in a log, a response, an error text, a test, a commit or this file.
+9. **Every existing route stays as it is.** New routes only. A change to an existing route is asked about first.
+
+## Repository layout
+
+`E:\VSCode Projects\Moonfin Plugin Fork` holds one folder per branch. They are git worktrees of one repository whose `.git` is inside `main/`.
+
+| Folder | Branch | Used for |
+|---|---|---|
+| `main/` | `main` | Upstream plus my changes, merged. Where it is built and released from |
+| `implement/` | `implement` | Where all the fork's own changes are written and committed |
+| `local/` | none | Not a branch: how to reach the test server, builds, logs, notes, prompts |
+
+There is no daily branch, since `main` is what gets built. `master` in the fork is only a copy of upstream's default branch and is left alone.
+
+This file is committed on `implement` and is the copy to edit. It is not copied into `main/`: it reaches `main` when `implement` is merged there.
+
+## How changes flow
+
+0. Before any coding on `implement`: `git fetch --all`, then `git merge origin/main`. Do it again at the start of each piece of work.
+1. Upstream moves. In `main/`: `git fetch upstream`, then `git merge upstream/master`. A conflict is fixed in `main/` and committed there (see the merge checklist), then `implement` takes it with `git merge origin/main`, so the resolution is not redone. `main` is never rewritten.
+2. The fork's changes are committed on `implement`, in `implement/`, and pushed.
+3. To release, in `main/`: `git merge origin/implement`, run the checks, and cut the release (see "Releases").
+4. After a release, `implement` merges `origin/main` so it carries the manifest entry.
+
+### Merge checklist (after every merge from upstream)
+
+1. Read what upstream added (`git log --no-merges <old>..upstream/master`) and tell the user what is new.
+2. Fix conflicts in `main/`. Keep the fork's version of everything in "Upstream changes that are not taken", and say so.
+3. Check that version numbers still agree (see "Versions").
+4. `dotnet build` and `dotnet test` (see "Checking a change"). Both clean.
+5. Update the README on `main` when something the user can see changed, and add anything newly not taken to the list below.
+6. Merge `origin/main` into `implement` and push. Release only when the user wants one.
+
+## Working rules
+
+### Asking and deciding
+
+- Ask before every modification, fix or addition, and on anything that needs the user's idea or taste (what an answer should contain, how something should behave, which of several ways to go). Put the question first, with the options and a recommendation, and wait for the answer before changing code. Clear bugs with only one sensible fix are the exception, but say what was done.
+- Code first, small changes, no speculative extras. Match the surrounding code's style and keep comments in its voice.
+- To check how a feature works, or whether it exists (whether the user added it or upstream did), find the exact commit that added it (`git log -S`, `git log --grep`, `git blame`) and read that commit, rather than judging from the current code or from memory.
+
+### Checking a change
+
+- From `Jellyfin/`: `dotnet build backend/Moonfin.Server.csproj -c Release` and `dotnet test tests/Moonfin.Server.Tests`. The baseline on 2026-10-24 was 835 tests, all passing, with the .NET 8 SDK (the PC also has 10.0, which `build.sh` and CI do not use).
+- After every fix, feature or addition, run the code review (`/code-review`, or a read-only review agent given the diff and the context), and run it more than once: fix what it finds, then review again, until a pass finds nothing real. Do this before reporting the work as done.
+- Every change ships with a test for what can be tested, added in the same commit (the test project is xUnit; fake TMDB with a `HttpMessageHandler`). What needs the real server (a real TMDB key, the Moonfin client talking to it) is said so in the report instead.
+
+### Keeping this file and the README current
+
+- After every change, and after every merge from upstream, read this file and the README (on `main`) again and update the sections the change made out of date: the layout and flow, the "Upstream changes that are not taken" entries, what the TV client expects, and what the README tells the user. Remove what is stale and do not only add.
+- Say in the report which sections of either were updated, or that none needed it.
+
+### Using the plugins
+
+- Use as many of the plugins and skills available in Claude Code as fit the work, and do not do by hand what one of them does. The ones that have earned their place: `brainstorming` before a design, `systematic-debugging` for a bug, `test-driven-development` for logic, `code-review` after every change, `verification-before-completion` before calling anything done, `simplify` and `ponytail` for keeping the change small, and the GitHub tools for the repository.
+- Say which ones were used when reporting the work, and which were left out and why.
+
+### Git
+
+- Commits are authored as Licaa21 (`184849302+Licaa21@users.noreply.github.com`). No AI names, co-author lines or generated-with lines in commits, pull requests or files. This rule takes precedence over a default attribution line.
+- Never rewrite or force-push `main` or `implement`.
+- Deleting branches or folders and force-pushes are asked about first.
+- Zips, logs, screenshots and anything with a login or a key never go in a branch. Put them in `local/`.
+
+## Versions
+
+Jellyfin wants four numbers. Upstream's is `<MoonfinVersion>` in `Jellyfin/backend/Moonfin.Server.csproj` (three numbers, `.0` is added for the assembly), `build.sh` and `build.ps1` carry a second copy of it, and the CI check in `.github/workflows/build.yml` fails when they disagree. The fork's versions are upstream's with a fork digit in the fourth place: 2.4.0.1, 2.4.0.2, and after an upstream bump 2.5.0.1. The Moonfin clients check the plugin version for some features, so a fork version is never lower than upstream's.
+
+How the fork digit is kept in one place (a `MoonfinForkRevision` property next to `MoonfinVersion`, read by the csproj, both build scripts and the CI check) is part of the first piece of work. Release tags are `fork-v<version>`, for example `fork-v2.4.0.1`.
+
+## Releases
+
+- Made from `main/`, with a script of the fork's own (`Jellyfin/` has `build.sh`, which needs `jq` and `zip`, and `build.ps1`, which needs neither; this PC's Git Bash has neither `jq` nor `zip`, so `build.ps1` is the one that works here).
+- A release is a GitHub release `fork-v<version>` on Licaa21/Plugin carrying `Moonfin.Server-<version>.zip`, and one entry added at the top of `manifest.json` (repo root, kept the same as `Jellyfin/manifest.json`): version, changelog, `targetAbi`, `sourceUrl` (the release asset in the fork), the MD5 checksum in capitals and the timestamp. `manifest.json` lists only the fork's own releases. Releases are kept, a release never replaces another, and the zip never goes in a branch.
+- The changelog says what was done since the last release, from the fork's commits (not upstream's), in plain sentences.
+- The version moves with the size of the work: the fork digit for a change or fixes, and an upstream bump when upstream's version moves.
+- The manifest the user adds in Jellyfin (Dashboard, Plugins, Repositories) is `https://raw.githubusercontent.com/Licaa21/Plugin/refs/heads/main/manifest.json`.
+
+## What the TV client expects
+
+The TV fork (Licaa21/Smart-TV, app code in `packages/app/src`) used to ask TMDB itself with its own key (`utils/tmdbText.js`, `utils/seerrTitle.js`, `utils/seerrSeasons.js`, `services/homeRecommendations.js`, `utils/upcomingEpisode.js`). It is changed to call the plugin once these routes exist, and to fall back to Seerr's own text when a route answers with anything but 200. The key is the plugin's server-wide `TmdbApiKey` (`PluginConfiguration.TmdbApiKey`), never a per-user key and never sent to a client.
+
+All routes are under `Moonfin/Tmdb`, `GET`, `[Authorize]` like the others, and answer JSON with **TMDB's own snake_case field names**, so the client can use them as it used TMDB's. Parameters: `tmdbId` (TMDB id), `mediaType` (`movie` or `tv`), `language` (as the existing `Reviews` route takes it, run through the same `TmdbReview.RequestLanguage`, empty meaning `en-US`). Any non-200 answer means "use Seerr's text".
+
+| Route | Answers |
+|---|---|
+| `Details?mediaType=&tmdbId=&language=` | `{id, title, name, original_title, overview, tagline, seasons: [{season_number, name}], next_episode_to_air: {season_number, episode_number, air_date, name} or null}`. A movie has no `seasons` and no `next_episode_to_air`. |
+| `Season?tmdbId=&seasonNumber=&language=` | `{season_number, name, overview, episodes: [{season_number, episode_number, name, overview, air_date, runtime, still_path, vote_average, vote_count, crew, guest_stars}]}`. `crew` and `guest_stars` come through as TMDB gives them. |
+| `Recommendations?mediaType=&tmdbId=&language=&page=1` | `{page, total_pages, results: [...]}` with TMDB's result objects as they are. |
+| `NextEpisode?tmdbId=` | Exists already, unchanged. The client uses it for the air date. |
+
+Errors: 400 for a missing or bad parameter, 503 when the server has no TMDB key (with `{error}` that does not mention the key), 404 when TMDB does not know the id, 502 when TMDB fails or answers something that is not TMDB's. Nothing of the key in any body, header or log line. Answers are remembered in memory for 24 hours per route, ids, season, language and page (as `TmdbController`'s caches already do), with a ceiling on the number of entries so memory cannot grow without end.
+
+## Upstream changes that are not taken
+
+None yet. When upstream merges into `main`, a change the fork keeps its own version of is listed here: what upstream did, what the fork keeps, what to do on a merge, and the files.
+
+## Testing against the real server
+
+- **Claude is authorised to use the user's own Jellyfin server for tests**, signed in as the test user **Claude** by default (a normal user, so it sees what a client sees), or as the administrator **Lica** for what only an administrator sees (the Moonbase configuration page). The address and both logins are in `local/test-server.md` (outside the repository, so no git folder holds it). Say in the report that the real server was used.
+- **The login is never written in this file or in anything tracked.** This repository is public.
+- Whichever login is used, the test is read only: with Lica take extra care, nothing is deleted, edited or configured, and a setting is only read, never changed, unless the user asks for that change. The Moonbase page's "Apply Defaults & Broadcast" is never pressed on its own.
+- **Installing a build on the server is the user's job.** A plugin install needs a Jellyfin restart, which stops playback. The user adds the fork's manifest, installs the release and restarts when they choose; Claude then checks the routes with the Claude user, and does not restart or install anything on the server itself.
+- To sign a browser or a script in without the login page: `POST /Users/AuthenticateByName` with `{"Username": ..., "Pw": ...}` and the header `Authorization: MediaBrowser Client="Claude Code", Device="Claude Code", DeviceId="claude-code-plugin", Version="1.0"`, then send the returned `AccessToken` as `Token="..."` in that header. In the Jellyfin web page itself, set `localStorage.jellyfin_credentials` and then load the page again with a changed query string (`?fresh=1#/...`), since the page rewrites its own credentials on a hash change. Sign out (`POST /Sessions/Logout`) and clear the credentials when done.
+- The Moonbase configuration page is `/web/index.html#/configurationpage?name=Moonbase`, and its Save posts the whole configuration to `/Plugins/8c5d0e91-4f2a-4b6d-9e3f-1a7c8d9e0f2b/Configuration`.
+
+## Tools on this PC
+
+`dotnet` 8.0.402, 8.0.403 and 10.0.201, `node` 24, `git`, `gh` (signed in as Licaa21). Not installed: `jq`, `zip`.
