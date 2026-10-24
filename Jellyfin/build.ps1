@@ -43,9 +43,12 @@ if ($Publish) {
     if (-not (Test-Path $Gh)) { throw "-Publish: gh is not installed" }
     # Windows PowerShell 5.1 turns gh's "release not found" on stderr into an error under Stop.
     $ErrorActionPreference = "Continue"
+    & $Gh auth status *> $null
+    $SignedIn = $LASTEXITCODE -eq 0
     & $Gh release view $ReleaseTag --repo Licaa21/Plugin *> $null
     $ReleaseExists = $LASTEXITCODE -eq 0
     $ErrorActionPreference = "Stop"
+    if (-not $SignedIn) { throw "-Publish: gh is not signed in (gh auth login)" }
     if ($ReleaseExists) { throw "-Publish: the release $ReleaseTag already exists. Releases are kept and never replaced, so raise MoonfinForkRevision" }
 }
 $BackendDir = Join-Path $RootDir "backend"

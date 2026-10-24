@@ -47,6 +47,10 @@ if [ "${PUBLISH:-0}" = "1" ]; then
         echo "Error: PUBLISH=1: gh is not installed." >&2
         exit 1
     fi
+    if ! gh auth status &> /dev/null; then
+        echo "Error: PUBLISH=1: gh is not signed in (gh auth login)." >&2
+        exit 1
+    fi
     if gh release view "$RELEASE_TAG" --repo Licaa21/Plugin &> /dev/null; then
         echo "Error: PUBLISH=1: the release $RELEASE_TAG already exists. Releases are kept and never replaced, so raise MoonfinForkRevision." >&2
         exit 1
