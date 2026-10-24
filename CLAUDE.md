@@ -139,4 +139,4 @@ A change the fork keeps its own version of is listed here: what upstream did, wh
 
 ## Tools on this PC
 
-`dotnet` 8.0.402, 8.0.403 and 10.0.201, `node` 24, `git`. Not installed: `jq`, `zip`, and `gh` (not on the PATH nor in its usual install folders, checked 2026-10-24; this file used to say it was signed in as Licaa21). Without `gh`, `build.ps1 -Publish` cannot create the release here, and the GitHub MCP tools can read releases but not create one or upload the zip. Install it (`winget install GitHub.cli`, then `gh auth login` as Licaa21) before the first release, or attach the zip to the release on github.com by hand.
+`dotnet` 8.0.402, 8.0.403 and 10.0.201, `node` 24, `git`, `gh` 2.100.0 (signed in as Licaa21). `gh` is at `C:\Users\Lica\AppData\Local\GitHubCLI\bin\gh.exe` and is not on the PATH that Claude Code's shells get, so call it by that path there (`build.ps1` does this itself when `gh` is not found). Not installed: `jq`, `zip`. The GitHub MCP tools can read releases but not create one or upload the zip, so `gh` is how a release is made.

@@ -210,7 +210,9 @@ if ($Publish) {
     # A file, since Windows PowerShell 5.1 mangles double quotes in native arguments.
     $NotesFile = Join-Path $RootDir "release-notes.tmp"
     [System.IO.File]::WriteAllText($NotesFile, $Changelog, (New-Object System.Text.UTF8Encoding $false))
-    gh release create $ReleaseTag $ZipPath --repo Licaa21/Plugin --target (git -C $RootDir rev-parse HEAD) --title "Moonbase $Version (fork)" --notes-file $NotesFile
+    $Gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
+    if (-not $Gh) { $Gh = Join-Path $env:LOCALAPPDATA "GitHubCLI\bin\gh.exe" }
+    & $Gh release create $ReleaseTag $ZipPath --repo Licaa21/Plugin --target (git -C $RootDir rev-parse HEAD) --title "Moonbase $Version (fork)" --notes-file $NotesFile
     $GhExit = $LASTEXITCODE
     Remove-Item $NotesFile -Force
     if ($GhExit -ne 0) { throw "gh release create failed. The manifest entry is already written: undo it with git checkout on both manifest.json files before running again." }
