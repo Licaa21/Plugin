@@ -35,6 +35,7 @@ if (-not $SkipManifestUpdate -and [string]::IsNullOrWhiteSpace($Changelog)) {
 if ($Publish) {
     if (git -C $RootDir status --porcelain) { throw "-Publish: commit or remove the changes first, the zip is built from the working tree and the release is cut at the commit" }
     git -C $RootDir fetch --quiet origin main
+    if ($LASTEXITCODE -ne 0) { throw "-Publish: could not fetch origin/main, so the check that the commit is on it cannot be made" }
     git -C $RootDir merge-base --is-ancestor HEAD origin/main
     if ($LASTEXITCODE -ne 0) { throw "-Publish: this commit is not on origin/main. Releases are cut from main, merge and push it there first" }
 }

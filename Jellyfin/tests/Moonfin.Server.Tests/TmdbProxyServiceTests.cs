@@ -204,6 +204,15 @@ public class TmdbProxyServiceTests
     }
 
     [Fact]
+    public async Task AKeyPastedWithSpacesIsTrimmed()
+    {
+        var tmdb = new FakeTmdb(MovieDetails);
+        await Service().DetailsAsync(tmdb.Client, $"  {Key}\r\n", "movie", "603", null, default);
+
+        Assert.Contains($"api_key={Key}&", tmdb.Requests.Single() + "&");
+    }
+
+    [Fact]
     public async Task TheKeyGoesToTmdbAsAV3QueryOrAV4Bearer()
     {
         var v3 = new FakeTmdb(MovieDetails);

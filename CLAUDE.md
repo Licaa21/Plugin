@@ -62,7 +62,7 @@ This file is committed on `implement` and is the copy to edit. It is not copied 
 
 ### Checking a change
 
-- From `Jellyfin/`: `dotnet build backend/Moonfin.Server.csproj -c Release` and `dotnet test tests/Moonfin.Server.Tests`. The baseline on 2026-10-24 was 835 tests, all passing, and 901 with the TMDB routes' 66 (`TmdbProxyServiceTests`), with the .NET 8 SDK (the PC also has 10.0, which `build.sh` and CI do not use).
+- From `Jellyfin/`: `dotnet build backend/Moonfin.Server.csproj -c Release` and `dotnet test tests/Moonfin.Server.Tests`. The baseline on 2026-10-24 was 835 tests, all passing, and 902 with the TMDB routes' 67 (`TmdbProxyServiceTests`), with the .NET 8 SDK (the PC also has 10.0, which `build.sh` and CI do not use).
 - After every fix, feature or addition, and after every merge from upstream, run the code review (`/code-review`, or a read-only review agent given the diff and the context), and run it more than once: fix what it finds, then review again, until a pass finds nothing real. Do this before reporting the work as done and before a release. It is part of the work, not an extra to offer afterwards: if it was not run, the work is not done. The order before every report: build, tests, code review (two passes or more), `verification-before-completion`.
 - Every change ships with a test for what can be tested, added in the same commit (the test project is xUnit; fake TMDB with a `HttpMessageHandler`). What needs the real server (a real TMDB key, the Moonfin client talking to it) is said so in the report instead.
 

@@ -133,7 +133,9 @@ public sealed class TmdbProxyService
         string route, TtlCache cache, string cacheKey, string? apiKey, string path, HttpClient client,
         CancellationToken ct, Func<JsonElement, bool> looksLikeTmdb, Action<Utf8JsonWriter, JsonElement> shape)
     {
-        if (string.IsNullOrWhiteSpace(apiKey))
+        // A key pasted with a trailing space or newline would otherwise reach TMDB as a 401 and look like an outage.
+        apiKey = apiKey?.Trim();
+        if (string.IsNullOrEmpty(apiKey))
         {
             return Fail(503, "TMDB is not set up on this server");
         }
