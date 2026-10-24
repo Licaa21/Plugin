@@ -207,8 +207,13 @@ if (-not $SkipManifestUpdate -and (Test-Path $ManifestFile)) {
 # Last, so a failure above leaves no release behind. The manifest entry is only local until it is
 # committed and pushed, which is when installs can see it.
 if ($Publish) {
-    gh release create $ReleaseTag $ZipPath --repo Licaa21/Plugin --target (git -C $RootDir rev-parse HEAD) --title "Moonbase $Version (fork)" --notes $Changelog
-    if ($LASTEXITCODE -ne 0) { throw "gh release create failed. The manifest entry is already written: undo it with git checkout on both manifest.json files before running again." }
+    # A file, since Windows PowerShell 5.1 mangles double quotes in native arguments.
+    $NotesFile = Join-Path $RootDir "release-notes.tmp"
+    [System.IO.File]::WriteAllText($NotesFile, $Changelog, (New-Object System.Text.UTF8Encoding $false))
+    gh release create $ReleaseTag $ZipPath --repo Licaa21/Plugin --target (git -C $RootDir rev-parse HEAD) --title "Moonbase $Version (fork)" --notes-file $NotesFile
+    $GhExit = $LASTEXITCODE
+    Remove-Item $NotesFile -Force
+    if ($GhExit -ne 0) { throw "gh release create failed. The manifest entry is already written: undo it with git checkout on both manifest.json files before running again." }
     Write-Host "Published release $ReleaseTag. Commit and push the manifest.json files, then merge main into implement."
 }
 
