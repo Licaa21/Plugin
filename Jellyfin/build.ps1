@@ -38,6 +38,11 @@ if ($Publish) {
     if ($LASTEXITCODE -ne 0) { throw "-Publish: could not fetch origin/main, so the check that the commit is on it cannot be made" }
     git -C $RootDir merge-base --is-ancestor HEAD origin/main
     if ($LASTEXITCODE -ne 0) { throw "-Publish: this commit is not on origin/main. Releases are cut from main, merge and push it there first" }
+    $Gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
+    if (-not $Gh) { $Gh = Join-Path $env:LOCALAPPDATA "GitHubCLI\bin\gh.exe" }
+    if (-not (Test-Path $Gh)) { throw "-Publish: gh is not installed" }
+    & $Gh release view $ReleaseTag --repo Licaa21/Plugin *> $null
+    if ($LASTEXITCODE -eq 0) { throw "-Publish: the release $ReleaseTag already exists. Releases are kept and never replaced, so raise MoonfinForkRevision" }
 }
 $BackendDir = Join-Path $RootDir "backend"
 $FrontendDir = Join-Path $RootDir "frontend"
@@ -210,8 +215,6 @@ if ($Publish) {
     # A file, since Windows PowerShell 5.1 mangles double quotes in native arguments.
     $NotesFile = Join-Path $RootDir "release-notes.tmp"
     [System.IO.File]::WriteAllText($NotesFile, $Changelog, (New-Object System.Text.UTF8Encoding $false))
-    $Gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
-    if (-not $Gh) { $Gh = Join-Path $env:LOCALAPPDATA "GitHubCLI\bin\gh.exe" }
     & $Gh release create $ReleaseTag $ZipPath --repo Licaa21/Plugin --target (git -C $RootDir rev-parse HEAD) --title "Moonbase $Version (fork)" --notes-file $NotesFile
     $GhExit = $LASTEXITCODE
     Remove-Item $NotesFile -Force

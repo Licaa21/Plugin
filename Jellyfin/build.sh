@@ -43,6 +43,14 @@ if [ "${PUBLISH:-0}" = "1" ]; then
         echo "Error: PUBLISH=1: this commit is not on origin/main. Releases are cut from main, merge and push it there first." >&2
         exit 1
     fi
+    if ! command -v gh &> /dev/null; then
+        echo "Error: PUBLISH=1: gh is not installed." >&2
+        exit 1
+    fi
+    if gh release view "$RELEASE_TAG" --repo Licaa21/Plugin &> /dev/null; then
+        echo "Error: PUBLISH=1: the release $RELEASE_TAG already exists. Releases are kept and never replaced, so raise MoonfinForkRevision." >&2
+        exit 1
+    fi
 fi
 
 BACKEND_DIR="$ROOT_DIR/backend"

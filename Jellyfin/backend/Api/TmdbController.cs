@@ -693,6 +693,10 @@ public class TmdbController : ControllerBase
     [HttpGet("Details")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status502BadGateway)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> GetDetails(
         [FromQuery] string? mediaType,
         [FromQuery] string? tmdbId,
@@ -706,6 +710,10 @@ public class TmdbController : ControllerBase
     [HttpGet("Season")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status502BadGateway)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> GetSeason(
         [FromQuery] string? tmdbId,
         [FromQuery] string? seasonNumber,
@@ -719,6 +727,10 @@ public class TmdbController : ControllerBase
     [HttpGet("Recommendations")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status502BadGateway)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> GetRecommendations(
         [FromQuery] string? mediaType,
         [FromQuery] string? tmdbId,
