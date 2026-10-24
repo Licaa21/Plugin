@@ -1,3 +1,20 @@
+# Moonbase, Lica's fork
+
+This is Licaa21's fork of the [Moonfin server plugin](https://github.com/Moonfin-Client/Plugin) (Moonbase, for Jellyfin 10.10 and newer). It is made for one server and is not a project for everyone: upstream's plugin is the one to use unless you want what is below.
+
+**What differs from upstream**
+
+- The server holds the TMDB key and serves the TMDB titles, descriptions, season episodes, recommendations and air dates that a client would otherwise need its own key for (`/Moonfin/Tmdb/Details`, `Season`, `Recommendations`). Work in progress, see the releases.
+
+**Install (replaces upstream's Moonbase in place, with its settings)**
+
+1. In Jellyfin: Dashboard, Plugins, Repositories, add `https://raw.githubusercontent.com/Licaa21/Plugin/refs/heads/main/manifest.json`.
+2. Uninstall upstream's Moonbase first if it is installed, then install Moonbase from the new catalog entry and restart Jellyfin. The plugin keeps the same id, so what you had configured stays.
+
+Releases are kept and numbered as upstream's version plus a fork digit (2.4.0.1, 2.4.0.2 ...). Upstream's README follows unchanged.
+
+---
+
 <h1 align="center">Moonbase, the server plugin for Moonfin!</h1>
 <h3 align="center">Moonbase is the server plugin that powers the Moonfin experience on both Jellyfin and Emby.</h3>
 
