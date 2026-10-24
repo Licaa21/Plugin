@@ -3,7 +3,7 @@
 # Usage: .\build.ps1 -Changelog "What changed." [-Publish] [-Version "2.4.0.1"] [-TargetAbi "10.10.0"] [-SourceUrl "https://..."] [-SkipManifestUpdate]
 # The version is read from the csproj (MoonfinVersion.MoonfinForkRevision) unless -Version is given.
 # -Publish also creates the GitHub release fork-v<version> on Licaa21/Plugin with the zip, at the
-# commit being built, so that commit has to be committed and pushed first.
+# commit being built, which has to be on origin/main.
 
 param(
     [string]$Version = "",
@@ -34,7 +34,8 @@ if (-not $SkipManifestUpdate -and [string]::IsNullOrWhiteSpace($Changelog)) {
 }
 if ($Publish) {
     if (git -C $RootDir status --porcelain --untracked-files=no) { throw "-Publish: commit the changes first, the release is cut at the commit being built" }
-    if (-not (git -C $RootDir branch -r --contains HEAD)) { throw "-Publish: push this commit first, the release is cut at the commit being built" }
+    git -C $RootDir merge-base --is-ancestor HEAD origin/main
+    if ($LASTEXITCODE -ne 0) { throw "-Publish: this commit is not on origin/main. Releases are cut from main, merge and push it there first" }
 }
 $BackendDir = Join-Path $RootDir "backend"
 $FrontendDir = Join-Path $RootDir "frontend"

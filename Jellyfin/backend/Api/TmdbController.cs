@@ -707,7 +707,7 @@ public class TmdbController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSeason(
         [FromQuery] string? tmdbId,
-        [FromQuery] int? seasonNumber,
+        [FromQuery] string? seasonNumber,
         [FromQuery] string? language,
         CancellationToken cancellationToken) =>
         Proxied(await _proxy.SeasonAsync(CreateClient(), ServerApiKey(), tmdbId, seasonNumber, language, cancellationToken));
@@ -722,8 +722,8 @@ public class TmdbController : ControllerBase
         [FromQuery] string? mediaType,
         [FromQuery] string? tmdbId,
         [FromQuery] string? language,
-        [FromQuery] int page = 1,
-        CancellationToken cancellationToken = default) =>
+        [FromQuery] string? page,
+        CancellationToken cancellationToken) =>
         Proxied(await _proxy.RecommendationsAsync(CreateClient(), ServerApiKey(), mediaType, tmdbId, language, page, cancellationToken));
 
     private ContentResult Proxied(TmdbProxyResult result) =>

@@ -62,7 +62,7 @@ This file is committed on `implement` and is the copy to edit. It is not copied 
 
 ### Checking a change
 
-- From `Jellyfin/`: `dotnet build backend/Moonfin.Server.csproj -c Release` and `dotnet test tests/Moonfin.Server.Tests`. The baseline on 2026-10-24 was 835 tests, all passing, with the .NET 8 SDK (the PC also has 10.0, which `build.sh` and CI do not use).
+- From `Jellyfin/`: `dotnet build backend/Moonfin.Server.csproj -c Release` and `dotnet test tests/Moonfin.Server.Tests`. The baseline on 2026-10-24 was 835 tests, all passing, and 901 with the TMDB routes' 66 (`TmdbProxyServiceTests`), with the .NET 8 SDK (the PC also has 10.0, which `build.sh` and CI do not use).
 - After every fix, feature or addition, and after every merge from upstream, run the code review (`/code-review`, or a read-only review agent given the diff and the context), and run it more than once: fix what it finds, then review again, until a pass finds nothing real. Do this before reporting the work as done and before a release. It is part of the work, not an extra to offer afterwards: if it was not run, the work is not done. The order before every report: build, tests, code review (two passes or more), `verification-before-completion`.
 - Every change ships with a test for what can be tested, added in the same commit (the test project is xUnit; fake TMDB with a `HttpMessageHandler`). What needs the real server (a real TMDB key, the Moonfin client talking to it) is said so in the report instead.
 
@@ -85,13 +85,13 @@ This file is committed on `implement` and is the copy to edit. It is not copied 
 
 ## Versions
 
-Jellyfin wants four numbers. Upstream's is `<MoonfinVersion>` in `Jellyfin/backend/Moonfin.Server.csproj` (three numbers, `.0` is added for the assembly), `build.sh` and `build.ps1` carry a second copy of it, and the CI check in `.github/workflows/build.yml` fails when they disagree. The fork's versions are upstream's with a fork digit in the fourth place: 2.4.0.1, 2.4.0.2, and after an upstream bump 2.5.0.1. The Moonfin clients check the plugin version for some features, so a fork version is never lower than upstream's.
+Jellyfin wants four numbers. Upstream's is `<MoonfinVersion>` in `Jellyfin/backend/Moonfin.Server.csproj` (three numbers). The fork's own digit is `<MoonfinForkRevision>` right next to it, and the version is `MoonfinVersion.MoonfinForkRevision`: 2.4.0.1, 2.4.0.2, and after an upstream bump 2.5.0.1 (the revision goes back to 1). The csproj builds the assembly, file and package version from the two, and `build.ps1`, `build.sh` and the CI step in `.github/workflows/build.yml` read both numbers from the csproj, so there is no second copy to drift (upstream's copy of the version in the scripts and CI's check of it are replaced; see "Upstream changes that are not taken"). Each of the three refuses a version that is not four numbers. The Moonfin clients check the plugin version for some features, so a fork version is never lower than upstream's. Release tags are `fork-v<version>`, for example `fork-v2.4.0.1`.
 
-How the fork digit is kept in one place (a `MoonfinForkRevision` property next to `MoonfinVersion`, read by the csproj, both build scripts and the CI check) is part of the first piece of work. Release tags are `fork-v<version>`, for example `fork-v2.4.0.1`.
+CI (`build.yml`) runs on pushes and pull requests to `master` only, which is upstream's branch name, so in the fork it does not run for `main` or `implement`. Nothing has changed that yet.
 
 ## Releases
 
-- Made from `main/`, with a script of the fork's own (`Jellyfin/` has `build.sh`, which needs `jq` and `zip`, and `build.ps1`, which needs neither; this PC's Git Bash has neither `jq` nor `zip`, so `build.ps1` is the one that works here).
+- Made from `main/`, with a script of the fork's own (`Jellyfin/` has `build.sh`, which needs `jq` and `zip`, and `build.ps1`, which needs neither; this PC's Git Bash has neither `jq` nor `zip`, so `build.ps1` is the one that works here, and `build.sh` has only been syntax-checked and its version reading tried). From `Jellyfin/`: `.\build.ps1 -Changelog "..."` builds, verifies the assembly version, zips, and prepends the entry to both `manifest.json` files (owner Licaa21, `sourceUrl` `https://github.com/Licaa21/Plugin/releases/download/fork-v<version>/Moonfin.Server-<version>.zip`); it refuses to run without a changelog unless `-SkipManifestUpdate` is given. `-Publish` also runs `gh release create fork-v<version>` with the zip at the current commit, so that commit has to be on `origin/main` (releases are cut from `main/`); the manifest entry is written before that and is only local until committed. `build.sh` takes `CHANGELOG=... PUBLISH=1` instead. Windows PowerShell 5.1 rewrites `manifest.json` with its own indentation. Run it only when the user asks for a release.
 - A release is a GitHub release `fork-v<version>` on Licaa21/Plugin carrying `Moonfin.Server-<version>.zip`, and one entry added at the top of `manifest.json` (repo root, kept the same as `Jellyfin/manifest.json`): version, changelog, `targetAbi`, `sourceUrl` (the release asset in the fork), the MD5 checksum in capitals and the timestamp. `manifest.json` lists only the fork's own releases. Releases are kept, a release never replaces another, and the zip never goes in a branch.
 - The changelog says what was done since the last release, from the fork's commits (not upstream's), in plain sentences.
 - The version moves with the size of the work: the fork digit for a change or fixes, and an upstream bump when upstream's version moves.
@@ -112,9 +112,20 @@ All routes are under `Moonfin/Tmdb`, `GET`, `[Authorize]` like the others, and a
 
 Errors: 400 for a missing or bad parameter, 503 when the server has no TMDB key (with `{error}` that does not mention the key), 404 when TMDB does not know the id, 502 when TMDB fails or answers something that is not TMDB's. Nothing of the key in any body, header or log line. Answers are remembered in memory for 24 hours per route, ids, season, language and page (as `TmdbController`'s caches already do), with a ceiling on the number of entries so memory cannot grow without end.
 
+**Built** (code and tests done, not released yet): `Jellyfin/backend/Services/TmdbProxyService.cs` holds the logic and the caches, and `TmdbController` has the three thin actions `GetDetails`, `GetSeason` and `GetRecommendations`, which hand it `CreateClient()` and the server-wide key (`ServerApiKey()`, never `GetUserApiKey()`). Exact behaviour, where the table above leaves it open:
+
+- `Details` returns only the listed fields. A movie answers `id`, `title`, `original_title`, `overview`, `tagline` (whichever TMDB sent); a series answers `name` instead of `title`, `seasons` (every season TMDB lists, specials included) and `next_episode_to_air`, which is `null` when nothing is scheduled. An empty translation stays empty: there is no second call in English, so the client falls back to Seerr's text itself.
+- `mediaType` is `movie` or `tv` (any case), `tmdbId` a positive whole number, `seasonNumber` a whole number from 0, `page` 1 to 500 (a missing or blank page is 1). The service reads all of them as text, so a non-number gets the `{"error": ...}` 400 too, not the framework's own. Anything else is 400, before any TMDB call and before the key is looked at.
+- Errors are `{"error": "..."}` (lower case, whatever the host's JSON naming). 404 when TMDB says 404; 502 for any other TMDB failure (401, 429, 5xx, timeout, network) and for a 200 that is not the right shape (not an object, no `id`, no `episodes` or `results` array, wrong-typed elements).
+- Answers are written with relaxed JSON escaping, so non-English text is not turned into XXXX. One cache per route, 500 entries each, 24 hours; when full, expired entries go first and then the oldest. Only 200 answers are cached. The ceiling counts entries, not bytes (a `Season` answer can be a few hundred KB), and concurrent misses on one key are not merged.
+- The only log lines are the route name and TMDB's status code or the exception type, never an address. A v3 key still travels in the request URL, so the host's own `System.Net.Http.HttpClient` logging would show it if someone turned it up to Information; the older routes have the same exposure.
+- Not checked against the real server or the TV app: it needs the key and an installed build.
+
 ## Upstream changes that are not taken
 
-None yet. When upstream merges into `main`, a change the fork keeps its own version of is listed here: what upstream did, what the fork keeps, what to do on a merge, and the files.
+A change the fork keeps its own version of is listed here: what upstream did, what the fork keeps, what to do on a merge, and the files.
+
+- **Version in the build scripts and CI.** Upstream keeps a copy of the version as the default in `Jellyfin/build.sh` (`VERSION="${1:-x.y.z.0}"`) and `Jellyfin/build.ps1` (`$Version = "x.y.z.0"`), and the CI step in `.github/workflows/build.yml` compares `build.sh`'s copy with the csproj. The fork reads `MoonfinVersion` and `MoonfinForkRevision` from the csproj instead and has no copy. On a merge, keep the fork's version of those lines (the conflict is on the old default-version lines), take upstream's `MoonfinVersion`, and set `MoonfinForkRevision` back to 1. The scripts' owner, release tag, `sourceUrl` and changelog handling are the fork's too (upstream's say RadicalMuffinMan and strip the last digit for the tag).
 
 ## Testing against the real server
 

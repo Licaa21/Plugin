@@ -79,6 +79,18 @@ public class TmdbProxyServiceTests
     }
 
     [Fact]
+    public async Task NonEnglishTextIsNotEscaped()
+    {
+        var tmdb = new FakeTmdb("""{"id":1,"title":"千と千尋の神隠し","overview":"Привет & <b>"}""");
+        var result = await Service().DetailsAsync(tmdb.Client, Key, "movie", "1", "ja-JP", default);
+
+        Assert.Contains("千と千尋の神隠し", result.Json);
+        Assert.Contains("Привет", result.Json);
+        using var doc = JsonDocument.Parse(result.Json);
+        Assert.Equal("Привет & <b>", doc.RootElement.GetProperty("overview").GetString());
+    }
+
+    [Fact]
     public async Task AMovieHasNoSeasonsAndNoNextEpisode()
     {
         var tmdb = new FakeTmdb(MovieDetails);
@@ -124,7 +136,7 @@ public class TmdbProxyServiceTests
     public async Task ASeasonComesBackWithItsEpisodes()
     {
         var tmdb = new FakeTmdb(SeasonBody);
-        var result = await Service().SeasonAsync(tmdb.Client, Key, "1399", 1, "en-US", default);
+        var result = await Service().SeasonAsync(tmdb.Client, Key, "1399", "1", "en-US", default);
 
         Assert.Equal(200, result.Status);
         Assert.Contains("/3/tv/1399/season/1?", tmdb.Requests.Single());
@@ -153,7 +165,7 @@ public class TmdbProxyServiceTests
     public async Task SeasonZeroIsAllowed()
     {
         var tmdb = new FakeTmdb("""{"season_number":0,"name":"Specials","episodes":[]}""");
-        var result = await Service().SeasonAsync(tmdb.Client, Key, "1399", 0, "en-US", default);
+        var result = await Service().SeasonAsync(tmdb.Client, Key, "1399", "0", "en-US", default);
 
         Assert.Equal(200, result.Status);
         Assert.Contains("/season/0?", tmdb.Requests.Single());
@@ -163,7 +175,7 @@ public class TmdbProxyServiceTests
     public async Task RecommendationsComeBackAsTmdbSendsThem()
     {
         var tmdb = new FakeTmdb(RecommendationsBody);
-        var result = await Service().RecommendationsAsync(tmdb.Client, Key, "tv", "1399", "en-US", 2, default);
+        var result = await Service().RecommendationsAsync(tmdb.Client, Key, "tv", "1399", "en-US", "2", default);
 
         Assert.Equal(200, result.Status);
         Assert.Contains("/3/tv/1399/recommendations?", tmdb.Requests.Single());
@@ -176,6 +188,19 @@ public class TmdbProxyServiceTests
         Assert.Equal("tv", first.GetProperty("media_type").GetString());
         Assert.Equal(18, first.GetProperty("genre_ids")[0].GetInt32());
         Assert.False(root.TryGetProperty("total_results", out _));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("  ")]
+    public async Task NoPageMeansTheFirst(string? page)
+    {
+        var tmdb = new FakeTmdb(RecommendationsBody);
+        var result = await Service().RecommendationsAsync(tmdb.Client, Key, "tv", "1399", null, page, default);
+
+        Assert.Equal(200, result.Status);
+        Assert.Contains("page=1", tmdb.Requests.Single());
     }
 
     [Fact]
@@ -213,11 +238,14 @@ public class TmdbProxyServiceTests
     }
 
     [Theory]
-    [InlineData(null, 1)]
-    [InlineData("abc", 1)]
+    [InlineData(null, "1")]
+    [InlineData("abc", "1")]
     [InlineData("1399", null)]
-    [InlineData("1399", -1)]
-    public async Task SeasonRefusesABadParameter(string? tmdbId, int? season)
+    [InlineData("1399", "-1")]
+    [InlineData("1399", "abc")]
+    [InlineData("1399", "1.5")]
+    [InlineData("1399", "")]
+    public async Task SeasonRefusesABadParameter(string? tmdbId, string? season)
     {
         var tmdb = new FakeTmdb(SeasonBody);
         var result = await Service().SeasonAsync(tmdb.Client, Key, tmdbId, season, null, default);
@@ -227,11 +255,13 @@ public class TmdbProxyServiceTests
     }
 
     [Theory]
-    [InlineData(null, "1399", 1)]
-    [InlineData("tv", null, 1)]
-    [InlineData("tv", "1399", 0)]
-    [InlineData("tv", "1399", 501)]
-    public async Task RecommendationsRefusesABadParameter(string? mediaType, string? tmdbId, int page)
+    [InlineData(null, "1399", "1")]
+    [InlineData("tv", null, "1")]
+    [InlineData("tv", "1399", "0")]
+    [InlineData("tv", "1399", "501")]
+    [InlineData("tv", "1399", "abc")]
+    [InlineData("tv", "1399", "-1")]
+    public async Task RecommendationsRefusesABadParameter(string? mediaType, string? tmdbId, string? page)
     {
         var tmdb = new FakeTmdb(RecommendationsBody);
         var result = await Service().RecommendationsAsync(tmdb.Client, Key, mediaType, tmdbId, null, page, default);
@@ -251,8 +281,8 @@ public class TmdbProxyServiceTests
         var answers = new[]
         {
             await service.DetailsAsync(tmdb.Client, key, "movie", "603", null, default),
-            await service.SeasonAsync(tmdb.Client, key, "1399", 1, null, default),
-            await service.RecommendationsAsync(tmdb.Client, key, "tv", "1399", null, 1, default),
+            await service.SeasonAsync(tmdb.Client, key, "1399", "1", null, default),
+            await service.RecommendationsAsync(tmdb.Client, key, "tv", "1399", null, "1", default),
         };
 
         Assert.All(answers, a => Assert.Equal(503, a.Status));
@@ -267,8 +297,8 @@ public class TmdbProxyServiceTests
         var service = Service();
 
         Assert.Equal(404, (await service.DetailsAsync(tmdb.Client, Key, "movie", "1", null, default)).Status);
-        Assert.Equal(404, (await service.SeasonAsync(tmdb.Client, Key, "1", 99, null, default)).Status);
-        Assert.Equal(404, (await service.RecommendationsAsync(tmdb.Client, Key, "tv", "1", null, 1, default)).Status);
+        Assert.Equal(404, (await service.SeasonAsync(tmdb.Client, Key, "1", "99", null, default)).Status);
+        Assert.Equal(404, (await service.RecommendationsAsync(tmdb.Client, Key, "tv", "1", null, "1", default)).Status);
     }
 
     [Theory]
@@ -299,8 +329,8 @@ public class TmdbProxyServiceTests
         var tmdb = new FakeTmdb(body);
 
         Assert.Equal(502, (await service.DetailsAsync(tmdb.Client, Key, "movie", "1", null, default)).Status);
-        Assert.Equal(502, (await service.SeasonAsync(tmdb.Client, Key, "1", 1, null, default)).Status);
-        Assert.Equal(502, (await service.RecommendationsAsync(tmdb.Client, Key, "movie", "1", null, 1, default)).Status);
+        Assert.Equal(502, (await service.SeasonAsync(tmdb.Client, Key, "1", "1", null, default)).Status);
+        Assert.Equal(502, (await service.RecommendationsAsync(tmdb.Client, Key, "movie", "1", null, "1", default)).Status);
         Assert.All(log.Lines, l => Assert.DoesNotContain(Key, l));
     }
 
@@ -313,7 +343,7 @@ public class TmdbProxyServiceTests
         var details2 = new FakeTmdb("""{"id":1,"seasons":[{"season_number":1,"name":"s"}],"next_episode_to_air":7}""");
 
         Assert.Equal(502, (await service.DetailsAsync(details.Client, Key, "tv", "1", null, default)).Status);
-        Assert.Equal(502, (await service.SeasonAsync(season.Client, Key, "1", 1, null, default)).Status);
+        Assert.Equal(502, (await service.SeasonAsync(season.Client, Key, "1", "1", null, default)).Status);
         Assert.Equal(200, (await service.DetailsAsync(details2.Client, Key, "tv", "2", null, default)).Status);
     }
 
@@ -366,15 +396,15 @@ public class TmdbProxyServiceTests
         await service.DetailsAsync(tmdb.Client, Key, "tv", "1399", "en-US", default);
         await service.DetailsAsync(tmdb.Client, Key, "tv", "1399", "fr-FR", default);
         await service.DetailsAsync(tmdb.Client, Key, "tv", "1400", "en-US", default);
-        await service.SeasonAsync(tmdb.Client, Key, "1399", 1, "en-US", default);
-        await service.SeasonAsync(tmdb.Client, Key, "1399", 2, "en-US", default);
-        await service.RecommendationsAsync(tmdb.Client, Key, "tv", "1399", "en-US", 1, default);
-        await service.RecommendationsAsync(tmdb.Client, Key, "tv", "1399", "en-US", 2, default);
+        await service.SeasonAsync(tmdb.Client, Key, "1399", "1", "en-US", default);
+        await service.SeasonAsync(tmdb.Client, Key, "1399", "2", "en-US", default);
+        await service.RecommendationsAsync(tmdb.Client, Key, "tv", "1399", "en-US", "1", default);
+        await service.RecommendationsAsync(tmdb.Client, Key, "tv", "1399", "en-US", "2", default);
         Assert.Equal(7, tmdb.Requests.Count);
 
         await service.DetailsAsync(tmdb.Client, Key, "tv", "1399", "fr-FR", default);
-        await service.SeasonAsync(tmdb.Client, Key, "1399", 2, "en-US", default);
-        await service.RecommendationsAsync(tmdb.Client, Key, "tv", "1399", "en-US", 2, default);
+        await service.SeasonAsync(tmdb.Client, Key, "1399", "2", "en-US", default);
+        await service.RecommendationsAsync(tmdb.Client, Key, "tv", "1399", "en-US", "2", default);
         Assert.Equal(7, tmdb.Requests.Count);
     }
 
@@ -443,8 +473,8 @@ public class TmdbProxyServiceTests
         foreach (var status in new[] { HttpStatusCode.NotFound, HttpStatusCode.Unauthorized })
         {
             var tmdb = new FakeTmdb(status, "{}");
-            results.Add(await service.SeasonAsync(tmdb.Client, Key, "9", 1, "en-US", default));
-            results.Add(await service.RecommendationsAsync(tmdb.Client, Key, "tv", "9", "en-US", 1, default));
+            results.Add(await service.SeasonAsync(tmdb.Client, Key, "9", "1", "en-US", default));
+            results.Add(await service.RecommendationsAsync(tmdb.Client, Key, "tv", "9", "en-US", "1", default));
         }
 
         results.Add(await service.DetailsAsync(new FakeTmdb(MovieDetails).Client, Key, "bogus", "9", null, default));

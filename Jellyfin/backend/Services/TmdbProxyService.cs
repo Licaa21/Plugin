@@ -24,7 +24,6 @@ public sealed class TmdbProxyService
     private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(24);
 
     private readonly ILogger _logger;
-    private readonly Func<DateTimeOffset> _now;
     private readonly TtlCache _details;
     private readonly TtlCache _seasons;
     private readonly TtlCache _recommendations;
@@ -37,7 +36,6 @@ public sealed class TmdbProxyService
     internal TmdbProxyService(ILogger logger, int maxEntries, Func<DateTimeOffset> now)
     {
         _logger = logger;
-        _now = now;
         _details = new TtlCache(maxEntries, now);
         _seasons = new TtlCache(maxEntries, now);
         _recommendations = new TtlCache(maxEntries, now);
@@ -89,16 +87,16 @@ public sealed class TmdbProxyService
     }
 
     public Task<TmdbProxyResult> SeasonAsync(
-        HttpClient client, string? apiKey, string? tmdbId, int? seasonNumber, string? language, CancellationToken ct)
+        HttpClient client, string? apiKey, string? tmdbId, string? seasonNumber, string? language, CancellationToken ct)
     {
-        if (!TryId(tmdbId, out var id) || seasonNumber is not >= 0)
+        if (!TryId(tmdbId, out var id) || !TryWhole(seasonNumber, out var season))
         {
             return Task.FromResult(Bad("tmdbId must be a TMDB id and seasonNumber a season number"));
         }
 
         var lang = TmdbReview.RequestLanguage(language);
-        return Serve("Season", _seasons, $"{id}:{seasonNumber}:{lang}", apiKey,
-            $"tv/{id}/season/{seasonNumber}?language={Uri.EscapeDataString(lang)}", client, ct,
+        return Serve("Season", _seasons, $"{id}:{season}:{lang}", apiKey,
+            $"tv/{id}/season/{season}?language={Uri.EscapeDataString(lang)}", client, ct,
             root => root.TryGetProperty("episodes", out var e) && e.ValueKind == JsonValueKind.Array,
             (w, root) =>
             {
@@ -117,16 +115,16 @@ public sealed class TmdbProxyService
     }
 
     public Task<TmdbProxyResult> RecommendationsAsync(
-        HttpClient client, string? apiKey, string? mediaType, string? tmdbId, string? language, int page, CancellationToken ct)
+        HttpClient client, string? apiKey, string? mediaType, string? tmdbId, string? language, string? page, CancellationToken ct)
     {
-        if (!TryMediaType(mediaType, out var type) || !TryId(tmdbId, out var id) || page is < 1 or > MaxPage)
+        if (!TryMediaType(mediaType, out var type) || !TryId(tmdbId, out var id) || !TryWhole(string.IsNullOrWhiteSpace(page) ? "1" : page, out var pageNumber) || pageNumber is < 1 or > MaxPage)
         {
             return Task.FromResult(Bad($"mediaType must be movie or tv, tmdbId a TMDB id and page 1 to {MaxPage}"));
         }
 
         var lang = TmdbReview.RequestLanguage(language);
-        return Serve("Recommendations", _recommendations, $"{type}:{id}:{lang}:{page}", apiKey,
-            $"{type}/{id}/recommendations?language={Uri.EscapeDataString(lang)}&page={page}", client, ct,
+        return Serve("Recommendations", _recommendations, $"{type}:{id}:{lang}:{pageNumber}", apiKey,
+            $"{type}/{id}/recommendations?language={Uri.EscapeDataString(lang)}&page={pageNumber}", client, ct,
             root => root.TryGetProperty("results", out var r) && r.ValueKind == JsonValueKind.Array,
             (w, root) => Copy(w, root, "page", "total_pages", "results"));
     }
@@ -171,7 +169,8 @@ public sealed class TmdbProxyService
             }
 
             using var buffer = new MemoryStream();
-            using (var writer = new Utf8JsonWriter(buffer))
+            // Relaxed so non-English text stays as it is rather than \uXXXX, which would triple its size.
+            using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
             {
                 writer.WriteStartObject();
                 shape(writer, doc.RootElement);
@@ -207,6 +206,9 @@ public sealed class TmdbProxyService
         type = asked?.Trim().ToLowerInvariant() ?? string.Empty;
         return type is "movie" or "tv";
     }
+
+    private static bool TryWhole(string? asked, out int number) =>
+        int.TryParse(asked?.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out number);
 
     private static bool TryId(string? asked, out long id) =>
         long.TryParse(asked?.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out id) && id > 0;

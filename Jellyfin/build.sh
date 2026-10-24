@@ -5,7 +5,7 @@
 # Usage: CHANGELOG="What changed." [PUBLISH=1] ./build.sh [version] [target-abi] [source-url]
 # The version is read from the csproj (MoonfinVersion.MoonfinForkRevision) unless given.
 # PUBLISH=1 also creates the GitHub release fork-v<version> on Licaa21/Plugin with the zip, at the
-# commit being built, so that commit has to be committed and pushed first.
+# commit being built, which has to be on origin/main.
 # Needs jq and zip. build.ps1 is the same script for a PC without them.
 
 set -e
@@ -38,8 +38,8 @@ if [ "${PUBLISH:-0}" = "1" ]; then
         echo "Error: PUBLISH=1: commit the changes first, the release is cut at the commit being built." >&2
         exit 1
     fi
-    if [ -z "$(git -C "$ROOT_DIR" branch -r --contains HEAD)" ]; then
-        echo "Error: PUBLISH=1: push this commit first, the release is cut at the commit being built." >&2
+    if ! git -C "$ROOT_DIR" merge-base --is-ancestor HEAD origin/main; then
+        echo "Error: PUBLISH=1: this commit is not on origin/main. Releases are cut from main, merge and push it there first." >&2
         exit 1
     fi
 fi
