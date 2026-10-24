@@ -41,8 +41,12 @@ if ($Publish) {
     $Gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
     if (-not $Gh) { $Gh = Join-Path $env:LOCALAPPDATA "GitHubCLI\bin\gh.exe" }
     if (-not (Test-Path $Gh)) { throw "-Publish: gh is not installed" }
+    # Windows PowerShell 5.1 turns gh's "release not found" on stderr into an error under Stop.
+    $ErrorActionPreference = "Continue"
     & $Gh release view $ReleaseTag --repo Licaa21/Plugin *> $null
-    if ($LASTEXITCODE -eq 0) { throw "-Publish: the release $ReleaseTag already exists. Releases are kept and never replaced, so raise MoonfinForkRevision" }
+    $ReleaseExists = $LASTEXITCODE -eq 0
+    $ErrorActionPreference = "Stop"
+    if ($ReleaseExists) { throw "-Publish: the release $ReleaseTag already exists. Releases are kept and never replaced, so raise MoonfinForkRevision" }
 }
 $BackendDir = Join-Path $RootDir "backend"
 $FrontendDir = Join-Path $RootDir "frontend"
