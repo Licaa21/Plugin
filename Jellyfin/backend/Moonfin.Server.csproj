@@ -4,12 +4,14 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <!-- One place to bump, so the three can't drift apart. The release scripts still
-         override all of them with -p: switches. -->
+    <!-- One place to bump, so the three can't drift apart. The release scripts and the CI check
+         read the version from here, and the scripts pass it back with -p: switches. -->
     <MoonfinVersion>2.4.0</MoonfinVersion>
-    <AssemblyVersion>$(MoonfinVersion).0</AssemblyVersion>
-    <FileVersion>$(MoonfinVersion).0</FileVersion>
-    <Version>$(MoonfinVersion)</Version>
+    <!-- The fork's own digit, the fourth number: 2.4.0.1, 2.4.0.2. Back to 1 when MoonfinVersion moves. -->
+    <MoonfinForkRevision>1</MoonfinForkRevision>
+    <AssemblyVersion>$(MoonfinVersion).$(MoonfinForkRevision)</AssemblyVersion>
+    <FileVersion>$(MoonfinVersion).$(MoonfinForkRevision)</FileVersion>
+    <Version>$(MoonfinVersion).$(MoonfinForkRevision)</Version>
     <RootNamespace>Moonfin.Server</RootNamespace>
     <AssemblyName>Moonfin.Server</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

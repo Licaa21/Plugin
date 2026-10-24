@@ -21,16 +21,16 @@ jobs:
       - name: Read Jellyfin version and ABI
         id: jf_meta
         run: |
-          # MoonfinVersion is the three-part source of AssemblyVersion, hence the trailing .0
-          VERSION="$(grep -oPm1 '(?<=<MoonfinVersion>)[^<]+' Jellyfin/backend/Moonfin.Server.csproj).0"
-          ABI=$(grep 'Jellyfin.Controller' Jellyfin/backend/Moonfin.Server.csproj | grep -oP 'Version="\K[^"]+')
-
-          # build.sh's default version is a second copy of the same number.
-          SCRIPT_VERSION=$(grep -oPm1 'VERSION="\$\{1:-\K[^}]+' Jellyfin/build.sh)
-          if [ "$SCRIPT_VERSION" != "$VERSION" ]; then
-            echo "::error::Version drift: build.sh says ${SCRIPT_VERSION}, the csproj says ${VERSION}."
+          # The csproj is the one source of the version: upstream's three numbers (MoonfinVersion)
+          # plus the fork's digit (MoonfinForkRevision). build.sh and build.ps1 read it from there too.
+          BASE_VERSION="$(grep -oPm1 '(?<=<MoonfinVersion>)[^<]+' Jellyfin/backend/Moonfin.Server.csproj)"
+          FORK_REVISION="$(grep -oPm1 '(?<=<MoonfinForkRevision>)[^<]+' Jellyfin/backend/Moonfin.Server.csproj)"
+          VERSION="${BASE_VERSION}.${FORK_REVISION}"
+          if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){3}$ ]]; then
+            echo "::error::MoonfinVersion and MoonfinForkRevision in the csproj do not make a four-number version: '${VERSION}'."
             exit 1
           fi
+          ABI=$(grep 'Jellyfin.Controller' Jellyfin/backend/Moonfin.Server.csproj | grep -oP 'Version="\K[^"]+')
 
           # build.sh hardcodes the ABI on purpose. Deriving it from the PackageReference would
           # let a routine package bump raise the minimum server version and strand 10.10 installs.
@@ -173,7 +173,7 @@ jobs:
             "guid": "${PLUGIN_GUID}",
             "name": "Moonbase",
             "overview": "Moonfin server plugin for Jellyfin with web app hosting, settings sync, theming, and Seerr integrations",
-            "owner": "RadicalMuffinMan",
+            "owner": "Licaa21",
             "targetAbi": "${TARGET_ABI}",
             "timestamp": "${TIMESTAMP}",
             "version": "${VERSION}",

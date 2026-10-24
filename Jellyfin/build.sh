@@ -2,19 +2,48 @@
 # Build script for Moonfin Jellyfin plugin
 # Creates a release ZIP with proper structure for plugin manifest
 # Works on Linux, macOS, and Windows (Git Bash/WSL)
-# Usage: ./build.sh [version] [target-abi] [source-url]
+# Usage: CHANGELOG="What changed." [PUBLISH=1] ./build.sh [version] [target-abi] [source-url]
+# The version is read from the csproj (MoonfinVersion.MoonfinForkRevision) unless given.
+# PUBLISH=1 also creates the GitHub release fork-v<version> on Licaa21/Plugin with the zip, at the
+# commit being built, so that commit has to be committed and pushed first.
+# Needs jq and zip. build.ps1 is the same script for a PC without them.
 
 set -e
 
-VERSION="${1:-2.4.0.0}"
-TARGET_ABI="${2:-10.10.0}"
-SOURCE_URL="${3:-}"
-BUILD_TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-# Release tags are the three-part version, so 2.4.0.0 is published under the tag 2.4.0
-RELEASE_TAG="${VERSION%.*}"
-
 # Get repo root (where this script lives)
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+csproj_value() { sed -n "s:.*<$1>\([^<]*\)</$1>.*:\1:p" "$ROOT_DIR/backend/Moonfin.Server.csproj" | head -1; }
+
+VERSION="${1:-$(csproj_value MoonfinVersion).$(csproj_value MoonfinForkRevision)}"
+TARGET_ABI="${2:-10.10.0}"
+SOURCE_URL="${3:-}"
+CHANGELOG="${CHANGELOG:-}"
+BUILD_TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+RELEASE_TAG="fork-v${VERSION}"
+
+if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){3}$ ]]; then
+    echo "Error: '$VERSION' is not a four-number version. Check MoonfinVersion and MoonfinForkRevision in Moonfin.Server.csproj." >&2
+    exit 1
+fi
+if [ "${PUBLISH:-0}" = "1" ] && [ "${SKIP_MANIFEST_UPDATE:-0}" = "1" ]; then
+    echo "Error: PUBLISH=1 needs the manifest entry, drop SKIP_MANIFEST_UPDATE." >&2
+    exit 1
+fi
+if [ "${SKIP_MANIFEST_UPDATE:-0}" != "1" ] && [ -z "$CHANGELOG" ]; then
+    echo "Error: give the release a CHANGELOG, or build without a manifest entry (SKIP_MANIFEST_UPDATE=1)." >&2
+    exit 1
+fi
+if [ "${PUBLISH:-0}" = "1" ]; then
+    if [ -n "$(git -C "$ROOT_DIR" status --porcelain --untracked-files=no)" ]; then
+        echo "Error: PUBLISH=1: commit the changes first, the release is cut at the commit being built." >&2
+        exit 1
+    fi
+    if [ -z "$(git -C "$ROOT_DIR" branch -r --contains HEAD)" ]; then
+        echo "Error: PUBLISH=1: push this commit first, the release is cut at the commit being built." >&2
+        exit 1
+    fi
+fi
+
 BACKEND_DIR="$ROOT_DIR/backend"
 FRONTEND_DIR="$ROOT_DIR/frontend"
 VERIFY_PROJECT="$ROOT_DIR/tools/verify-plugin/VerifyPlugin.csproj"
@@ -106,7 +135,7 @@ cat > "$RELEASE_DIR/meta.json" <<EOF
   "guid": "${PLUGIN_GUID}",
   "name": "Moonbase",
   "overview": "Moonfin server plugin for Jellyfin with web app hosting, settings sync, theming, and Seerr integrations",
-  "owner": "RadicalMuffinMan",
+  "owner": "Licaa21",
   "targetAbi": "${TARGET_ABI}.0",
   "timestamp": "${TIMESTAMP_ISO}",
   "version": "${VERSION}",
@@ -160,20 +189,20 @@ if [ "${SKIP_MANIFEST_UPDATE:-0}" != "1" ] && [ -f "$MANIFEST_FILE" ]; then
            --arg source "$SOURCE_URL" \
            --arg zip "$ZIP_NAME" \
            --arg tag "$RELEASE_TAG" \
+           --arg log "$CHANGELOG" \
            '.[0].versions |= ([{
                 version: $ver,
-                changelog: "",
+                changelog: $log,
                 targetAbi: $abi,
                 sourceUrl: (if $source != "" then $source
-                            else ((.[0].sourceUrl | sub("/download/[^/]+/[^/]+$"; ""))
-                                  + "/download/" + $tag + "/" + $zip)
+                            else "https://github.com/Licaa21/Plugin/releases/download/" + $tag + "/" + $zip
                             end),
                 checksum: $sum,
                 timestamp: $time,
                 dependencies: []
             }] + .)' \
            "$MANIFEST_FILE" > "${MANIFEST_FILE}.tmp" && mv "${MANIFEST_FILE}.tmp" "$MANIFEST_FILE"
-        echo "Prepended version $VERSION to manifest.json (changelog left blank, fill it in)"
+        echo "Prepended version $VERSION to manifest.json"
 
         # The catalog URL people add points at the manifest in the repo root, not this one.
         REPO_ROOT_MANIFEST="$(cd "$ROOT_DIR/.." && pwd)/manifest.json"
@@ -188,6 +217,17 @@ if [ "${SKIP_MANIFEST_UPDATE:-0}" != "1" ] && [ -f "$MANIFEST_FILE" ]; then
         echo "  version=$VERSION  targetAbi=${TARGET_ABI}.0  checksum=$CHECKSUM  timestamp=$TIMESTAMP  sourceUrl=$SOURCE_URL" >&2
         exit 1
     fi
+fi
+
+# Last, so a failure above leaves no release behind. The manifest entry is only local until it is
+# committed and pushed, which is when installs can see it.
+if [ "${PUBLISH:-0}" = "1" ]; then
+    gh release create "$RELEASE_TAG" "$ROOT_DIR/$ZIP_NAME" --repo Licaa21/Plugin \
+        --target "$(git -C "$ROOT_DIR" rev-parse HEAD)" --title "Moonbase $VERSION (fork)" --notes "$CHANGELOG" || {
+        echo "Error: gh release create failed. The manifest entry is already written: undo it with git checkout on both manifest.json files before running again." >&2
+        exit 1
+    }
+    echo "Published release $RELEASE_TAG. Commit and push the manifest.json files, then merge main into implement."
 fi
 
 # Cleanup

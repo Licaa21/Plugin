@@ -43,6 +43,7 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddSingleton<TmdbRatingCacheService>();
         serviceCollection.AddSingleton<TmdbRatingService>();
         serviceCollection.AddSingleton<TmdbThumbService>();
+        serviceCollection.AddSingleton<TmdbProxyService>();
         serviceCollection.AddSingleton<ServerRatingLimitService>();
         serviceCollection.AddSingleton<ItemCardDtoMapper>();
         serviceCollection.AddSingleton<SeasonalKeywordStoreService>();

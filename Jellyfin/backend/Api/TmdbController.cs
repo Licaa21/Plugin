@@ -24,6 +24,7 @@ public class TmdbController : ControllerBase
     private readonly StudioLogoCacheService _studioCache;
     private readonly StudioLogoFetchService _studioFetch;
     private readonly TmdbThumbService _thumbs;
+    private readonly TmdbProxyService _proxy;
 
     // Cache: key = "tmdbId:season" => (response, timestamp)
     private static readonly ConcurrentDictionary<string, (TmdbSeasonRatingsResponse Response, DateTimeOffset CachedAt)> _seasonCache = new();
@@ -44,13 +45,15 @@ public class TmdbController : ControllerBase
         IHttpClientFactory httpClientFactory,
         StudioLogoCacheService studioCache,
         StudioLogoFetchService studioFetch,
-        TmdbThumbService thumbs)
+        TmdbThumbService thumbs,
+        TmdbProxyService proxy)
     {
         _settingsService = settingsService;
         _httpClientFactory = httpClientFactory;
         _studioCache = studioCache;
         _studioFetch = studioFetch;
         _thumbs = thumbs;
+        _proxy = proxy;
     }
 
     /// <summary>
@@ -681,6 +684,53 @@ public class TmdbController : ControllerBase
         Response.Headers["Cache-Control"] = "public,max-age=86400";
         return Redirect($"{imageScheme}://image.tmdb.org/t/p/w1280{path}");
     }
+
+    /// <summary>
+    /// Title, overview, tagline, season names and next air date for a movie or show, in TMDB's own
+    /// field names, so the Smart TV app needs no TMDB key. Uses the server-wide key only.
+    /// </summary>
+    [HttpGet("Details")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetDetails(
+        [FromQuery] string? mediaType,
+        [FromQuery] string? tmdbId,
+        [FromQuery] string? language,
+        CancellationToken cancellationToken) =>
+        Proxied(await _proxy.DetailsAsync(CreateClient(), ServerApiKey(), mediaType, tmdbId, language, cancellationToken));
+
+    /// <summary>
+    /// A season's name, overview and episodes in TMDB's own field names. Uses the server-wide key only.
+    /// </summary>
+    [HttpGet("Season")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSeason(
+        [FromQuery] string? tmdbId,
+        [FromQuery] int? seasonNumber,
+        [FromQuery] string? language,
+        CancellationToken cancellationToken) =>
+        Proxied(await _proxy.SeasonAsync(CreateClient(), ServerApiKey(), tmdbId, seasonNumber, language, cancellationToken));
+
+    /// <summary>
+    /// One page of TMDB's recommendations for a movie or show, as TMDB sends it. Uses the server-wide key only.
+    /// </summary>
+    [HttpGet("Recommendations")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetRecommendations(
+        [FromQuery] string? mediaType,
+        [FromQuery] string? tmdbId,
+        [FromQuery] string? language,
+        [FromQuery] int page = 1,
+        CancellationToken cancellationToken = default) =>
+        Proxied(await _proxy.RecommendationsAsync(CreateClient(), ServerApiKey(), mediaType, tmdbId, language, page, cancellationToken));
+
+    private ContentResult Proxied(TmdbProxyResult result) =>
+        new() { StatusCode = result.Status, Content = result.Json, ContentType = "application/json" };
+
+    // The routes above answer with the server's key only, never a user's own.
+    private static string? ServerApiKey() => MoonfinPlugin.Instance?.Configuration?.TmdbApiKey;
 
     private async Task<string?> GetUserApiKey()
     {

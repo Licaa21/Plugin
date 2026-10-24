@@ -17,6 +17,7 @@ The rules that matter most, each explained further down:
 5. **A change is done only when** it builds, the tests pass, the code review found nothing real, and this file and the README are up to date.
 6. **After every merge from upstream**, run the merge checklist, and keep what is in "Upstream changes that are not taken".
 7. **Commits carry no AI names**: authored as Licaa21, no co-author or generated-with lines.
+10. **The code review is never skipped.** Every change to code, tests, scripts or the manifest is reviewed before it is reported as done, at least two passes, and a merge from upstream is reviewed too (the conflict resolutions especially). Small changes are not exempt, and neither is a change that passed its tests. Only prose alone (CLAUDE.md, the README) is. The report names the passes and what each found, and a report without them is not finished. Do not write "I did not run the code review" as a way out: run it.
 8. **The TMDB key is never written anywhere**: not in a log, a response, an error text, a test, a commit or this file.
 9. **Every existing route stays as it is.** New routes only. A change to an existing route is asked about first.
 
@@ -62,7 +63,7 @@ This file is committed on `implement` and is the copy to edit. It is not copied 
 ### Checking a change
 
 - From `Jellyfin/`: `dotnet build backend/Moonfin.Server.csproj -c Release` and `dotnet test tests/Moonfin.Server.Tests`. The baseline on 2026-10-24 was 835 tests, all passing, with the .NET 8 SDK (the PC also has 10.0, which `build.sh` and CI do not use).
-- After every fix, feature or addition, run the code review (`/code-review`, or a read-only review agent given the diff and the context), and run it more than once: fix what it finds, then review again, until a pass finds nothing real. Do this before reporting the work as done.
+- After every fix, feature or addition, and after every merge from upstream, run the code review (`/code-review`, or a read-only review agent given the diff and the context), and run it more than once: fix what it finds, then review again, until a pass finds nothing real. Do this before reporting the work as done and before a release. It is part of the work, not an extra to offer afterwards: if it was not run, the work is not done. The order before every report: build, tests, code review (two passes or more), `verification-before-completion`.
 - Every change ships with a test for what can be tested, added in the same commit (the test project is xUnit; fake TMDB with a `HttpMessageHandler`). What needs the real server (a real TMDB key, the Moonfin client talking to it) is said so in the report instead.
 
 ### Keeping this file and the README current

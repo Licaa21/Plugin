@@ -1,11 +1,16 @@
 # Build script for Moonfin Jellyfin plugin
 # Creates a release ZIP with proper structure for plugin manifest
-# Usage: .\build.ps1 [-Version "1.1.0.0"] [-TargetAbi "10.10.0"] [-SourceUrl "https://..."] [-SkipManifestUpdate]
+# Usage: .\build.ps1 -Changelog "What changed." [-Publish] [-Version "2.4.0.1"] [-TargetAbi "10.10.0"] [-SourceUrl "https://..."] [-SkipManifestUpdate]
+# The version is read from the csproj (MoonfinVersion.MoonfinForkRevision) unless -Version is given.
+# -Publish also creates the GitHub release fork-v<version> on Licaa21/Plugin with the zip, at the
+# commit being built, so that commit has to be committed and pushed first.
 
 param(
-    [string]$Version = "2.4.0.0",
+    [string]$Version = "",
+    [string]$Changelog = "",
     [string]$TargetAbi = "10.10.0",
     [string]$SourceUrl = "",
+    [switch]$Publish,
     [switch]$SkipManifestUpdate
 )
 
@@ -13,6 +18,24 @@ $ErrorActionPreference = "Stop"
 
 $BuildTimestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $RootDir = $PSScriptRoot
+
+if ($Version -eq "") {
+    $CsprojText = [System.IO.File]::ReadAllText((Join-Path $RootDir "backend\Moonfin.Server.csproj"))
+    $Base = [regex]::Match($CsprojText, '<MoonfinVersion>([^<]+)</MoonfinVersion>').Groups[1].Value
+    $Fork = [regex]::Match($CsprojText, '<MoonfinForkRevision>([^<]+)</MoonfinForkRevision>').Groups[1].Value
+    if ($Base -eq "" -or $Fork -eq "") { throw "MoonfinVersion or MoonfinForkRevision is missing from Moonfin.Server.csproj" }
+    $Version = "$Base.$Fork"
+}
+if ($Version -notmatch '^\d+(\.\d+){3}$') { throw "'$Version' is not a four-number version. Check MoonfinVersion and MoonfinForkRevision in Moonfin.Server.csproj." }
+$ReleaseTag = "fork-v$Version"
+if ($Publish -and $SkipManifestUpdate) { throw "-Publish needs the manifest entry, drop -SkipManifestUpdate" }
+if (-not $SkipManifestUpdate -and [string]::IsNullOrWhiteSpace($Changelog)) {
+    throw "Give the release a changelog (-Changelog ""..."") or build without a manifest entry (-SkipManifestUpdate)"
+}
+if ($Publish) {
+    if (git -C $RootDir status --porcelain --untracked-files=no) { throw "-Publish: commit the changes first, the release is cut at the commit being built" }
+    if (-not (git -C $RootDir branch -r --contains HEAD)) { throw "-Publish: push this commit first, the release is cut at the commit being built" }
+}
 $BackendDir = Join-Path $RootDir "backend"
 $FrontendDir = Join-Path $RootDir "frontend"
 $VerifyDir = Join-Path $RootDir "tools\verify-plugin"
@@ -106,7 +129,7 @@ $Meta = [ordered]@{
     guid = $PluginGuid
     name = "Moonbase"
     overview = "Moonfin server plugin for Jellyfin with web app hosting, settings sync, theming, and Seerr integrations"
-    owner = "RadicalMuffinMan"
+    owner = "Licaa21"
     targetAbi = "${TargetAbi}.0"
     timestamp = $TimestampIso
     version = $Version
@@ -147,15 +170,12 @@ if (-not $SkipManifestUpdate -and (Test-Path $ManifestFile)) {
     if (-not [string]::IsNullOrWhiteSpace($SourceUrl)) {
         $NewSourceUrl = $SourceUrl
     } else {
-        # Release tags are the three-part version, so 2.4.0.0 is published under the tag 2.4.0
-        $ReleaseTag = $Version -replace '\.[^.]+$', ''
-        $UrlBase = $Manifest[0].versions[0].sourceUrl -replace '/download/[^/]+/[^/]+$', ''
-        $NewSourceUrl = "$UrlBase/download/$ReleaseTag/$ZipName"
+        $NewSourceUrl = "https://github.com/Licaa21/Plugin/releases/download/$ReleaseTag/$ZipName"
     }
 
     $NewEntry = [ordered]@{
         version = $Version
-        changelog = ""
+        changelog = $Changelog
         targetAbi = "${TargetAbi}.0"
         sourceUrl = $NewSourceUrl
         checksum = $Hash
@@ -170,7 +190,7 @@ if (-not $SkipManifestUpdate -and (Test-Path $ManifestFile)) {
         $Json = "[$Json]"
     }
     [System.IO.File]::WriteAllText($ManifestFile, $Json, (New-Object System.Text.UTF8Encoding $false))
-    Write-Host "Prepended version $Version to manifest.json (changelog left blank, fill it in)"
+    Write-Host "Prepended version $Version to manifest.json"
 
     # The catalog URL people add points at the manifest in the repo root, not this one.
     $RepoRootManifest = Join-Path (Split-Path $RootDir -Parent) "manifest.json"
@@ -179,6 +199,14 @@ if (-not $SkipManifestUpdate -and (Test-Path $ManifestFile)) {
         Write-Host "Synced the repo root manifest.json"
     }
     $ManifestUpdated = $true
+}
+
+# Last, so a failure above leaves no release behind. The manifest entry is only local until it is
+# committed and pushed, which is when installs can see it.
+if ($Publish) {
+    gh release create $ReleaseTag $ZipPath --repo Licaa21/Plugin --target (git -C $RootDir rev-parse HEAD) --title "Moonbase $Version (fork)" --notes $Changelog
+    if ($LASTEXITCODE -ne 0) { throw "gh release create failed. The manifest entry is already written: undo it with git checkout on both manifest.json files before running again." }
+    Write-Host "Published release $ReleaseTag. Commit and push the manifest.json files, then merge main into implement."
 }
 
 # Cleanup
