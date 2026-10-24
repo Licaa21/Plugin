@@ -23,8 +23,8 @@ jobs:
         run: |
           # The csproj is the one source of the version: upstream's three numbers (MoonfinVersion)
           # plus the fork's digit (MoonfinForkRevision). build.sh and build.ps1 read it from there too.
-          BASE_VERSION="$(grep -oPm1 '(?<=<MoonfinVersion>)[^<]+' Jellyfin/backend/Moonfin.Server.csproj)"
-          FORK_REVISION="$(grep -oPm1 '(?<=<MoonfinForkRevision>)[^<]+' Jellyfin/backend/Moonfin.Server.csproj)"
+          BASE_VERSION="$(grep -oPm1 '(?<=<MoonfinVersion>)[^<]+' Jellyfin/backend/Moonfin.Server.csproj || true)"
+          FORK_REVISION="$(grep -oPm1 '(?<=<MoonfinForkRevision>)[^<]+' Jellyfin/backend/Moonfin.Server.csproj || true)"
           VERSION="${BASE_VERSION}.${FORK_REVISION}"
           if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){3}$ ]]; then
             echo "::error::MoonfinVersion and MoonfinForkRevision in the csproj do not make a four-number version: '${VERSION}'."

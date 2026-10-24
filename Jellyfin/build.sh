@@ -34,10 +34,11 @@ if [ "${SKIP_MANIFEST_UPDATE:-0}" != "1" ] && [ -z "$CHANGELOG" ]; then
     exit 1
 fi
 if [ "${PUBLISH:-0}" = "1" ]; then
-    if [ -n "$(git -C "$ROOT_DIR" status --porcelain --untracked-files=no)" ]; then
-        echo "Error: PUBLISH=1: commit the changes first, the release is cut at the commit being built." >&2
+    if [ -n "$(git -C "$ROOT_DIR" status --porcelain)" ]; then
+        echo "Error: PUBLISH=1: commit or remove the changes first, the zip is built from the working tree and the release is cut at the commit." >&2
         exit 1
     fi
+    git -C "$ROOT_DIR" fetch --quiet origin main
     if ! git -C "$ROOT_DIR" merge-base --is-ancestor HEAD origin/main; then
         echo "Error: PUBLISH=1: this commit is not on origin/main. Releases are cut from main, merge and push it there first." >&2
         exit 1

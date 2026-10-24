@@ -14,6 +14,7 @@ namespace Moonfin.Server.Api;
 /// Proxy controller for TMDB API requests.
 /// Provides episode-level ratings that MDBList doesn't cover.
 /// The user's API key is stored in their settings and never exposed to the client.
+/// The Details, Season and Recommendations routes use the server-wide key only.
 /// </summary>
 [ApiController]
 [Route("Moonfin/Tmdb")]

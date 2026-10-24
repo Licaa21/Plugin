@@ -33,7 +33,8 @@ if (-not $SkipManifestUpdate -and [string]::IsNullOrWhiteSpace($Changelog)) {
     throw "Give the release a changelog (-Changelog ""..."") or build without a manifest entry (-SkipManifestUpdate)"
 }
 if ($Publish) {
-    if (git -C $RootDir status --porcelain --untracked-files=no) { throw "-Publish: commit the changes first, the release is cut at the commit being built" }
+    if (git -C $RootDir status --porcelain) { throw "-Publish: commit or remove the changes first, the zip is built from the working tree and the release is cut at the commit" }
+    git -C $RootDir fetch --quiet origin main
     git -C $RootDir merge-base --is-ancestor HEAD origin/main
     if ($LASTEXITCODE -ne 0) { throw "-Publish: this commit is not on origin/main. Releases are cut from main, merge and push it there first" }
 }
