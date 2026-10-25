@@ -65,7 +65,7 @@ namespace Emby.Plugins.Moonfin.Api
                 });
             }
 
-            return new { success = true, seerrUserId = result.SeerrUserId, jellyseerrUserId = result.SeerrUserId, displayName = result.DisplayName, avatar = result.Avatar, permissions = result.Permissions };
+            return new { success = true, seerrUserId = result.SeerrUserId, displayName = result.DisplayName, avatar = result.Avatar, permissions = result.Permissions };
         }
 
         public async Task<object?> Get(GetSeerrStatusRequest request)
@@ -89,7 +89,6 @@ namespace Emby.Plugins.Moonfin.Api
                 authenticated = sess != null,
                 url = config.SeerrUrl,
                 seerrUserId = sess?.SeerrUserId,
-                jellyseerrUserId = sess?.SeerrUserId, // alias kept for older clients
                 displayName = sess?.DisplayName,
                 avatar = sess?.Avatar,
                 permissions = sess?.Permissions ?? 0,

@@ -3,9 +3,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Controller.Plugins;
 using MediaBrowser.Controller.Session;
 using MediaBrowser.Model.Logging;
+using MediaBrowser.Model.Tasks;
+using Moonfin.LiveTv;
 
 namespace Emby.Plugins.Moonfin
 {
@@ -18,9 +21,15 @@ namespace Emby.Plugins.Moonfin
         private readonly IUserDataManager _userDataManager;
         private readonly ISessionManager _sessionManager;
         private readonly IServerApplicationHost _appHost;
+        private readonly ILiveTvManager _liveTvManager;
+        private readonly ITaskManager _taskManager;
         private Services.NewMediaNotifier? _newMediaNotifier;
+        private Services.DefaultHiddenLibraries? _hiddenLibraries;
+        private Services.EmbyLiveTvRecordingHost? _recordingHost;
+        private IncompleteRecordingWatcher? _recordingWatcher;
+        private CancellationTokenSource? _recordingStop;
 
-        public ServerEntryPoint(ILogManager logManager, ILibraryManager libraryManager, IUserManager userManager, IUserDataManager userDataManager, ISessionManager sessionManager, IServerApplicationHost appHost)
+        public ServerEntryPoint(ILogManager logManager, ILibraryManager libraryManager, IUserManager userManager, IUserDataManager userDataManager, ISessionManager sessionManager, IServerApplicationHost appHost, ILiveTvManager liveTvManager, ITaskManager taskManager)
         {
             _logManager = logManager;
             _libraryManager = libraryManager;
@@ -28,6 +37,8 @@ namespace Emby.Plugins.Moonfin
             _userDataManager = userDataManager;
             _sessionManager = sessionManager;
             _appHost = appHost;
+            _liveTvManager = liveTvManager;
+            _taskManager = taskManager;
         }
 
         public void Run()
@@ -40,7 +51,6 @@ namespace Emby.Plugins.Moonfin
             PluginServices.UserDataManager = _userDataManager;
             PluginServices.SessionManager = _sessionManager;
 
-            plugin.MigrateConfiguration();
             plugin.InitializeServices(_logManager, _appHost);
 
             // New-media notifications: ItemAdded -> coalesced websocket + push fan-out.
@@ -57,6 +67,11 @@ namespace Emby.Plugins.Moonfin
                     _logManager.GetLogger("MoonfinNewMedia"));
                 _newMediaNotifier.Start();
             }
+
+            _hiddenLibraries = new Services.DefaultHiddenLibraries(_userManager, _logManager.GetLogger("Moonfin"));
+            PluginServices.HiddenLibraries = _hiddenLibraries;
+
+            StartIncompleteRecordings(plugin);
 
             // Heal user data files corrupted before atomic writes shipped. Fire and forget so
             // a slow disk can't hold up server startup, and never let it throw into boot.
@@ -86,10 +101,40 @@ namespace Emby.Plugins.Moonfin
             }
         }
 
+        private void StartIncompleteRecordings(Plugin plugin)
+        {
+            var logger = _logManager.GetLogger("MoonfinLiveTvRecordings");
+            _recordingHost = new Services.EmbyLiveTvRecordingHost(_liveTvManager, _libraryManager, _userManager, _taskManager, logger);
+            var log = new Services.EmbyRecordingLog(logger);
+            var service = new IncompleteRecordingService(
+                _recordingHost,
+                log,
+                new Services.EmbyStateFile(),
+                () => DateTime.UtcNow,
+                System.IO.Path.Combine(plugin.DataFolderPath, IncompleteRecordingService.StoreFileName),
+                Services.IncompleteRecordingConfig.Read);
+            PluginServices.IncompleteRecordings = service;
+
+            _recordingWatcher = new IncompleteRecordingWatcher(service, _recordingHost, log);
+            _recordingStop = new CancellationTokenSource();
+            var watcher = _recordingWatcher;
+            var token = _recordingStop.Token;
+            _ = Task.Run(() => watcher.RunAsync(token));
+        }
+
         public void Dispose()
         {
             _newMediaNotifier?.Dispose();
             _newMediaNotifier = null;
+
+            _hiddenLibraries?.Dispose();
+            PluginServices.HiddenLibraries = null;
+
+            _recordingStop?.Cancel();
+            _recordingHost?.Dispose();
+            _recordingWatcher?.Dispose();
+            _recordingStop?.Dispose();
+            PluginServices.IncompleteRecordings = null;
         }
     }
 
@@ -100,5 +145,7 @@ namespace Emby.Plugins.Moonfin
         public static IUserManager? UserManager { get; set; }
         public static IUserDataManager? UserDataManager { get; set; }
         public static ISessionManager? SessionManager { get; set; }
+        public static IncompleteRecordingService? IncompleteRecordings { get; set; }
+        public static Services.DefaultHiddenLibraries? HiddenLibraries { get; set; }
     }
 }

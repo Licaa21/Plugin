@@ -51,14 +51,6 @@ public class MoonfinUserSettings
     [JsonPropertyName("seerrRows")]
     public SeerrRowsConfig? SeerrRows { get; set; }
 
-    // Legacy jellyseerr* aliases so pre-rename payloads still deserialize.
-    [JsonPropertyName("jellyseerrEnabled")]
-    public bool? JellyseerrEnabledCompat { get => SeerrEnabled; set { if (value != null) { SeerrEnabled = value; } } }
-    [JsonPropertyName("jellyseerrApiKey")]
-    public string? JellyseerrApiKeyCompat { get => SeerrApiKey; set { if (value != null) { SeerrApiKey = value; } } }
-    [JsonPropertyName("jellyseerrRows")]
-    public SeerrRowsConfig? JellyseerrRowsCompat { get => SeerrRows; set { if (value != null) { SeerrRows = value; } } }
-
     [JsonPropertyName("mdblistEnabled")]
     public bool? MdblistEnabled { get; set; }
     [JsonPropertyName("mdblistApiKey")]

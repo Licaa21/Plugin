@@ -741,6 +741,10 @@
                             <span class="material-icons moonfinNavIcon" aria-hidden="true">sports_esports</span>
                             <span class="moonfinNavText"><span class="moonfinNavLabel">Games</span><span class="moonfinNavSub">Retro / EmulatorJS</span></span>
                         </button>
+                        <button type="button" class="moonfinNavItem" data-tab="livetv">
+                            <span class="material-icons moonfinNavIcon" aria-hidden="true">live_tv</span>
+                            <span class="moonfinNavText"><span class="moonfinNavLabel">Live TV</span><span class="moonfinNavSub">Recordings</span></span>
+                        </button>
                         <button type="button" class="moonfinNavItem" data-tab="defaults">
                             <span class="material-icons moonfinNavIcon" aria-hidden="true">tune</span>
                             <span class="moonfinNavText"><span class="moonfinNavLabel">User defaults</span><span class="moonfinNavSub">Force client settings</span></span>
@@ -1379,6 +1383,45 @@
                     </div>
 
                     </section>
+                    <section class="moonfinTabPanel" data-tab="livetv">
+                    <div class="verticalSection">
+                        <h3 class="sectionTitle">Live TV Recordings</h3>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input type="checkbox" id="LiveTvDetectIncompleteRecordings" is="emby-checkbox" />
+                                <span>Detect incomplete recordings</span>
+                            </label>
+                            <div class="fieldDescription">
+                                Watches recordings as they run and tags the ones that come out short, so Moonfin can show them as Incomplete.
+                            </div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input type="checkbox" id="LiveTvAutoRecordCompleteShowing" is="emby-checkbox" />
+                                <span>Re-record incomplete episodes and movies</span>
+                            </label>
+                            <div class="fieldDescription">
+                                Schedules the next showing of an episode or movie that recorded short. Movies must have matching titles and descriptions.
+                            </div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input type="checkbox" id="LiveTvDeleteIncompleteCopies" is="emby-checkbox" />
+                                <span>Delete incomplete copies</span>
+                            </label>
+                            <div class="fieldDescription">
+                                When an episode records complete, deletes the copies of it marked Incomplete, the same as deleting them yourself. Copies kept as complete stay.
+                            </div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="LiveTvIncompleteThresholdPercent">Incomplete threshold (%)</label>
+                            <input type="number" id="LiveTvIncompleteThresholdPercent" is="emby-input" min="50" max="100" step="1" />
+                            <div class="fieldDescription">
+                                Recordings shorter than this share of their scheduled time are incomplete. Default 90.
+                            </div>
+                        </div>
+                    </div>
+                    </section>
                     <section class="moonfinTabPanel" data-tab="defaults">
                     <div class="verticalSection">
                         <h3 class="sectionTitle">Default User Settings</h3>
@@ -1588,6 +1631,7 @@
                                     <option value="true">Yes</option>
                                     <option value="false">No</option>
                                 </select>
+                                <div class="fieldDescription">Only shows while SyncPlay is on under Playback.</div>
                             </div>
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultEnableFolderView">Enable Folder View</label>
@@ -2831,6 +2875,14 @@
                                     The discovery tab in book and audiobook libraries, which browses titles from Open Library and LibriVox. This is the default only. A user can still turn it back on for themselves.
                                 </div>
                             </div>
+                            <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Library Visibility</h4>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused">Hidden libraries</label>
+                                <div id="DefaultHiddenLibraryPicker" style="max-height:200px;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px;"></div>
+                                <div class="fieldDescription">
+                                    Hidden from the home screen for new users, the same as switching them off in Library Visibility. Jellyfin's own home screen hides them too. Users keep access and can show them again. To hide them for existing users, Save and then use Apply Defaults To All Users Now on the Actions tab.
+                                </div>
+                            </div>
                             <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Library Pages</h4>
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultLibraryStyle">Video library style</label>
@@ -3448,6 +3500,16 @@
                                     <option value="long_">After 5 episodes</option>
                                     <option value="veryLong">After 8 episodes</option>
                                 </select>
+                            </div>
+                            <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">SyncPlay</h4>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultSyncPlayEnabled">Enable SyncPlay</label>
+                                <select id="DefaultSyncPlayEnabled" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                                <div class="fieldDescription">Group watching. The SyncPlay button under Navigation only shows while this is on.</div>
                             </div>
                         </div>
 
@@ -4166,6 +4228,7 @@
                 { parent: 'DefaultEnableRadarrCalendar', fields: ['DefaultRadarrCalendarShowCinema', 'DefaultRadarrCalendarShowDigital', 'DefaultRadarrCalendarShowPhysical', 'DefaultRadarrCalendarShowDate', 'DefaultMergeRadarrSonarrCalendars'] },
                 { parent: 'DefaultEnableSonarrCalendar', fields: ['DefaultSonarrCalendarShowDate', 'DefaultSonarrCalendarShowEpisodeInfo', 'DefaultMergeRadarrSonarrCalendars'] },
                 { parent: 'MdblistOfficialListsEnabled', fields: ['MdblistOfficialListsMaxItems'] },
+                { parent: 'LiveTvDetectIncompleteRecordings', fields: ['LiveTvAutoRecordCompleteShowing', 'LiveTvDeleteIncompleteCopies', 'LiveTvIncompleteThresholdPercent'] },
                 { parent: 'AnimeMarkersEnabled', fields: ['AnimeMarkerRecapLookup', 'AnimeMarkerShowFiller', 'AnimeMarkerMaxAgeDays'] },
                 { parent: 'AnimeAudioMarkersEnabled', fields: ['AnimeAudioMarkersMovies', 'AnimeAudioSeparateDualAudio'] },
                 { parent: ['AnimeMarkersEnabled', 'AnimeAudioMarkersEnabled'], fields: ['AnimeMarkerLibraryPicker', 'AnimeAudioTrustSelectedLibraries', 'AnimeMarkerPlacement', 'AnimeMarkerDiagBtn', 'AnimeMarkerPreviewName', 'AnimeMarkerVerboseLogging', 'AnimeMarkerLogBtn'] },
@@ -6974,6 +7037,10 @@
                     document.querySelector('#RecommendationsProviderEnabled').checked = config.RecommendationsProviderEnabled !== false;
                     document.querySelector('#StudioLogosEnabled').checked = config.StudioLogosEnabled !== false;
                     document.querySelector('#StudioLogosMaxAgeDays').value = config.StudioLogosMaxAgeDays || 30;
+                    document.querySelector('#LiveTvDetectIncompleteRecordings').checked = config.LiveTvDetectIncompleteRecordings !== false;
+                    document.querySelector('#LiveTvAutoRecordCompleteShowing').checked = config.LiveTvAutoRecordCompleteShowing === true;
+                    document.querySelector('#LiveTvIncompleteThresholdPercent').value = config.LiveTvIncompleteThresholdPercent || 90;
+                    document.querySelector('#LiveTvDeleteIncompleteCopies').checked = config.LiveTvDeleteIncompleteCopies === true;
                     document.querySelector('#AnimeMarkersEnabled').checked = config.AnimeMarkersEnabled === true;
                     document.querySelector('#AnimeMarkerRecapLookup').checked = config.AnimeMarkerRecapLookup !== false;
                     document.querySelector('#AnimeAudioMarkersEnabled').checked = config.AnimeAudioMarkersEnabled === true;
@@ -6992,6 +7059,8 @@
                     document.querySelector('#WebDefaultServerUrl').value = config.WebDefaultServerUrl || '';
                     document.querySelector('#WebForcedServerUrl').value = config.WebForcedServerUrl || '';
                     document.querySelector('#WebEnableWebRtcScan').checked = config.WebEnableWebRtcScan !== false;
+
+                    loadLibraryPicker('#DefaultHiddenLibraryPicker', 'defaultHiddenLibraryCb', config.DefaultHiddenLibraryIds || []);
 
                     document.querySelector('#GamesEnabled').checked = config.GamesEnabled === true;
                     document.querySelector('#GamesIsolateWebApp').checked = config.GamesIsolateWebApp === true;
@@ -7136,6 +7205,7 @@
                     setNullableBoolSelect('#DefaultShowGenresButton', defaults.showGenresButton);
                     setNullableBoolSelect('#DefaultShowFavoritesButton', defaults.showFavoritesButton);
                     setNullableBoolSelect('#DefaultShowSyncPlayButton', defaults.showSyncPlayButton);
+                    setNullableBoolSelect('#DefaultSyncPlayEnabled', defaults.syncPlayEnabled);
                     setNullableBoolSelect('#DefaultShowLibrariesInToolbar', defaults.showLibrariesInToolbar);
 
                     setSelectValue('#DefaultResumeSubtractDuration', defaults.resumeSubtractDuration != null ? String(defaults.resumeSubtractDuration) : '', 'Configured rewind');
@@ -7422,7 +7492,8 @@
                     picker.innerHTML = '<div style="padding:8px;color:rgba(255,255,255,0.5);font-size:0.9em;">Loading...</div>';
 
                     var userId = ApiClient.getCurrentUserId();
-                    ApiClient.getUserViews(userId).then(function(result) {
+                    // Hidden ones too, or a library the admin hid from their own home would drop out of the saved list.
+                    ApiClient.getUserViews({ IncludeHidden: true }, userId).then(function(result) {
                         var items = result.Items || [];
                         if (items.length === 0) {
                             picker.innerHTML = '<div style="padding:8px;color:rgba(255,255,255,0.5);font-size:0.9em;">No libraries found.</div>';
@@ -7822,6 +7893,10 @@
                         config.RecommendationsProviderEnabled = document.querySelector('#RecommendationsProviderEnabled').checked;
                         config.StudioLogosEnabled = document.querySelector('#StudioLogosEnabled').checked;
                         config.StudioLogosMaxAgeDays = parseInt(document.querySelector('#StudioLogosMaxAgeDays').value, 10) || 30;
+                        config.LiveTvDetectIncompleteRecordings = document.querySelector('#LiveTvDetectIncompleteRecordings').checked;
+                        config.LiveTvAutoRecordCompleteShowing = document.querySelector('#LiveTvAutoRecordCompleteShowing').checked;
+                        config.LiveTvIncompleteThresholdPercent = Math.min(100, Math.max(50, parseInt(document.querySelector('#LiveTvIncompleteThresholdPercent').value, 10) || 90));
+                        config.LiveTvDeleteIncompleteCopies = document.querySelector('#LiveTvDeleteIncompleteCopies').checked;
                         config.AnimeMarkersEnabled = document.querySelector('#AnimeMarkersEnabled').checked;
                         config.AnimeMarkerRecapLookup = document.querySelector('#AnimeMarkerRecapLookup').checked;
                         config.AnimeAudioMarkersEnabled = document.querySelector('#AnimeAudioMarkersEnabled').checked;
@@ -7842,6 +7917,12 @@
                         config.WebDefaultServerUrl = document.querySelector('#WebDefaultServerUrl').value || null;
                         config.WebForcedServerUrl = document.querySelector('#WebForcedServerUrl').value || null;
                         config.WebEnableWebRtcScan = document.querySelector('#WebEnableWebRtcScan').checked;
+
+                        if (document.querySelector('.defaultHiddenLibraryCb') != null) {
+                            config.DefaultHiddenLibraryIds = Array.prototype.slice.call(
+                                document.querySelectorAll('.defaultHiddenLibraryCb:checked')
+                            ).map(function (cb) { return cb.getAttribute('data-id'); });
+                        }
 
                         config.GamesEnabled = document.querySelector('#GamesEnabled').checked;
                         config.GamesIsolateWebApp = document.querySelector('#GamesIsolateWebApp').checked;
@@ -8068,6 +8149,7 @@
                         config.DefaultUserSettings.showGenresButton = getNullableBoolSelect('#DefaultShowGenresButton');
                         config.DefaultUserSettings.showFavoritesButton = getNullableBoolSelect('#DefaultShowFavoritesButton');
                         config.DefaultUserSettings.showSyncPlayButton = getNullableBoolSelect('#DefaultShowSyncPlayButton');
+                        config.DefaultUserSettings.syncPlayEnabled = getNullableBoolSelect('#DefaultSyncPlayEnabled');
                         config.DefaultUserSettings.showLibrariesInToolbar = getNullableBoolSelect('#DefaultShowLibrariesInToolbar');
                         config.DefaultUserSettings.mdblistEnabled = getNullableBoolSelect('#DefaultMdblistEnabled');
                         config.DefaultUserSettings.tmdbEpisodeRatingsEnabled = getNullableBoolSelect('#DefaultTmdbEpisodeRatingsEnabled');

@@ -543,6 +543,7 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
     var FIELD_DEPENDENCIES = [
         { parent: 'SeerrEnabled', fields: ['SeerrUrl', 'SeerrDisplayName', 'PublicServerUrl', 'DefaultShowSeerrButton', 'DefaultSeerrHeading', 'DefaultSeerrBlockNsfw', 'DefaultSeerrShowMissingCollectionItems', 'DefaultShowSeerrAvailabilityBadges', 'DefaultSeerrDiscoveryList', 'DefaultEnableRadarrCalendar', 'DefaultEnableSonarrCalendar'] },
         { parent: 'SeerrEnabled', off: ['true'], fields: ['DefaultSeerrOffNote'] },
+        { parent: 'LiveTvDetectIncompleteRecordings', fields: ['LiveTvAutoRecordCompleteShowing', 'LiveTvDeleteIncompleteCopies', 'LiveTvIncompleteThresholdPercent'] },
         { parent: 'DefaultEnableRadarrCalendar', fields: ['DefaultRadarrCalendarShowCinema', 'DefaultRadarrCalendarShowDigital', 'DefaultRadarrCalendarShowPhysical', 'DefaultRadarrCalendarShowDate', 'DefaultMergeRadarrSonarrCalendars'] },
         { parent: 'DefaultEnableSonarrCalendar', fields: ['DefaultSonarrCalendarShowDate', 'DefaultSonarrCalendarShowEpisodeInfo', 'DefaultMergeRadarrSonarrCalendars'] },
         { parent: 'MdblistOfficialListsEnabled', fields: ['MdblistOfficialListsMaxItems'] },
@@ -2348,6 +2349,12 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
             view.querySelector('#WebForcedServerUrl').value = config.WebForcedServerUrl || '';
             view.querySelector('#WebEnableWebRtcScan').checked = config.WebEnableWebRtcScan !== false;
             view.querySelector('#EnableClientLogUpload').checked = config.EnableClientLogUpload !== false;
+            view.querySelector('#LiveTvDetectIncompleteRecordings').checked = config.LiveTvDetectIncompleteRecordings !== false;
+            view.querySelector('#LiveTvAutoRecordCompleteShowing').checked = config.LiveTvAutoRecordCompleteShowing === true;
+            view.querySelector('#LiveTvIncompleteThresholdPercent').value = config.LiveTvIncompleteThresholdPercent || 90;
+            view.querySelector('#LiveTvDeleteIncompleteCopies').checked = config.LiveTvDeleteIncompleteCopies === true;
+
+            loadLibraryPicker(view, '#DefaultHiddenLibraryPicker', 'defaultHiddenLibraryCb', config.DefaultHiddenLibraryIds || []);
 
             view.querySelector('#GamesEnabled').checked = config.GamesEnabled === true;
             loadGameLibraryPicker(view, config.GameLibraryIds || []);
@@ -2522,6 +2529,8 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
             setNullableBoolSelect(view, '#DefaultShowGenresButton', defaults.showGenresButton);
             setNullableBoolSelect(view, '#DefaultShowFavoritesButton', defaults.showFavoritesButton);
             setNullableBoolSelect(view, '#DefaultShowLibrariesInToolbar', defaults.showLibrariesInToolbar);
+            setNullableBoolSelect(view, '#DefaultShowSyncPlayButton', defaults.showSyncPlayButton);
+            setNullableBoolSelect(view, '#DefaultSyncPlayEnabled', defaults.syncPlayEnabled);
 
             setNullableBoolSelect(view, '#DefaultMdblistEnabled', defaults.mdblistEnabled);
             setNullableBoolSelect(view, '#DefaultTmdbEpisodeRatingsEnabled', defaults.tmdbEpisodeRatingsEnabled);
@@ -2688,6 +2697,15 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
             config.WebForcedServerUrl = view.querySelector('#WebForcedServerUrl').value || null;
             config.WebEnableWebRtcScan = view.querySelector('#WebEnableWebRtcScan').checked;
             config.EnableClientLogUpload = view.querySelector('#EnableClientLogUpload').checked;
+            config.LiveTvDetectIncompleteRecordings = view.querySelector('#LiveTvDetectIncompleteRecordings').checked;
+            config.LiveTvAutoRecordCompleteShowing = view.querySelector('#LiveTvAutoRecordCompleteShowing').checked;
+            config.LiveTvIncompleteThresholdPercent = Math.min(100, Math.max(50, parseInt(view.querySelector('#LiveTvIncompleteThresholdPercent').value, 10) || 90));
+            config.LiveTvDeleteIncompleteCopies = view.querySelector('#LiveTvDeleteIncompleteCopies').checked;
+
+            if (view.querySelector('.defaultHiddenLibraryCb') != null) {
+                config.DefaultHiddenLibraryIds = Array.prototype.slice.call(view.querySelectorAll('.defaultHiddenLibraryCb:checked'))
+                    .map(function (cb) { return cb.getAttribute('data-id'); });
+            }
 
             config.GamesEnabled = view.querySelector('#GamesEnabled').checked;
             config.GameLibraryIds = Array.prototype.slice.call(view.querySelectorAll('.gameLibraryCb:checked'))
@@ -2876,6 +2894,8 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
             d.showGenresButton = getNullableBoolSelect(view, '#DefaultShowGenresButton');
             d.showFavoritesButton = getNullableBoolSelect(view, '#DefaultShowFavoritesButton');
             d.showLibrariesInToolbar = getNullableBoolSelect(view, '#DefaultShowLibrariesInToolbar');
+            d.showSyncPlayButton = getNullableBoolSelect(view, '#DefaultShowSyncPlayButton');
+            d.syncPlayEnabled = getNullableBoolSelect(view, '#DefaultSyncPlayEnabled');
 
             d.mdblistEnabled = getNullableBoolSelect(view, '#DefaultMdblistEnabled');
             d.tmdbEpisodeRatingsEnabled = getNullableBoolSelect(view, '#DefaultTmdbEpisodeRatingsEnabled');

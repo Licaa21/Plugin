@@ -168,8 +168,30 @@ namespace Emby.Plugins.Moonfin
         /// <summary>Lets Moonfin clients upload diagnostic and crash reports into the server's log folder, where they appear in Dashboard > Logs.</summary>
         public bool EnableClientLogUpload { get; set; } = true;
 
+        /// <summary>
+        /// Watches Live TV recordings and tags the ones that come out incomplete. The other Live TV
+        /// recording settings only act while this is on.
+        /// </summary>
+        public bool LiveTvDetectIncompleteRecordings { get; set; } = true;
+
+        /// <summary>When a Live TV recording comes out incomplete, schedule the earliest later showing of the same episode.</summary>
+        public bool LiveTvAutoRecordCompleteShowing { get; set; }
+
+        /// <summary>A recording written for less than this percentage of its padded schedule is incomplete.</summary>
+        public int LiveTvIncompleteThresholdPercent { get; set; } = 90;
+
+        /// <summary>When a complete copy of an episode records, delete the copies of it tagged incomplete.</summary>
+        public bool LiveTvDeleteIncompleteCopies { get; set; }
+
         /// <summary>Admin-configured default settings. Users who haven't customized a setting inherit this value.</summary>
         public MoonfinSettingsProfile? DefaultUserSettings { get; set; }
+
+        /// <summary>
+        /// Libraries added to each new user's My Media and Latest exclude lists, and to existing users'
+        /// when the admin applies the defaults to them. Kept as Emby's numeric ids, which Moonfin
+        /// clients match on and Emby's own apps ignore.
+        /// </summary>
+        public List<string> DefaultHiddenLibraryIds { get; set; } = new List<string>();
 
         /// <summary>Metadata index for uploaded custom themes stored in the plugin data folder.</summary>
         public List<UploadedThemeEntry> UploadedThemes { get; set; } = new List<UploadedThemeEntry>();
@@ -204,50 +226,7 @@ namespace Emby.Plugins.Moonfin
         public string GamesLaunchBoxUrl { get; set; } =
             "https://gamesdb.launchbox-app.com/Metadata.zip";
 
-        // Legacy keys from before the Jellyseerr -> Seerr rename. Kept only so existing
-        // configs deserialize. MigrateLegacyKeys() copies them into the Seerr* keys on load.
-        public string? JellyseerrUrl { get; set; }
-        public bool JellyseerrEnabled { get; set; }
-        public string? JellyseerrDisplayName { get; set; }
-
-        public string? GetEffectiveSeerrUrl() => NormalizeSeerrUrl(SeerrUrl ?? JellyseerrUrl);
-
-        /// <summary>
-        /// Copies any pre-rename Jellyseerr* values into the Seerr* keys and clears the
-        /// legacy ones. Returns true when something changed so the caller can persist.
-        /// </summary>
-        public bool MigrateLegacyKeys()
-        {
-            var changed = false;
-
-            if (string.IsNullOrEmpty(SeerrUrl) && !string.IsNullOrEmpty(JellyseerrUrl))
-            {
-                SeerrUrl = JellyseerrUrl;
-                changed = true;
-            }
-
-            if (!SeerrEnabled && JellyseerrEnabled)
-            {
-                SeerrEnabled = true;
-                changed = true;
-            }
-
-            if (string.IsNullOrEmpty(SeerrDisplayName) && !string.IsNullOrEmpty(JellyseerrDisplayName))
-            {
-                SeerrDisplayName = JellyseerrDisplayName;
-                changed = true;
-            }
-
-            if (JellyseerrUrl != null || JellyseerrEnabled || JellyseerrDisplayName != null)
-            {
-                JellyseerrUrl = null;
-                JellyseerrEnabled = false;
-                JellyseerrDisplayName = null;
-                changed = true;
-            }
-
-            return changed;
-        }
+        public string? GetEffectiveSeerrUrl() => NormalizeSeerrUrl(SeerrUrl);
 
         /// <summary>
         /// Normalizes a user-entered Seerr URL so downstream Uri parsing and string

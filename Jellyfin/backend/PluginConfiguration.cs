@@ -31,12 +31,6 @@ public class PluginConfiguration : BasePluginConfiguration
     /// </summary>
     public string? SeerrDisplayName { get; set; }
 
-    // Legacy keys from before the Jellyseerr -> Seerr rename. Kept only so existing
-    // configs deserialize; MigrateLegacyKeys() copies them into the Seerr* keys on load.
-    public string? JellyseerrUrl { get; set; }
-    public bool JellyseerrEnabled { get; set; }
-    public string? JellyseerrDisplayName { get; set; }
-
     /// <summary>
     /// Shared secret Seerr must present (header or query) when calling the Moonfin
     /// webhook. Auto-generated on first load if empty.
@@ -98,6 +92,28 @@ public class PluginConfiguration : BasePluginConfiguration
     /// How long a cached studio-logo entry stays fresh before the sync task refetches it.
     /// </summary>
     public int StudioLogosMaxAgeDays { get; set; } = 30;
+
+    /// <summary>
+    /// Watches Live TV recordings and tags the ones that come out incomplete. The other Live TV
+    /// recording settings only act while this is on.
+    /// </summary>
+    public bool LiveTvDetectIncompleteRecordings { get; set; } = true;
+
+    /// <summary>
+    /// When a Live TV recording comes out incomplete, schedule the earliest later showing of the
+    /// same episode.
+    /// </summary>
+    public bool LiveTvAutoRecordCompleteShowing { get; set; } = false;
+
+    /// <summary>
+    /// A recording written for less than this percentage of its padded schedule is incomplete.
+    /// </summary>
+    public int LiveTvIncompleteThresholdPercent { get; set; } = 90;
+
+    /// <summary>
+    /// When a complete copy of an episode records, delete the copies of it tagged incomplete.
+    /// </summary>
+    public bool LiveTvDeleteIncompleteCopies { get; set; }
 
     // ---------------------------------------------------------------------
     // Anime filler, canon and recap markers
@@ -303,6 +319,12 @@ public class PluginConfiguration : BasePluginConfiguration
     public MoonfinSettingsProfile? DefaultUserSettings { get; set; }
 
     /// <summary>
+    /// Libraries added to each new user's My Media and Latest exclude lists, and to existing users'
+    /// when the admin applies the defaults to them.
+    /// </summary>
+    public List<string> DefaultHiddenLibraryIds { get; set; } = new();
+
+    /// <summary>
     /// Metadata index for uploaded custom themes stored in the plugin data folder.
     /// </summary>
     public List<UploadedThemeEntry> UploadedThemes { get; set; } = new();
@@ -402,44 +424,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// </summary>
     public string? GetEffectiveSeerrUrl()
     {
-        return NormalizeSeerrUrl(SeerrUrl ?? JellyseerrUrl);
-    }
-
-    /// <summary>
-    /// Copies any pre-rename Jellyseerr* values into the Seerr* keys and clears the
-    /// legacy ones. Returns true when something changed so the caller can persist.
-    /// </summary>
-    public bool MigrateLegacyKeys()
-    {
-        var changed = false;
-
-        if (string.IsNullOrEmpty(SeerrUrl) && !string.IsNullOrEmpty(JellyseerrUrl))
-        {
-            SeerrUrl = JellyseerrUrl;
-            changed = true;
-        }
-
-        if (!SeerrEnabled && JellyseerrEnabled)
-        {
-            SeerrEnabled = true;
-            changed = true;
-        }
-
-        if (string.IsNullOrEmpty(SeerrDisplayName) && !string.IsNullOrEmpty(JellyseerrDisplayName))
-        {
-            SeerrDisplayName = JellyseerrDisplayName;
-            changed = true;
-        }
-
-        if (JellyseerrUrl != null || JellyseerrEnabled || JellyseerrDisplayName != null)
-        {
-            JellyseerrUrl = null;
-            JellyseerrEnabled = false;
-            JellyseerrDisplayName = null;
-            changed = true;
-        }
-
-        return changed;
+        return NormalizeSeerrUrl(SeerrUrl);
     }
 
     /// <summary>

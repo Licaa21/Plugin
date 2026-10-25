@@ -5,8 +5,8 @@ using Xunit;
 namespace Emby.Plugins.Moonfin.Tests;
 
 /// <summary>
-/// The settings envelope decides which profile a client is handed, whether an old file needs
-/// migrating, and whether a payload written before the Jellyseerr rename still loads.
+/// The settings envelope decides which profile a client is handed and whether an old file needs
+/// migrating.
 /// </summary>
 public class MoonfinUserSettingsTests
 {
@@ -112,37 +112,6 @@ public class MoonfinUserSettingsTests
         Assert.False(Parse("{\"schemaVersion\":2,\"navbarEnabled\":true}").NeedsMigration);
         Assert.False(Parse("{\"schemaVersion\":1,\"navbarEnabled\":true,\"global\":{}}").NeedsMigration);
         Assert.False(Parse("{\"schemaVersion\":1}").NeedsMigration);
-    }
-
-    [Fact]
-    public void LegacyJellyseerrKeysLoadIntoTheSeerrFields()
-    {
-        var settings = Parse(
-            "{\"jellyseerrEnabled\":true,\"jellyseerrApiKey\":\"abc\"," +
-            "\"jellyseerrRows\":{\"trendingMovies\":true}}");
-
-        Assert.True(settings.SeerrEnabled);
-        Assert.Equal("abc", settings.SeerrApiKey);
-        Assert.True(settings.SeerrRows?.TrendingMovies);
-    }
-
-    [Fact]
-    public void AnAbsentLegacyKeyLeavesTheSeerrFieldAlone()
-    {
-        // The alias setter ignores null, so in a payload carrying both shapes the legacy one
-        // can't blank out a value the new one supplied.
-        var settings = Parse("{\"seerrApiKey\":\"new\",\"jellyseerrApiKey\":null}");
-
-        Assert.Equal("new", settings.SeerrApiKey);
-    }
-
-    [Fact]
-    public void TheEnvelopeStillWritesBothSpellingsForOlderReaders()
-    {
-        var json = JsonSerializer.Serialize(new MoonfinUserSettings { SeerrApiKey = "abc" });
-
-        Assert.Contains("\"seerrApiKey\":\"abc\"", json, StringComparison.Ordinal);
-        Assert.Contains("\"jellyseerrApiKey\":\"abc\"", json, StringComparison.Ordinal);
     }
 
     [Fact]

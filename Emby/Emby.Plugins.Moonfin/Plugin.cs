@@ -73,19 +73,6 @@ namespace Emby.Plugins.Moonfin
         }
 
         /// <summary>
-        /// Migrates legacy configuration keys. Must run after construction (not in the ctor):
-        /// Emby sets the plugin's configuration attributes after instantiation, so reading
-        /// Configuration during the constructor throws inside BasePlugin.ConfigurationFilePath.
-        /// </summary>
-        internal void MigrateConfiguration()
-        {
-            if (Configuration.MigrateLegacyKeys())
-            {
-                SaveConfiguration();
-            }
-        }
-
-        /// <summary>
         /// Emby's config-save hook: the config page persists changes through this. Re-run webhook
         /// provisioning when PublicServerUrl changes so a newly set public URL is pushed to Seerr
         /// without a restart. Best-effort and never throws into the save path.

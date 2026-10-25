@@ -13,11 +13,6 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("showSeerrAvailabilityBadges")] public bool? ShowSeerrAvailabilityBadges { get; set; }
         [JsonPropertyName("showBookDiscoverTab")] public bool? ShowBookDiscoverTab { get; set; }
         [JsonPropertyName("seerrRows")] public SeerrRowsConfig? SeerrRows { get; set; }
-        // Legacy jellyseerr* aliases: read old payloads and keep serializing the old keys for un-migrated clients.
-        [JsonPropertyName("jellyseerrEnabled")] public bool? JellyseerrEnabledCompat { get => SeerrEnabled; set { if (value != null) { SeerrEnabled = value; } } }
-        [JsonPropertyName("jellyseerrApiKey")] public string? JellyseerrApiKeyCompat { get => SeerrApiKey; set { if (value != null) { SeerrApiKey = value; } } }
-        [JsonPropertyName("jellyseerrBlockNsfw")] public bool? JellyseerrBlockNsfwCompat { get => SeerrBlockNsfw; set { if (value != null) { SeerrBlockNsfw = value; } } }
-        [JsonPropertyName("jellyseerrRows")] public SeerrRowsConfig? JellyseerrRowsCompat { get => SeerrRows; set { if (value != null) { SeerrRows = value; } } }
         [JsonPropertyName("mdblistEnabled")] public bool? MdblistEnabled { get; set; }
         [JsonPropertyName("mdblistApiKey")] public string? MdblistApiKey { get; set; }
         [JsonPropertyName("mdblistRatingSources")] public List<string>? MdblistRatingSources { get; set; }

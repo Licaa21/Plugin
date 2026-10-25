@@ -1,6 +1,10 @@
+using Jellyfin.Data.Events.Users;
 using MediaBrowser.Controller;
+using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Moonfin.LiveTv;
 using Moonfin.Pin;
 using Moonfin.Romm;
 using Moonfin.Server.Services;
@@ -17,6 +21,8 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
     {
         serviceCollection.AddSingleton<MoonfinSettingsService>();
         serviceCollection.AddSingleton<IUserDirectory, UserDirectory>();
+        serviceCollection.AddSingleton<DefaultHiddenLibraries>();
+        serviceCollection.AddScoped<IEventConsumer<UserCreatedEventArgs>, DefaultHiddenLibrariesOnUserCreated>();
         serviceCollection.AddSingleton<IPinStore, FilePinStore>();
         serviceCollection.AddSingleton<PinService>(sp => new PinService(sp.GetRequiredService<IPinStore>()));
         serviceCollection.AddSingleton<MoonfinThemeValidator>();
@@ -108,6 +114,21 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddHostedService<SeerrProvisioningStartupService>();
         serviceCollection.AddHostedService<NewMediaNotifier>();
         serviceCollection.AddHostedService(provider => provider.GetRequiredService<GameArtworkReconciliationService>());
+
+        // Incomplete Live TV recordings
+        serviceCollection.AddSingleton<ILiveTvRecordingHost, JellyfinLiveTvRecordingHost>();
+        serviceCollection.AddSingleton(provider => new IncompleteRecordingService(
+            provider.GetRequiredService<ILiveTvRecordingHost>(),
+            new JellyfinRecordingLog(provider.GetRequiredService<ILogger<IncompleteRecordingService>>()),
+            new JellyfinStateFile(),
+            () => DateTime.UtcNow,
+            Path.Combine(MoonfinPlugin.ResolveDataFolderPath(), IncompleteRecordingService.StoreFileName),
+            IncompleteRecordingConfig.Read));
+        serviceCollection.AddSingleton(provider => new IncompleteRecordingWatcher(
+            provider.GetRequiredService<IncompleteRecordingService>(),
+            provider.GetRequiredService<ILiveTvRecordingHost>(),
+            new JellyfinRecordingLog(provider.GetRequiredService<ILogger<IncompleteRecordingWatcher>>())));
+        serviceCollection.AddHostedService<IncompleteRecordingHostedService>();
 
         // Recommendations / Similar Items
         serviceCollection.AddSingleton<MoonfinSimilarItemsService>();

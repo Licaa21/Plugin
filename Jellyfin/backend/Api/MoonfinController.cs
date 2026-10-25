@@ -35,6 +35,7 @@ public class MoonfinController : ControllerBase
     private readonly ConfigBackupService _configBackup;
     private readonly MoonfinSimilarItemsService _similarItemsService;
     private readonly ItemCardDtoMapper _cardMapper;
+    private readonly DefaultHiddenLibraries _hiddenLibraries;
     private readonly ILogger<MoonfinController> _logger;
     
     private static readonly Type? _userManagerType = Type.GetType("MediaBrowser.Controller.Library.IUserManager, MediaBrowser.Controller");
@@ -51,6 +52,7 @@ public class MoonfinController : ControllerBase
         ConfigBackupService configBackup,
         MoonfinSimilarItemsService similarItemsService,
         ItemCardDtoMapper cardMapper,
+        DefaultHiddenLibraries hiddenLibraries,
         ILogger<MoonfinController> logger)
     {
         _settingsService = settingsService;
@@ -60,6 +62,7 @@ public class MoonfinController : ControllerBase
         _configBackup = configBackup;
         _similarItemsService = similarItemsService;
         _cardMapper = cardMapper;
+        _hiddenLibraries = hiddenLibraries;
         _logger = logger;
     }
 
@@ -137,6 +140,8 @@ public class MoonfinController : ControllerBase
             TmdbReviewsSupported = true,
             MessagesSupported = true,
             PinSupported = true,
+            IncompleteRecordingsSupported = config?.LiveTvDetectIncompleteRecordings ?? true,
+            ExtendedCompleteShowingsSupported = config?.LiveTvDetectIncompleteRecordings ?? true,
             RecommendationsSupported = config?.RecommendationsProviderEnabled ?? true,
             DefaultSettings = config?.DefaultUserSettings
         });
@@ -491,6 +496,7 @@ public class MoonfinController : ControllerBase
             usersAffected = await _settingsService.MergeDefaultsToAllUsersAsync(defaults);
         }
 
+        await _hiddenLibraries.ApplyAsync(GetAllServerUserIds() ?? new List<Guid>());
         var liveRefreshDeliveries = _settingsService.BroadcastSystemEvent("settingsUpdated");
 
         return Ok(new { success = true, overwrite, usersAffected, orphansDeleted, liveRefreshDeliveries });
@@ -536,6 +542,7 @@ public class MoonfinController : ControllerBase
             await _settingsService.MergeDefaultsToUserAsync(userId, defaults);
         }
 
+        await _hiddenLibraries.ApplyAsync([userId]);
         return Ok(new { success = true, overwrite });
     }
 
@@ -1477,8 +1484,6 @@ public class MoonfinController : ControllerBase
     /// Gets the Seerr configuration (admin URL + user enablement).
     /// </summary>
     [HttpGet("Seerr/Config")]
-    // Legacy alias kept active so older clients keep working while they migrate to /Moonfin/Seerr.
-    [HttpGet("Jellyseerr/Config")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<SeerrConfigResponse>> GetSeerrConfig()
@@ -1581,6 +1586,18 @@ public class MoonfinPingResponse
     public bool? PinSupported { get; set; }
 
     /// <summary>
+    /// True when this plugin has the incomplete Live TV recordings endpoints and the admin left
+    /// detection on. Older plugins leave it out, so the app hides the badge, the Record prompt and
+    /// the setting.
+    /// </summary>
+    [JsonPropertyName("incompleteRecordingsSupported")]
+    public bool? IncompleteRecordingsSupported { get; set; }
+
+    /// <summary>Movie recovery and user-confirmed current-guide suggestions.</summary>
+    [JsonPropertyName("extendedCompleteShowingsSupported")]
+    public bool? ExtendedCompleteShowingsSupported { get; set; }
+
+    /// <summary>
     /// True when this plugin supports server-side recommendations scoring.
     /// </summary>
     [JsonPropertyName("recommendationsSupported")]
@@ -1588,13 +1605,6 @@ public class MoonfinPingResponse
 
     [JsonPropertyName("defaultSettings")]
     public MoonfinSettingsProfile? DefaultSettings { get; set; }
-
-    // Legacy field names so clients from before the Seerr rename keep reading these.
-    [JsonPropertyName("jellyseerrEnabled")]
-    public bool? JellyseerrEnabled => SeerrEnabled;
-
-    [JsonPropertyName("jellyseerrUrl")]
-    public string? JellyseerrUrl => SeerrUrl;
 }
 
 /// <summary>
