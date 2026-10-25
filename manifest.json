@@ -9,6 +9,17 @@
         "imageUrl":  "https://raw.githubusercontent.com/Moonfin-Client/Plugin/master/Jellyfin/backend/assets/logo.png",
         "versions":  [
                          {
+                             "version":  "2.4.0.5",
+                             "changelog":  "Fifth fork release, on upstream commit 1c86196 (Moonbase 2.4.0 plus the keyboard style setting).\n\nChanged: the Moonbase User defaults tab no longer has a separate \u0027All TV app settings\u0027 subtab. Each Moonfin TV app setting now sits in the category of the app\u0027s own screen (Subtitles, Subtitle Customization, Audio, Quality \u0026 Decoding and so on), next to the settings every Moonfin app shares. The audio codec order is a sortable list like the button layouts.\n\nAdded: the second subtitle track of the TV app (preferred language, size, vertical offset, color) can have a default. The Row Image Type and per-row image choices offer Backdrop and Logo as well as Poster, Thumbnail and Banner, in both the Classic and the Modern row style. The detail page and on-screen button lists know the buttons only the TV app has (Add to collection, Playback info, Artwork, Episodes, Sleep timer), so saving the page keeps them in an arrangement.\n\nThe web app is still upstream\u0027s 2.4.0 build, unchanged. Push notifications through Moonfin\u0027s hosted relay are still off in this fork.",
+                             "targetAbi":  "10.10.0.0",
+                             "sourceUrl":  "https://github.com/Licaa21/Plugin/releases/download/fork-v2.4.0.5/Moonfin.Server-2.4.0.5.zip",
+                             "checksum":  "732197B3E99136ADF029F2AEA1A484C8",
+                             "timestamp":  "2026-10-25T22:26:10",
+                             "dependencies":  [
+
+                                              ]
+                         },
+                         {
                              "version":  "2.4.0.4",
                              "changelog":  "Fourth fork release, on the same upstream base as before (Moonbase 2.4.0 up to upstream commit e848699).\n\nFixed: the Moonfin button in Jellyfin web (the web app served at /Moonfin/Web/) did not work in releases 2.4.0.1 to 2.4.0.3, because their download did not contain the web app and the page answered 404. The download now carries it, so the button works after an install and after every update. The web app is upstream\u0027s Moonfin web build from the 2.4.0 release, unchanged; its source is https://github.com/Moonfin-Client/Moonfin-Core. The download is about 66 MB instead of 2 MB.\n\nNothing else changed. The TMDB routes, the 102 settings and the editor from 2.4.0.3 are as they were. Push notifications through Moonfin\u0027s hosted relay are still off in this fork.",
                              "targetAbi":  "10.10.0.0",
