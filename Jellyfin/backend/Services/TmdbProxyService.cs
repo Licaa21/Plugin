@@ -183,7 +183,7 @@ public sealed class TmdbProxyService
             cache.Set(cacheKey, json);
             return new TmdbProxyResult(200, json);
         }
-        catch (Exception ex) when (!ct.IsCancellationRequested && ex is HttpRequestException or JsonException or InvalidOperationException or OperationCanceledException)
+        catch (Exception ex) when (!ct.IsCancellationRequested && ex is HttpRequestException or IOException or JsonException or InvalidOperationException or OperationCanceledException)
         {
             // The type only: a message could carry the request address, and a v3 key rides in it.
             _logger.LogWarning("TMDB {Route} failed: {Error}", route, ex.GetType().Name);

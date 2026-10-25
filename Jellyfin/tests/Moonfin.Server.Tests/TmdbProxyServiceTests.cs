@@ -372,6 +372,15 @@ public class TmdbProxyServiceTests
     }
 
     [Fact]
+    public async Task ABrokenConnectionWhileReadingIs502()
+    {
+        var tmdb = new FakeTmdb(_ => throw new IOException("connection reset"));
+        var result = await Service().DetailsAsync(tmdb.Client, Key, "movie", "1", null, default);
+
+        Assert.Equal(502, result.Status);
+    }
+
+    [Fact]
     public async Task ATimeoutIs502ButACancelledRequestStaysCancelled()
     {
         var timeout = new FakeTmdb(_ => throw new TaskCanceledException("timed out"));
