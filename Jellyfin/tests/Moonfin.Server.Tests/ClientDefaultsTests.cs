@@ -225,6 +225,20 @@ public sealed class ClientDefaultsTests : IDisposable
     }
 
     [Theory]
+    [InlineData("preferredSecondarySubtitleLanguage", typeof(string), "Subtitles")]
+    [InlineData("secondarySubtitleSize", typeof(double?), "Subtitle Customization")]
+    [InlineData("secondarySubtitleOffset", typeof(double?), "Subtitle Customization")]
+    [InlineData("secondarySubtitleColor", typeof(string), "Subtitle Customization")]
+    public void TheSecondarySubtitleSettingsAreInTheirPlaybackCategories(string key, Type type, string category)
+    {
+        // The names and types are the TV app's (1.6.0); the category is where the player's own settings put them.
+        var entry = Assert.Single(Schema(), e => e.K == key);
+        Assert.Equal("playback", entry.P);
+        Assert.Equal(category, entry.C);
+        Assert.Equal(type, ProfileByJsonName()[key].PropertyType);
+    }
+
+    [Theory]
     [InlineData("DETAIL_BUTTONS", "collection")]
     [InlineData("DETAIL_BUTTONS", "playbackInfo")]
     [InlineData("DETAIL_BUTTONS", "artwork")]

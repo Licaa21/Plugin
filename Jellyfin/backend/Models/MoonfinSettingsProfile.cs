@@ -1339,6 +1339,18 @@ public class MoonfinSettingsProfile
 
     [JsonPropertyName("skipOverlayText")]
     public string? SkipOverlayText { get; set; }
+
+    [JsonPropertyName("preferredSecondarySubtitleLanguage")]
+    public string? PreferredSecondarySubtitleLanguage { get; set; }
+
+    [JsonPropertyName("secondarySubtitleSize")]
+    public double? SecondarySubtitleSize { get; set; }
+
+    [JsonPropertyName("secondarySubtitleOffset")]
+    public double? SecondarySubtitleOffset { get; set; }
+
+    [JsonPropertyName("secondarySubtitleColor")]
+    public string? SecondarySubtitleColor { get; set; }
 }
 
 
