@@ -62,7 +62,7 @@ This file is committed on `implement` and is the copy to edit. It is not copied 
 
 ### Checking a change
 
-- From `Jellyfin/`: `dotnet build backend/Moonfin.Server.csproj -c Release` and `dotnet test tests/Moonfin.Server.Tests`. The baseline on 2026-10-24 was 835 tests, all passing, and 902 with the TMDB routes' 67 (`TmdbProxyServiceTests`), with the .NET 8 SDK (the PC also has 10.0, which `build.sh` and CI do not use).
+- From `Jellyfin/`: `dotnet build backend/Moonfin.Server.csproj -c Release` and `dotnet test tests/Moonfin.Server.Tests`. The baseline on 2026-10-24 was 835 tests, all passing, and 905 with the TMDB routes' 70 (`TmdbProxyServiceTests`), with the .NET 8 SDK (the PC also has 10.0, which `build.sh` and CI do not use).
 - After every fix, feature or addition, and after every merge from upstream, run the code review (`/code-review`, or a read-only review agent given the diff and the context), and run it more than once: fix what it finds, then review again, until a pass finds nothing real. Do this before reporting the work as done and before a release. It is part of the work, not an extra to offer afterwards: if it was not run, the work is not done. The order before every report: build, tests, code review (two passes or more), `verification-before-completion`.
 - Every change ships with a test for what can be tested, added in the same commit (the test project is xUnit; fake TMDB with a `HttpMessageHandler`). What needs the real server (a real TMDB key, the Moonfin client talking to it) is said so in the report instead.
 
@@ -128,6 +128,7 @@ Errors: 400 for a missing or bad parameter, 503 when the server has no TMDB key 
 - Only 200 answers are cached. A 404, 429 or 5xx is asked again every time, and there is no per-user rate limit, so any signed-in user can use up the server key's TMDB quota.
 - A v3 TMDB key travels in the request URL (`api_key=`), so the host's own `System.Net.Http.HttpClient` logging would print it if someone turned it up to Information. The older routes have the same exposure; v4 tokens go in a header and are not affected.
 - The cache drops the oldest entry, not the least recently used.
+- A TMDB 401 (a wrong or revoked server key) comes back as the same 502 as an outage and is asked again every time; the only trace is a warning in the log with the status code. A language code that is not in the exact form `xx` or `xx-YY` (so `en-us` too) is not an error, it is read as `en-US`.
 - `language` is only checked for the shape `xx` or `xx-YY`, not against the languages TMDB has, so a caller can make many cache keys for one id (the same quota and eviction effect as the points above).
 - A failed `-Publish` after `gh` created the release but not the asset leaves a half-made release that blocks a retry (releases are never replaced): delete that release by hand, or raise `MoonfinForkRevision`.
 

@@ -124,6 +124,9 @@ public class TmdbProxyServiceTests
     [InlineData(null, "en-US")]
     [InlineData("", "en-US")]
     [InlineData("../../etc&x=1", "en-US")]
+    [InlineData("en-us", "en-US")]
+    [InlineData("EN-US", "en-US")]
+    [InlineData("pt-br", "en-US")]
     public async Task TheLanguageGoesThroughTheSameCheckAsReviews(string? asked, string sent)
     {
         var tmdb = new FakeTmdb(MovieDetails);
