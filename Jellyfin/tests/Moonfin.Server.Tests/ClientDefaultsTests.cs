@@ -115,6 +115,31 @@ public sealed class ClientDefaultsTests : IDisposable
     }
 
     [Fact]
+    public void TheTwoSettingsStoredAsTextOfferTheFormsTheOtherMoonfinAppWrites()
+    {
+        // The TV app writes the bitrate as Mbps text with "0" for Auto and the timeout as m<minutes> or s<seconds>;
+        // Moonfin-Core writes "auto" for Auto and only m<minutes>. Each client reads only its own forms, so the
+        // editor offers the forms of both, and nothing a client could not read.
+        var schema = Schema();
+
+        Assert.Equal(
+            new[] { "0", "auto", "200", "120", "80", "60", "40", "20", "10", "5", "2", "1" },
+            schema.Single(e => e.K == "maxBitrate").O!.Select(o => o[0]));
+        Assert.Equal(
+            new[] { "s30", "m1", "s90", "m2", "m3", "m5", "m10", "m15", "m30" },
+            schema.Single(e => e.K == "screensaverTimeout").O!.Select(o => o[0]));
+
+        // The shape, not only the list: a bitrate is a short count of Mbps (never bits per second, which an
+        // earlier version offered) and a timeout is a unit letter and a count.
+        Assert.All(
+            schema.Single(e => e.K == "maxBitrate").O!,
+            o => Assert.Matches("^(auto|[0-9]{1,3})$", o[0]));
+        Assert.All(
+            schema.Single(e => e.K == "screensaverTimeout").O!,
+            o => Assert.Matches("^[smh][0-9]{1,4}$", o[0]));
+    }
+
+    [Fact]
     public void TheTabListsEachKeyOnceAndEveryEntryHasALabelAndAGroup()
     {
         var schema = Schema();

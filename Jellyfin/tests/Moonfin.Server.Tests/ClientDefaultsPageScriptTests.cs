@@ -73,6 +73,9 @@ public sealed class ClientDefaultsPageScriptTests
             { name: 'a list is one entry per line', f: { k: 'a', t: 'list' }, tag: 'TEXTAREA', typed: 'a\n b \r\n\nc', expect: ['a', 'b', 'c'] },
             { name: 'an empty list is not set', f: { k: 'a', t: 'list' }, tag: 'TEXTAREA', typed: '  \n ', expect: null },
             { name: 'a stored list shows one entry per line and comes back', f: { k: 'a', t: 'list' }, tag: 'TEXTAREA', stored: ['x', 'y'], expect: ['x', 'y'], box: 'x\ny' },
+            { name: 'a stored "0" (Auto) is a value, not an empty one', f: { k: 'a', t: 'text' }, tag: 'SELECT', opts: [U, '0', 'auto', '120'], stored: '0', expect: '0' },
+            { name: 'a stored "auto" is kept as it is', f: { k: 'a', t: 'text' }, tag: 'SELECT', opts: [U, '0', 'auto', '120'], stored: 'auto', expect: 'auto' },
+            { name: 'an old plain-digit bitrate is kept and shown as the current choice', f: { k: 'a', t: 'text' }, tag: 'SELECT', opts: [U, '0', 'auto', '120'], stored: '120000000', expect: '120000000', optionCount: 5 },
             { name: 'a stored value no choice has is kept', f: { k: 'a', t: 'text' }, tag: 'SELECT', opts: [U, 'small'], stored: 'weird', expect: 'weird', optionCount: 3 },
             { name: 'a stored empty value on a dropdown without an empty choice is kept', f: { k: 'a', t: 'text' }, tag: 'SELECT', opts: [U, 'small'], stored: '', expect: '', optionCount: 3 },
         ];
@@ -157,7 +160,7 @@ public sealed class ClientDefaultsPageScriptTests
                 Assert.True(process.ExitCode == 0, "node failed: " + error);
 
                 var outcomes = JsonSerializer.Deserialize<List<Outcome>>(output, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
-                Assert.True(outcomes.Count >= 25, "the scenarios did not run");
+                Assert.True(outcomes.Count >= 28, "the scenarios did not run");
                 var failed = outcomes.Where(o => !o.Ok).Select(o => $"{o.Name}: {o.Detail}").ToList();
                 Assert.True(failed.Count == 0, string.Join(Environment.NewLine, failed));
             }
