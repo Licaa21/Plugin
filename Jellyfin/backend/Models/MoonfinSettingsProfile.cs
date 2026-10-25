@@ -944,6 +944,9 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("preferSystemImeKeyboard")]
     public bool? PreferSystemImeKeyboard { get; set; }
 
+    [JsonPropertyName("keyboardStyle")]
+    public string? KeyboardStyle { get; set; }
+
     [JsonPropertyName("clockBehavior")]
     public string? ClockBehavior { get; set; }
 
