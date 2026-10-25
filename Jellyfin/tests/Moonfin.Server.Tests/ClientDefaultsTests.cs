@@ -8,7 +8,7 @@ using Xunit;
 namespace Moonfin.Server.Tests;
 
 /// <summary>
-/// The Moonbase page draws an "All TV app settings" tab from a list of keys inside configPage.html and
+/// The Moonbase page draws the TV app settings into its categories from a list of keys inside configPage.html and
 /// writes the values into DefaultUserSettings under those names. A key the profile does not have, or has
 /// with another type, would make the whole configuration fail to save, so the list is checked against
 /// the profile here. The profile's own merge, resolve and apply code loops over its properties, so the
@@ -36,7 +36,7 @@ public sealed class ClientDefaultsTests : IDisposable
         }
     }
 
-    private sealed record SchemaEntry(string K, string T, string G, string L, double? Min, double? Max, double? Step, List<List<string>>? O);
+    private sealed record SchemaEntry(string K, string T, string P, string C, string L, double? Min, double? Max, double? Step, List<List<string>>? O);
 
     private static string Page()
     {
@@ -83,6 +83,7 @@ public sealed class ClientDefaultsTests : IDisposable
                 "num" => type == typeof(double?) || type == typeof(float?) || type == typeof(decimal?),
                 "text" => type == typeof(string),
                 "list" => type == typeof(List<string>),
+                "order" => type == typeof(List<string>),
                 _ => false,
             };
             Assert.True(ok, $"{entry.K}: the tab treats it as {entry.T}, the profile has {type.Name}");
@@ -140,13 +141,97 @@ public sealed class ClientDefaultsTests : IDisposable
     }
 
     [Fact]
+    public void TheHomeRowImageTypeControlsShowInBothRowStylesAndOfferBackdropAndLogo()
+    {
+        // The TV app uses these for Modern cards as well, so no row style hides them, and it offers five artwork types.
+        var html = Page();
+
+        var rule = html.Split('\n').Single(l => l.Contains("parent: 'DefaultHomeRowsStyle', off: ['v2']"));
+        Assert.DoesNotContain("DefaultHomeImageTypeContinueWatching", rule);
+        Assert.DoesNotContain("DefaultHomeRowsImageTypeOverride", rule);
+
+        var from = html.IndexOf("id=\"DefaultHomeRowsImageType\"", StringComparison.Ordinal);
+        var rowType = html[from..html.IndexOf("</select>", from, StringComparison.Ordinal)];
+        foreach (var value in new[] { "poster", "backdrop", "logo", "thumb", "banner" })
+        {
+            Assert.Contains($"value=\"{value}\"", rowType);
+            Assert.Contains($"<option value=\"{value}\">", html[html.IndexOf("var HOME_ROW_IMAGE_TYPE_OPTIONS", StringComparison.Ordinal)..][..600]);
+        }
+    }
+
+    // Categories the page does not have, so the first setting that goes there creates them (the app's own screen names).
+    private static readonly HashSet<string> CategoriesTheTabCreates = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Quality & Decoding", "Subtitle Customization", "Accent Colors", "Sign-in", "Diagnostics",
+    };
+
+    private static string PanelOf(string html, string subtab)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(html, $"class=\"defaultsSubtabPanel[^\"]*\" data-subtab=\"{subtab}\"");
+        Assert.True(match.Success, $"the page has no '{subtab}' subtab");
+        var end = html.IndexOf("class=\"defaultsSubtabPanel", match.Index + match.Length, StringComparison.Ordinal);
+        var tab = html.IndexOf("<section class=\"moonfinTabPanel", match.Index + match.Length, StringComparison.Ordinal);
+        end = end < 0 ? tab : tab < 0 ? end : Math.Min(end, tab);
+        return html[match.Index..end];
+    }
+
+    [Fact]
+    public void EverySettingSitsInASubtabOfThePageAndInACategoryItHasOrCreates()
+    {
+        // Each setting is drawn into the category of that name in its subtab; a misspelt name would quietly make a second
+        // category next to the page's own, and a missing subtab would leave the setting out.
+        var html = Page();
+
+        foreach (var group in Schema().GroupBy(e => e.P))
+        {
+            var panel = PanelOf(html, group.Key);
+            var headings = System.Text.RegularExpressions.Regex.Matches(panel, "<h4[^>]*>([^<]*)</h4>")
+                .Select(m => System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var entry in group)
+            {
+                Assert.True(
+                    headings.Contains(entry.C) || CategoriesTheTabCreates.Contains(entry.C),
+                    $"{entry.K}: '{entry.C}' is neither a category of the '{entry.P}' subtab nor one the tab creates");
+            }
+        }
+    }
+
+    [Fact]
+    public void TheSeerrOnlySettingsFollowTheSeerrSwitch()
+    {
+        var html = Page();
+        var rule = html.Split('\n').Single(l => l.Contains("{ parent: 'SeerrEnabled', fields: ["));
+
+        foreach (var entry in Schema().Where(e => e.P == "integrations" && e.C == "Seerr"))
+        {
+            Assert.Contains($"'ClientDefault_{entry.K}'", rule);
+        }
+    }
+
+    [Fact]
+    public void ThereIsNoSeparateSubtabForTheTvAppSettingsAndTheAudioCodecOrderIsASortableList()
+    {
+        var html = Page();
+
+        Assert.DoesNotContain("data-subtab=\"client-all\"", html);
+        Assert.DoesNotContain("ClientDefaultsRoot", html);
+
+        var order = Schema().Single(e => e.K == "audioCodecOrder");
+        Assert.Equal("order", order.T);
+        Assert.NotNull(order.O);
+        Assert.Contains("eac3", order.O!.Select(o => o[0]));
+    }
+
+    [Fact]
     public void TheTabListsEachKeyOnceAndEveryEntryHasALabelAndAGroup()
     {
         var schema = Schema();
 
         Assert.Equal(schema.Count, schema.Select(e => e.K).Distinct(StringComparer.Ordinal).Count());
-        Assert.All(schema, e => Assert.False(string.IsNullOrWhiteSpace(e.L) || string.IsNullOrWhiteSpace(e.G), e.K));
-        Assert.Equal(schema.Count, schema.Select(e => e.G + "|" + e.L).Distinct(StringComparer.Ordinal).Count());
+        Assert.All(schema, e => Assert.False(string.IsNullOrWhiteSpace(e.L) || string.IsNullOrWhiteSpace(e.P) || string.IsNullOrWhiteSpace(e.C), e.K));
+        Assert.Equal(schema.Count, schema.Select(e => e.P + "|" + e.C + "|" + e.L).Distinct(StringComparer.Ordinal).Count());
     }
 
     [Fact]

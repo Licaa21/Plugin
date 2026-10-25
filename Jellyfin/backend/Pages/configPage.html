@@ -1449,7 +1449,6 @@
                             <button type="button" class="defaultsSubtabBtn" data-subtab="details-page">Details Page</button>
                             <button type="button" class="defaultsSubtabBtn" data-subtab="playback">Playback</button>
                             <button type="button" class="defaultsSubtabBtn" data-subtab="integrations">Integrations</button>
-                            <button type="button" class="defaultsSubtabBtn" data-subtab="client-all">All TV app settings</button>
                         </div>
 
                         <div class="defaultsSubtabPanel active" data-subtab="account">
@@ -2542,13 +2541,16 @@
                                 <select id="DefaultHomeRowsImageType" is="emby-select">
                                     <option value="">Not set (user decides)</option>
                                     <option value="poster">Poster</option>
+                                    <option value="backdrop">Backdrop</option>
+                                    <option value="logo">Logo</option>
                                     <option value="thumb">Thumbnail</option>
                                     <option value="banner">Banner</option>
                                 </select>
+                                <div class="fieldDescription">Backdrop and Logo are choices of the Moonfin TV app; other Moonfin apps may not know them.</div>
                             </div>
                             <div id="DefaultHomeRowImageTypesSection">
                                 <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Per-Row Image Types</h4>
-                                <div class="fieldDescription" style="margin-bottom:0.75em;">The artwork each home row uses with the Classic row type. Only applies while Override Row Image Type is off. Continue Watching has its own setting above. A row left unset is up to the user.</div>
+                                <div class="fieldDescription" style="margin-bottom:0.75em;">The artwork each home row uses. The TV app uses it with either row type; other Moonfin apps may only use it with Classic rows. Only applies while Override Row Image Type is off. Continue Watching has its own setting above. A row left unset is up to the user.</div>
                                 <div id="DefaultHomeRowImageTypes" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); column-gap:1.5em;"></div>
                             </div>
                             <div class="inputContainer">
@@ -3525,15 +3527,6 @@
                             </div>
                         </div>
 
-                        <div class="defaultsSubtabPanel" data-subtab="client-all">
-                            <div class="fieldDescription" style="margin-bottom: 1em;">
-                                The Moonfin Smart TV app's settings that have no control in the other tabs, such as subtitle styling,
-                                audio codec order, accent colors, skip segments and the playback time display. <strong>Not set</strong>
-                                means "do not force this value". For lists, put one entry per line; an empty list means not set.
-                            </div>
-                            <div id="ClientDefaultsRoot"></div>
-                        </div>
-
                         <div class="defaultsSubtabPanel" data-subtab="integrations">
                             <div id="DefaultSeerrOffNote" class="fieldDescription">Turn on Seerr under Integrations to set these defaults.</div>
                             <h4 id="DefaultSeerrHeading" style="margin: 1em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Seerr</h4>
@@ -4219,7 +4212,7 @@
                     }
                 });
 
-                // Looked up at each keystroke: the "All TV app settings" fields are drawn after this runs.
+                // Looked up at each keystroke: the TV app setting fields are drawn after this runs.
                 function searchFields() {
                     return Array.prototype.slice.call(
                         page.querySelectorAll('.moonfinTabPanel .inputContainer, .moonfinTabPanel .checkboxContainer, .moonfinTabPanel .selectContainer')
@@ -4248,7 +4241,7 @@
             // hides anything. A hidden parent counts as off and hides its own fields too, so a rule
             // has to come after the rule that hides its parent.
             var FIELD_DEPENDENCIES = [
-                { parent: 'SeerrEnabled', fields: ['SeerrUrl', 'SeerrDisplayName', 'PublicServerUrl', 'DefaultShowSeerrButton', 'DefaultSeerrHeading', 'DefaultSeerrBlockNsfw', 'DefaultSeerrShowMissingCollectionItems', 'DefaultShowSeerrAvailabilityBadges', 'DefaultSeerrDiscoveryList', 'DefaultEnableRadarrCalendar', 'DefaultEnableSonarrCalendar'] },
+                { parent: 'SeerrEnabled', fields: ['SeerrUrl', 'SeerrDisplayName', 'PublicServerUrl', 'DefaultShowSeerrButton', 'DefaultSeerrHeading', 'ClientDefault_searchDefaultTab', 'DefaultSeerrBlockNsfw', 'DefaultSeerrShowMissingCollectionItems', 'DefaultShowSeerrAvailabilityBadges', 'DefaultSeerrDiscoveryList', 'DefaultEnableRadarrCalendar', 'DefaultEnableSonarrCalendar'] },
                 { parent: 'SeerrEnabled', off: ['true'], fields: ['DefaultSeerrOffNote'] },
                 { parent: 'DefaultEnableRadarrCalendar', fields: ['DefaultRadarrCalendarShowCinema', 'DefaultRadarrCalendarShowDigital', 'DefaultRadarrCalendarShowPhysical', 'DefaultRadarrCalendarShowDate', 'DefaultMergeRadarrSonarrCalendars'] },
                 { parent: 'DefaultEnableSonarrCalendar', fields: ['DefaultSonarrCalendarShowDate', 'DefaultSonarrCalendarShowEpisodeInfo', 'DefaultMergeRadarrSonarrCalendars'] },
@@ -4279,7 +4272,7 @@
                 { parent: 'DefaultMediaBarAutoAdvance', fields: ['DefaultMediaBarIntervalMs'] },
                 { parent: 'DefaultMediaBarTrailerPreview', fields: ['DefaultMediaBarTrailerAudio', 'DefaultTrailerVolume', 'DefaultMediaBarTrailerCaptions'] },
                 { parent: 'DefaultHomeRowsStyle', off: ['v1'], fields: ['DefaultModernCardsOnMyMediaRow', 'DefaultModernHomeRowsPadding'] },
-                { parent: 'DefaultHomeRowsStyle', off: ['v2'], fields: ['DefaultClassicHomeRowsPadding', 'DefaultHomeRowInfoOverlay', 'DefaultHomeImageTypeContinueWatching', 'DefaultHomeRowsImageTypeOverride'] },
+                { parent: 'DefaultHomeRowsStyle', off: ['v2'], fields: ['DefaultClassicHomeRowsPadding', 'DefaultHomeRowInfoOverlay'] },
                 { parent: 'DefaultHomeRowsImageTypeOverride', fields: ['DefaultHomeRowsImageType'] },
                 { parent: 'DefaultHomeRowsImageTypeOverride', off: ['true'], fields: ['DefaultHomeRowImageTypesSection'] },
                 { parent: 'DefaultEpisodePreviewEnabled', fields: ['DefaultPreviewAudioEnabled'] },
@@ -4433,140 +4426,140 @@
                 return null;
             }
 
-            // The TV app settings with no control in the other tabs: key, type (bool, int, num, text, list),
-            // group, label, options and range. Drawn into the "All TV app settings" tab and read back on save.
+            // The TV app settings with no control elsewhere on this page: key, subtab (p), category (c), label, type (bool,
+            // int, num, text, list, order), options and range. Each is drawn into its category and read back on save.
             var CLIENT_DEFAULTS_SCHEMA = [
-                {"k":"preferTranscode","g":"Playback / Quality Decoding","l":"Prefer Transcoding","t":"bool"},
-                {"k":"forceDirectPlay","g":"Playback / Quality Decoding","l":"Force Direct Play","t":"bool"},
-                {"k":"experimentalTruehd","g":"Playback / Audio","l":"Experimental TrueHD Attempt","t":"bool"},
-                {"k":"forceCompatibleAv1Transcode","g":"Playback / Quality Decoding","l":"Force Compatible AV1 Transcode","t":"bool"},
-                {"k":"dolbyVisionAsHdr10","g":"Playback / Quality Decoding","l":"Play Dolby Vision Profile 7 as HDR10","t":"bool"},
-                {"k":"allowManyStreams","g":"Playback / Quality Decoding","l":"Allow Files With Many Streams","t":"bool"},
-                {"k":"allowHevcLevel52","g":"Playback / Quality Decoding","l":"Allow HEVC Level 5.2","t":"bool"},
-                {"k":"maxBitrate","g":"Playback / Quality Decoding","l":"Max Streaming Bitrate","t":"text","o":[["0","Auto (TV app)"],["auto","Auto (Moonfin app)"],["200","200 Mbps"],["120","120 Mbps"],["80","80 Mbps"],["60","60 Mbps"],["40","40 Mbps"],["20","20 Mbps"],["10","10 Mbps"],["5","5 Mbps"],["2","2 Mbps"],["1","1 Mbps"]]},
-                {"k":"languageOverride","g":"General","l":"Interface Language","t":"text","o":[["af","Afrikaans"],["id","Bahasa Indonesia"],["ca","Català"],["cy","Cymraeg"],["da","Dansk"],["de","Deutsch"],["et","Eesti"],["en-GB","English (UK)"],["en-US","English (US)"],["es","Español"],["es-419","Español (América Latina)"],["es-AR","Español (Argentina)"],["es-MX","Español (México)"],["es-DO","Español (República Dominicana)"],["eo","Esperanto"],["fr","Français"],["gl","Galego"],["hr","Hrvatski"],["it","Italiano"],["sw","Kiswahili"],["lv","Latviešu"],["lt","Lietuvių"],["hu","Magyar"],["nl","Nederlands"],["nb","Norsk Bokmål"],["pl","Polski"],["pt","Português"],["pt-BR","Português (Brasil)"],["pt-PT","Português (Portugal)"],["ro","Română"],["sq","Shqip"],["sk","Slovenčina"],["sl","Slovenščina"],["fi","Suomi"],["sv","Svenska"],["tl","Tagalog"],["vi","Tiếng Việt"],["tr","Türkçe"],["cs","Čeština"],["el","Ελληνικά"],["be","Беларуская"],["bg","Български"],["mk","Македонски"],["mn","Монгол"],["ru","Русский"],["sr","Српски"],["uk","Українська"],["kk","Қазақша"],["he","עברית"],["ug","ئۇيغۇرچە"],["ar","العربية"],["fa","فارسی"],["hi","हिन्दी"],["bn","বাংলা"],["pa","ਪੰਜਾਬੀ"],["ta","தமிழ்"],["te","తెలుగు"],["kn","ಕನ್ನಡ"],["ml","മലയാളം"],["si","සිංහල"],["th","ไทย"],["zh","中文"],["zh-Hant","中文 (繁體)"],["ja","日本語"],["yue-CN","粤语 (简体)"],["yue","粵語"],["yue-HK","粵語 (繁體)"],["ko","한국어"]]},
-                {"k":"subtitleSize","g":"Playback / Subtitle Customization","l":"Subtitle Size","t":"text","o":[["small","Small"],["medium","Medium"],["large","Large"],["xlarge","Extra Large"]]},
-                {"k":"subtitlePosition","g":"Playback / Subtitle Customization","l":"Subtitle Position","t":"text","o":[["bottom","Bottom"],["lower","Lower"],["middle","Middle"],["higher","Higher"],["absolute","Absolute"]]},
-                {"k":"subtitleOpacity","g":"Playback / Subtitle Customization","l":"Text Opacity","t":"int","min":0,"max":100,"step":5},
-                {"k":"subtitleBackground","g":"Playback / Subtitle Customization","l":"Background Opacity","t":"int","min":0,"max":100,"step":5},
-                {"k":"subtitleBackgroundColor","g":"Playback / Subtitle Customization","l":"Background Color","t":"text","o":[["#ffffff","White"],["#cccccc","Light Gray"],["#808080","Gray"],["#404040","Dark Gray"],["#000000","Black"],["#ffff00","Yellow"],["#00ff00","Green"],["#00ffff","Cyan"],["#0000ff","Blue"],["#ff00ff","Magenta"],["#ff0000","Red"],["#000080","Navy"],["#00000000","Transparent"],["#00000080","Semi-transparent Black"],["#ffffff80","Semi-transparent White"]]},
-                {"k":"subtitleColor","g":"Playback / Subtitle Customization","l":"Text Fill Color","t":"text","o":[["#ffffff","White"],["#cccccc","Light Gray"],["#808080","Gray"],["#404040","Dark Gray"],["#000000","Black"],["#ffff00","Yellow"],["#00ff00","Green"],["#00ffff","Cyan"],["#0000ff","Blue"],["#ff00ff","Magenta"],["#ff0000","Red"],["#000080","Navy"],["#00000080","Semi-transparent Black"],["#ffffff80","Semi-transparent White"]]},
-                {"k":"subtitleShadowColor","g":"Playback / Subtitle Customization","l":"Shadow Color","t":"text","o":[["#ffffff","White"],["#cccccc","Light Gray"],["#808080","Gray"],["#404040","Dark Gray"],["#000000","Black"],["#ffff00","Yellow"],["#00ff00","Green"],["#00ffff","Cyan"],["#0000ff","Blue"],["#ff00ff","Magenta"],["#ff0000","Red"],["#000080","Navy"],["#00000000","Transparent"],["#00000080","Semi-transparent Black"],["#ffffff80","Semi-transparent White"]]},
-                {"k":"subtitleShadowOpacity","g":"Playback / Subtitle Customization","l":"Shadow Opacity","t":"int","min":0,"max":100,"step":5},
-                {"k":"subtitleShadowBlur","g":"Playback / Subtitle Customization","l":"Shadow Size (Blur)","t":"num","min":0,"max":1,"step":0.1},
-                {"k":"subtitlePositionAbsolute","g":"Playback / Subtitle Customization","l":"Absolute Position","t":"int","min":0,"max":100,"step":5},
-                {"k":"subtitleHdrSeparate","g":"Playback / Subtitle Customization","l":"Separate HDR Style","t":"bool"},
-                {"k":"subtitleSizeHdr","g":"Playback / Subtitle Customization","l":"Subtitle Size (HDR)","t":"text","o":[["small","Small"],["medium","Medium"],["large","Large"],["xlarge","Extra Large"]]},
-                {"k":"subtitlePositionHdr","g":"Playback / Subtitle Customization","l":"Subtitle Position (HDR)","t":"text","o":[["bottom","Bottom"],["lower","Lower"],["middle","Middle"],["higher","Higher"],["absolute","Absolute"]]},
-                {"k":"subtitleOpacityHdr","g":"Playback / Subtitle Customization","l":"Text Opacity (HDR)","t":"int","min":0,"max":100,"step":5},
-                {"k":"subtitleBackgroundHdr","g":"Playback / Subtitle Customization","l":"Background Opacity (HDR)","t":"int","min":0,"max":100,"step":5},
-                {"k":"subtitleBackgroundColorHdr","g":"Playback / Subtitle Customization","l":"Background Color (HDR)","t":"text","o":[["#ffffff","White"],["#cccccc","Light Gray"],["#808080","Gray"],["#404040","Dark Gray"],["#000000","Black"],["#ffff00","Yellow"],["#00ff00","Green"],["#00ffff","Cyan"],["#0000ff","Blue"],["#ff00ff","Magenta"],["#ff0000","Red"],["#000080","Navy"],["#00000000","Transparent"],["#00000080","Semi-transparent Black"],["#ffffff80","Semi-transparent White"]]},
-                {"k":"subtitleColorHdr","g":"Playback / Subtitle Customization","l":"Text Fill Color (HDR)","t":"text","o":[["#ffffff","White"],["#cccccc","Light Gray"],["#808080","Gray"],["#404040","Dark Gray"],["#000000","Black"],["#ffff00","Yellow"],["#00ff00","Green"],["#00ffff","Cyan"],["#0000ff","Blue"],["#ff00ff","Magenta"],["#ff0000","Red"],["#000080","Navy"],["#00000080","Semi-transparent Black"],["#ffffff80","Semi-transparent White"]]},
-                {"k":"subtitleShadowColorHdr","g":"Playback / Subtitle Customization","l":"Shadow Color (HDR)","t":"text","o":[["#ffffff","White"],["#cccccc","Light Gray"],["#808080","Gray"],["#404040","Dark Gray"],["#000000","Black"],["#ffff00","Yellow"],["#00ff00","Green"],["#00ffff","Cyan"],["#0000ff","Blue"],["#ff00ff","Magenta"],["#ff0000","Red"],["#000080","Navy"],["#00000000","Transparent"],["#00000080","Semi-transparent Black"],["#ffffff80","Semi-transparent White"]]},
-                {"k":"subtitleShadowOpacityHdr","g":"Playback / Subtitle Customization","l":"Shadow Opacity (HDR)","t":"int","min":0,"max":100,"step":5},
-                {"k":"subtitleShadowBlurHdr","g":"Playback / Subtitle Customization","l":"Shadow Size (Blur) (HDR)","t":"num","min":0,"max":1,"step":0.1},
-                {"k":"subtitlePositionAbsoluteHdr","g":"Playback / Subtitle Customization","l":"Absolute Position (HDR)","t":"int","min":0,"max":100,"step":5},
-                {"k":"pgsSubtitleSize","g":"Playback / Subtitle Customization","l":"PGS Size","t":"text","o":[["small","Small"],["medium","Medium"],["large","Large"],["xlarge","Extra Large"]]},
-                {"k":"pgsSubtitlePosition","g":"Playback / Subtitle Customization","l":"PGS Position","t":"text","o":[["bottom","Bottom"],["lower","Lower"],["middle","Middle"],["higher","Higher"]]},
-                {"k":"pgsSubtitleOpacity","g":"Playback / Subtitle Customization","l":"PGS Opacity","t":"int","min":10,"max":100,"step":5},
-                {"k":"pgsSubtitleBrightness","g":"Playback / Subtitle Customization","l":"PGS Brightness","t":"int","min":20,"max":100,"step":5},
-                {"k":"pgsSubtitleBackgroundColor","g":"Playback / Subtitle Customization","l":"PGS Background Color","t":"text","o":[["#ffffff","White"],["#cccccc","Light Gray"],["#808080","Gray"],["#404040","Dark Gray"],["#000000","Black"],["#ffff00","Yellow"],["#00ff00","Green"],["#00ffff","Cyan"],["#0000ff","Blue"],["#ff00ff","Magenta"],["#ff0000","Red"],["#000080","Navy"],["#00000000","Transparent"],["#00000080","Semi-transparent Black"],["#ffffff80","Semi-transparent White"]]},
-                {"k":"pgsSubtitleBackground","g":"Playback / Subtitle Customization","l":"PGS Background Opacity","t":"int","min":0,"max":100,"step":5},
-                {"k":"seekStep","g":"Playback / Player","l":"Seek Step","t":"int","o":[["5","5 seconds"],["10","10 seconds"],["20","20 seconds"],["30","30 seconds"]]},
-                {"k":"rememberSeriesAudio","g":"Playback / Audio","l":"Remember Audio Track per Series","t":"bool"},
-                {"k":"animeAudioLanguage","g":"Playback / Audio","l":"Anime Audio Language","t":"text","o":[["","Same as default"],["eng","English"],["spa","Spanish"],["fra","French"],["deu","German"],["ita","Italian"],["por","Portuguese"],["jpn","Japanese"],["kor","Korean"],["zho","Chinese"],["afr","Afrikaans"],["ara","Arabic"],["bel","Belarusian"],["ben","Bengali"],["bul","Bulgarian"],["cat","Catalan"],["ces","Czech"],["cym","Welsh"],["dan","Danish"],["ell","Greek"],["est","Estonian"],["fas","Persian"],["fin","Finnish"],["glg","Galician"],["heb","Hebrew"],["hin","Hindi"],["hrv","Croatian"],["hun","Hungarian"],["ind","Indonesian"],["kan","Kannada"],["kaz","Kazakh"],["lav","Latvian"],["lit","Lithuanian"],["mal","Malayalam"],["mkd","Macedonian"],["mon","Mongolian"],["nld","Dutch"],["nob","Norwegian"],["pan","Punjabi"],["pol","Polish"],["ron","Romanian"],["rus","Russian"],["sin","Sinhala"],["slk","Slovak"],["slv","Slovenian"],["sqi","Albanian"],["srp","Serbian"],["swa","Swahili"],["swe","Swedish"],["tam","Tamil"],["tel","Telugu"],["tgl","Tagalog"],["tha","Thai"],["tur","Turkish"],["uig","Uyghur"],["ukr","Ukrainian"],["vie","Vietnamese"]]},
-                {"k":"animeFallbackAudioLanguage","g":"Playback / Audio","l":"Anime Fallback Audio Language","t":"text","o":[["","None"],["eng","English"],["spa","Spanish"],["fra","French"],["deu","German"],["ita","Italian"],["por","Portuguese"],["jpn","Japanese"],["kor","Korean"],["zho","Chinese"],["afr","Afrikaans"],["ara","Arabic"],["bel","Belarusian"],["ben","Bengali"],["bul","Bulgarian"],["cat","Catalan"],["ces","Czech"],["cym","Welsh"],["dan","Danish"],["ell","Greek"],["est","Estonian"],["fas","Persian"],["fin","Finnish"],["glg","Galician"],["heb","Hebrew"],["hin","Hindi"],["hrv","Croatian"],["hun","Hungarian"],["ind","Indonesian"],["kan","Kannada"],["kaz","Kazakh"],["lav","Latvian"],["lit","Lithuanian"],["mal","Malayalam"],["mkd","Macedonian"],["mon","Mongolian"],["nld","Dutch"],["nob","Norwegian"],["pan","Punjabi"],["pol","Polish"],["ron","Romanian"],["rus","Russian"],["sin","Sinhala"],["slk","Slovak"],["slv","Slovenian"],["sqi","Albanian"],["srp","Serbian"],["swa","Swahili"],["swe","Swedish"],["tam","Tamil"],["tel","Telugu"],["tgl","Tagalog"],["tha","Thai"],["tur","Turkish"],["uig","Uyghur"],["ukr","Ukrainian"],["vie","Vietnamese"]]},
-                {"k":"preferStereoAudio","g":"Playback / Audio","l":"Prefer Stereo Tracks","t":"bool"},
-                {"k":"audioCodecOrder","g":"Other","l":"Audio Codec Order","t":"list"},
-                {"k":"subtitleDownloadLanguages","g":"Other","l":"Subtitle Download Languages","t":"list"},
-                {"k":"maxVideoResolution","g":"Playback / Quality Decoding","l":"Max Resolution","t":"text","o":[["auto","Auto"],["res480p","480p"],["res720p","720p"],["res1080p","1080p"],["res2160p","2160p (4K)"]]},
-                {"k":"playerZoomMode","g":"Playback / Player","l":"Player Zoom Mode","t":"text","o":[["fit","Fit"],["autoCrop","Auto Crop"],["stretch","Stretch"]]},
-                {"k":"xboxNativePlayer","g":"Playback / Quality Decoding","l":"Console Video Player","t":"bool"},
-                {"k":"xboxPassthrough","g":"Playback / Audio","l":"Passthrough (Experimental)","t":"bool"},
-                {"k":"trickPlayMode","g":"Playback / Player","l":"Trick Play","t":"text","o":[["disabled","Disabled"],["single","Single Thumbnail"],["strip","Filmstrip"],["full","Full Screen"]]},
-                {"k":"trickPlayPreviewScale","g":"Playback / Player","l":"Preview Size","t":"int","min":10,"max":100,"step":5},
-                {"k":"trickPlayVerticalPosition","g":"Playback / Player","l":"Distance From Seekbar","t":"int","min":0,"max":100,"step":5},
-                {"k":"trickPlayFollowScrub","g":"Playback / Player","l":"Follow Scrub Position","t":"bool"},
-                {"k":"trickPlayPauseWhileScrubbing","g":"Playback / Player","l":"Pause While Scrubbing","t":"bool"},
-                {"k":"showChapterMarkers","g":"Playback / Player","l":"Chapter Marks","t":"bool"},
-                {"k":"assDirectPlay","g":"Playback / Subtitles","l":"ASS/SSA Direct Play","t":"bool"},
-                {"k":"waitForAssSubtitles","g":"Playback / Subtitles","l":"Wait for ASS/SSA subtitles","t":"bool"},
-                {"k":"audioPassthroughMode","g":"Playback / Audio","l":"Passthrough","t":"text","o":[["auto","Auto (match detected device support)"],["manual","Manual (choose formats below)"],["disabled","Disabled (always decode on this device)"]]},
-                {"k":"maxAudioChannels","g":"Playback / Audio","l":"Max Audio Channels","t":"int","o":[["0","Auto Detect (Hardware Default)"],["1","Mono"],["2","Stereo"],["3","3.0"],["4","4.0"],["5","5.0"],["6","5.1"],["7","6.1"],["8","7.1"]]},
-                {"k":"transcodeAudioCodecs","g":"Other","l":"Transcode Audio Codecs","t":"list"},
-                {"k":"downmixToStereo","g":"Playback / Audio","l":"Downmix to Stereo","t":"bool"},
-                {"k":"syncPlayAdvancedCorrectionEnabled","g":"Playback / Sync Play","l":"Advanced Correction","t":"bool"},
-                {"k":"syncPlayEnableSyncCorrection","g":"Playback / Sync Play","l":"Sync Correction","t":"bool"},
-                {"k":"syncPlayUseSkipToSync","g":"Playback / Sync Play","l":"Skip to Sync","t":"bool"},
-                {"k":"syncPlayMinDelaySkipToSync","g":"Playback / Sync Play","l":"Minimum Skip Delay","t":"num","min":0,"max":15000,"step":250},
-                {"k":"syncPlayExtraTimeOffset","g":"Playback / Sync Play","l":"SyncPlay Extra Offset","t":"num","min":-2000,"max":2000,"step":100},
-                {"k":"theme","g":"Other","l":"Theme","t":"text"},
-                {"k":"customHomeRows","g":"Other","l":"Custom Home Rows","t":"list"},
-                {"k":"rememberRowCard","g":"Appearance / Home Screen","l":"Remember Card in Row","t":"bool"},
-                {"k":"playlistsGroupByType","g":"Other","l":"Playlists Group By Type","t":"bool"},
-                {"k":"detailsBackdropBlur","g":"Appearance / Details Page","l":"Background Blur","t":"int","o":[["0","Off"],["10","Light"],["20","Medium"],["30","Strong"],["40","Heavy"]]},
-                {"k":"serverLogging","g":"About / Diagnostics","l":"Server Logging","t":"bool"},
-                {"k":"diagnosticLoggingEnabled","g":"About / Diagnostics","l":"Diagnostic Logging","t":"bool"},
-                {"k":"timeOffsetHours","g":"General","l":"Clock Offset","t":"int","min":-12,"max":12,"step":1},
-                {"k":"autoLoginBehavior","g":"Account","l":"Auto Login","t":"text","o":[["disabled","Disabled"],["lastUser","Last User"],["currentUser","Current User"]]},
-                {"k":"alwaysAuthenticate","g":"Account","l":"Always Authenticate","t":"bool"},
-                {"k":"serverSortBy","g":"Account","l":"Sort Servers By","t":"text","o":[["name","Server name"],["recent","Recently Used"],["added","Date Added"]]},
-                {"k":"oledMode","g":"Appearance","l":"OLED Mode","t":"text","o":[["off","Off"],["subtle","Subtle"],["vivid","Vivid"]]},
-                {"k":"screensaverEnabled","g":"Appearance / Screensaver","l":"In-App Screensaver","t":"bool"},
-                {"k":"screensaverTimeout","g":"Appearance / Screensaver","l":"Timeout","t":"text","o":[["s30","30 seconds (TV app only)"],["m1","1 minute"],["s90","90 seconds (TV app only)"],["m2","2 minutes"],["m3","3 minutes"],["m5","5 minutes"],["m10","10 minutes"],["m15","15 minutes"],["m30","30 minutes"]]},
-                {"k":"screensaverDimmingLevel","g":"Appearance / Screensaver","l":"Dimming Level","t":"int","o":[["0","Off"],["25","25%"],["50","50%"],["75","75%"],["100","100%"]]},
-                {"k":"screensaverClockMode","g":"Other","l":"Screensaver Clock Mode","t":"text"},
-                {"k":"cardFocusZoom","g":"Appearance","l":"Focus Expansion Animation","t":"bool"},
-                {"k":"modernCardTransitionSpeed","g":"Appearance / Home Screen","l":"Modern Cards Transition Speed","t":"text","o":[["extraSlow","Extra Slow"],["slow","Slow"],["medium","Medium"],["fast","Fast"],["off","Off"]]},
-                {"k":"detailButtonsMaxVisible","g":"Appearance / Details Page","l":"Action Buttons on Screen","t":"int","o":[["0","Auto (Theme Default)"],["1","1 (Play only)"],["2","2"],["3","3"],["4","4"],["5","5"],["6","6"],["7","7"],["8","8"],["9","9"],["10","10"],["-1","All (Horizontal Scroll)"]]},
-                {"k":"nextUpBehavior","g":"Playback / Skipping Autoplay","l":"Next Up Display","t":"text","o":[["extended","Extended"],["minimal","Minimal"],["disabled","Disabled"]]},
-                {"k":"showDescriptionOnPause","g":"Playback / Player","l":"Show Description on Pause","t":"bool"},
-                {"k":"playbackTimeAboveLeft","g":"Playback / Playback Time","l":"Above bar, left","t":"text","o":[["none","Hidden"],["elapsed","Time elapsed"],["totalDuration","Total duration"],["timeRemaining","Time remaining"],["endsAt","Ends at"],["time","Current Time"]]},
-                {"k":"playbackTimeAboveCenter","g":"Playback / Playback Time","l":"Above bar, center","t":"text","o":[["none","Hidden"],["elapsed","Time elapsed"],["totalDuration","Total duration"],["timeRemaining","Time remaining"],["endsAt","Ends at"],["time","Current Time"]]},
-                {"k":"playbackTimeAboveRight","g":"Playback / Playback Time","l":"Above bar, right","t":"text","o":[["none","Hidden"],["elapsed","Time elapsed"],["totalDuration","Total duration"],["timeRemaining","Time remaining"],["endsAt","Ends at"],["time","Current Time"]]},
-                {"k":"playbackTimeBelowLeft","g":"Playback / Playback Time","l":"Below bar, left","t":"text","o":[["none","Hidden"],["elapsed","Time elapsed"],["totalDuration","Total duration"],["timeRemaining","Time remaining"],["endsAt","Ends at"],["time","Current Time"]]},
-                {"k":"playbackTimeBelowCenter","g":"Playback / Playback Time","l":"Below bar, center","t":"text","o":[["none","Hidden"],["elapsed","Time elapsed"],["totalDuration","Total duration"],["timeRemaining","Time remaining"],["endsAt","Ends at"],["time","Current Time"]]},
-                {"k":"playbackTimeBelowRight","g":"Playback / Playback Time","l":"Below bar, right","t":"text","o":[["none","Hidden"],["elapsed","Time elapsed"],["totalDuration","Total duration"],["timeRemaining","Time remaining"],["endsAt","Ends at"],["time","Current Time"]]},
-                {"k":"musicPlaybackTimeDisplay","g":"Playback / Playback Time","l":"Progress Bar Time","t":"text","o":[["totalDuration","Total duration"],["timeRemaining","Time remaining"],["endsAt","Ends at"]]},
-                {"k":"introAction","g":"Playback / Skipping Autoplay","l":"Intro Segments","t":"text","o":[["ask","Ask to Skip"],["auto","Auto Skip"],["none","Don't Skip"]]},
-                {"k":"outroAction","g":"Playback / Skipping Autoplay","l":"Outro Segments","t":"text","o":[["ask","Ask to Skip"],["auto","Auto Skip"],["none","Don't Skip"]]},
-                {"k":"screensaverAgeFilter","g":"Appearance / Screensaver","l":"Require Age Rating","t":"bool"},
-                {"k":"screensaverMaxRating","g":"Appearance / Screensaver","l":"Max Age Rating","t":"int","o":[["0","G"],["7","PG"],["13","PG-13"],["17","R"],["18","NC-17"]]},
-                {"k":"uiScale","g":"Appearance","l":"UI Scaling","t":"num","o":[["0.85","Compact"],["0.9","Small"],["0.95","Slightly Small"],["1","Default"],["1.05","Slightly Large"],["1.1","Large"],["1.15","Extra Large"],["1.2","Huge"],["1.3","Maximum"]]},
-                {"k":"settingsScale","g":"Appearance","l":"Settings Size","t":"num","o":[["1","Default"],["0.9","Slightly Smaller"],["0.8","Smaller"],["0.7","Compact"]]},
-                {"k":"enablePgsRendering","g":"Playback / Subtitles","l":"PGS Direct Play","t":"bool"},
-                {"k":"syncPlayAutoOpen","g":"Playback / Sync Play","l":"Open SyncPlay","t":"bool"},
-                {"k":"videoStartDelay","g":"Playback / Quality Decoding","l":"Video Start Delay","t":"num","min":0,"max":5,"step":0.5},
-                {"k":"liveTvSkipGuide","g":"Playback / Quality Decoding","l":"Skip TV Guide","t":"bool"},
-                {"k":"stereoUpmixEnabled","g":"Playback / Audio","l":"Stereo to Surround Upmix","t":"bool"},
-                {"k":"ac3Passthrough","g":"Playback / Audio","l":"AC3 Passthrough","t":"bool"},
-                {"k":"eac3Passthrough","g":"Playback / Audio","l":"EAC3 Passthrough","t":"bool"},
-                {"k":"dtsPassthrough","g":"Playback / Audio","l":"DTS Core Passthrough","t":"bool"},
-                {"k":"dtshdPassthrough","g":"Playback / Audio","l":"DTS-HD MA Passthrough","t":"bool"},
-                {"k":"truehdPassthrough","g":"Playback / Audio","l":"TrueHD Passthrough","t":"bool"},
-                {"k":"forceTruehdPassthrough","g":"Playback / Audio","l":"Force TrueHD / Atmos Passthrough","t":"bool"},
-                {"k":"searchDefaultTab","g":"Integrations / Seerr","l":"Search Opens On","t":"text","o":[["all","All"],["seerr","Seerr"]]},
-                {"k":"muteChatBannersDuringPlayback","g":"Other","l":"Mute Chat Banners During Playback","t":"bool"},
-                {"k":"performanceMode","g":"General","l":"Performance","t":"text","o":[["auto","Auto"],["ultra","Ultra"],["high","High"],["midhigh","Medium-High"],["mid","Medium"],["lowmid","Low"],["low","Performance"]]},
-                {"k":"preferSystemImeKeyboard","g":"General","l":"Prefer System Keyboard","t":"bool"},
-                {"k":"accentNavigation","g":"Appearance / Accent Colors","l":"Navigation","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
-                {"k":"accentHome","g":"Appearance / Accent Colors","l":"Home & Browse Highlights","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
-                {"k":"accentSettings","g":"Appearance / Accent Colors","l":"Settings & Controls","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
-                {"k":"accentSettingsFocus","g":"Appearance / Accent Colors","l":"Settings Focus","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
-                {"k":"accentAchievements","g":"Appearance / Accent Colors","l":"Achievement Badges","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
-                {"k":"accentDetails","g":"Appearance / Accent Colors","l":"Details Screen","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
-                {"k":"accentPlayer","g":"Appearance / Accent Colors","l":"Player & Playback","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
-                {"k":"accentSkip","g":"Appearance / Accent Colors","l":"Skip Intro/Recap/Credits","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
-                {"k":"accentLiveTv","g":"Appearance / Accent Colors","l":"Live TV & Recordings","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
-                {"k":"accentOther","g":"Appearance / Accent Colors","l":"Everything Else","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
-                {"k":"skipOverlayLayout","g":"Playback / Skip Segments","l":"Layout","t":"text","o":[["capsule","Capsule"],["rectangle","Rectangle"],["sweep","Sweep"]]},
-                {"k":"nextUpLayout","g":"Playback / Skip Segments","l":"Next Episode Layout","t":"text","o":[["card","Card"],["banner","Banner"],["button","Button"]]},
-                {"k":"skipOverlayPosition","g":"Playback / Skip Segments","l":"Position","t":"text","o":[["topLeft","Top-Left"],["topCenter","Top-Center"],["topRight","Top-Right"],["middleLeft","Middle-Left"],["middle","Middle"],["middleRight","Middle-Right"],["bottomLeft","Bottom-Left"],["bottomCenter","Bottom-Center"],["bottomRight","Bottom-Right"]]},
-                {"k":"skipOverlaySize","g":"Playback / Skip Segments","l":"Size","t":"text","o":[["thumbnail","Thumbnail"],["small","Small"],["medium","Medium"],["large","Large"]]},
-                {"k":"skipOverlayBackground","g":"Playback / Skip Segments","l":"Background Color","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
-                {"k":"skipOverlayOpacity","g":"Playback / Skip Segments","l":"Background Opacity","t":"int","min":20,"max":100,"step":2},
-                {"k":"skipOverlayAccent","g":"Playback / Skip Segments","l":"Accent Color","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
-                {"k":"skipOverlayText","g":"Playback / Skip Segments","l":"Text Color","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]}
+                {"k":"preferTranscode","p":"playback","c":"Quality & Decoding","l":"Prefer Transcoding","t":"bool"},
+                {"k":"forceDirectPlay","p":"playback","c":"Quality & Decoding","l":"Force Direct Play","t":"bool"},
+                {"k":"experimentalTruehd","p":"playback","c":"Audio","l":"Experimental TrueHD Attempt","t":"bool"},
+                {"k":"forceCompatibleAv1Transcode","p":"playback","c":"Quality & Decoding","l":"Force Compatible AV1 Transcode","t":"bool"},
+                {"k":"dolbyVisionAsHdr10","p":"playback","c":"Quality & Decoding","l":"Play Dolby Vision Profile 7 as HDR10","t":"bool"},
+                {"k":"allowManyStreams","p":"playback","c":"Quality & Decoding","l":"Allow Files With Many Streams","t":"bool"},
+                {"k":"allowHevcLevel52","p":"playback","c":"Quality & Decoding","l":"Allow HEVC Level 5.2","t":"bool"},
+                {"k":"maxBitrate","p":"playback","c":"Quality & Decoding","l":"Max Streaming Bitrate","t":"text","o":[["0","Auto (TV app)"],["auto","Auto (Moonfin app)"],["200","200 Mbps"],["120","120 Mbps"],["80","80 Mbps"],["60","60 Mbps"],["40","40 Mbps"],["20","20 Mbps"],["10","10 Mbps"],["5","5 Mbps"],["2","2 Mbps"],["1","1 Mbps"]]},
+                {"k":"languageOverride","p":"general","c":"Behavior","l":"Interface Language","t":"text","o":[["af","Afrikaans"],["id","Bahasa Indonesia"],["ca","Català"],["cy","Cymraeg"],["da","Dansk"],["de","Deutsch"],["et","Eesti"],["en-GB","English (UK)"],["en-US","English (US)"],["es","Español"],["es-419","Español (América Latina)"],["es-AR","Español (Argentina)"],["es-MX","Español (México)"],["es-DO","Español (República Dominicana)"],["eo","Esperanto"],["fr","Français"],["gl","Galego"],["hr","Hrvatski"],["it","Italiano"],["sw","Kiswahili"],["lv","Latviešu"],["lt","Lietuvių"],["hu","Magyar"],["nl","Nederlands"],["nb","Norsk Bokmål"],["pl","Polski"],["pt","Português"],["pt-BR","Português (Brasil)"],["pt-PT","Português (Portugal)"],["ro","Română"],["sq","Shqip"],["sk","Slovenčina"],["sl","Slovenščina"],["fi","Suomi"],["sv","Svenska"],["tl","Tagalog"],["vi","Tiếng Việt"],["tr","Türkçe"],["cs","Čeština"],["el","Ελληνικά"],["be","Беларуская"],["bg","Български"],["mk","Македонски"],["mn","Монгол"],["ru","Русский"],["sr","Српски"],["uk","Українська"],["kk","Қазақша"],["he","עברית"],["ug","ئۇيغۇرچە"],["ar","العربية"],["fa","فارسی"],["hi","हिन्दी"],["bn","বাংলা"],["pa","ਪੰਜਾਬੀ"],["ta","தமிழ்"],["te","తెలుగు"],["kn","ಕನ್ನಡ"],["ml","മലയാളം"],["si","සිංහල"],["th","ไทย"],["zh","中文"],["zh-Hant","中文 (繁體)"],["ja","日本語"],["yue-CN","粤语 (简体)"],["yue","粵語"],["yue-HK","粵語 (繁體)"],["ko","한국어"]]},
+                {"k":"subtitleSize","p":"playback","c":"Subtitle Customization","l":"Subtitle Size","t":"text","o":[["small","Small"],["medium","Medium"],["large","Large"],["xlarge","Extra Large"]]},
+                {"k":"subtitlePosition","p":"playback","c":"Subtitle Customization","l":"Subtitle Position","t":"text","o":[["bottom","Bottom"],["lower","Lower"],["middle","Middle"],["higher","Higher"],["absolute","Absolute"]]},
+                {"k":"subtitleOpacity","p":"playback","c":"Subtitle Customization","l":"Text Opacity","t":"int","min":0,"max":100,"step":5},
+                {"k":"subtitleBackground","p":"playback","c":"Subtitle Customization","l":"Background Opacity","t":"int","min":0,"max":100,"step":5},
+                {"k":"subtitleBackgroundColor","p":"playback","c":"Subtitle Customization","l":"Background Color","t":"text","o":[["#ffffff","White"],["#cccccc","Light Gray"],["#808080","Gray"],["#404040","Dark Gray"],["#000000","Black"],["#ffff00","Yellow"],["#00ff00","Green"],["#00ffff","Cyan"],["#0000ff","Blue"],["#ff00ff","Magenta"],["#ff0000","Red"],["#000080","Navy"],["#00000000","Transparent"],["#00000080","Semi-transparent Black"],["#ffffff80","Semi-transparent White"]]},
+                {"k":"subtitleColor","p":"playback","c":"Subtitle Customization","l":"Text Fill Color","t":"text","o":[["#ffffff","White"],["#cccccc","Light Gray"],["#808080","Gray"],["#404040","Dark Gray"],["#000000","Black"],["#ffff00","Yellow"],["#00ff00","Green"],["#00ffff","Cyan"],["#0000ff","Blue"],["#ff00ff","Magenta"],["#ff0000","Red"],["#000080","Navy"],["#00000080","Semi-transparent Black"],["#ffffff80","Semi-transparent White"]]},
+                {"k":"subtitleShadowColor","p":"playback","c":"Subtitle Customization","l":"Shadow Color","t":"text","o":[["#ffffff","White"],["#cccccc","Light Gray"],["#808080","Gray"],["#404040","Dark Gray"],["#000000","Black"],["#ffff00","Yellow"],["#00ff00","Green"],["#00ffff","Cyan"],["#0000ff","Blue"],["#ff00ff","Magenta"],["#ff0000","Red"],["#000080","Navy"],["#00000000","Transparent"],["#00000080","Semi-transparent Black"],["#ffffff80","Semi-transparent White"]]},
+                {"k":"subtitleShadowOpacity","p":"playback","c":"Subtitle Customization","l":"Shadow Opacity","t":"int","min":0,"max":100,"step":5},
+                {"k":"subtitleShadowBlur","p":"playback","c":"Subtitle Customization","l":"Shadow Size (Blur)","t":"num","min":0,"max":1,"step":0.1},
+                {"k":"subtitlePositionAbsolute","p":"playback","c":"Subtitle Customization","l":"Absolute Position","t":"int","min":0,"max":100,"step":5},
+                {"k":"subtitleHdrSeparate","p":"playback","c":"Subtitle Customization","l":"Separate HDR Style","t":"bool"},
+                {"k":"subtitleSizeHdr","p":"playback","c":"Subtitle Customization","l":"Subtitle Size (HDR)","t":"text","o":[["small","Small"],["medium","Medium"],["large","Large"],["xlarge","Extra Large"]]},
+                {"k":"subtitlePositionHdr","p":"playback","c":"Subtitle Customization","l":"Subtitle Position (HDR)","t":"text","o":[["bottom","Bottom"],["lower","Lower"],["middle","Middle"],["higher","Higher"],["absolute","Absolute"]]},
+                {"k":"subtitleOpacityHdr","p":"playback","c":"Subtitle Customization","l":"Text Opacity (HDR)","t":"int","min":0,"max":100,"step":5},
+                {"k":"subtitleBackgroundHdr","p":"playback","c":"Subtitle Customization","l":"Background Opacity (HDR)","t":"int","min":0,"max":100,"step":5},
+                {"k":"subtitleBackgroundColorHdr","p":"playback","c":"Subtitle Customization","l":"Background Color (HDR)","t":"text","o":[["#ffffff","White"],["#cccccc","Light Gray"],["#808080","Gray"],["#404040","Dark Gray"],["#000000","Black"],["#ffff00","Yellow"],["#00ff00","Green"],["#00ffff","Cyan"],["#0000ff","Blue"],["#ff00ff","Magenta"],["#ff0000","Red"],["#000080","Navy"],["#00000000","Transparent"],["#00000080","Semi-transparent Black"],["#ffffff80","Semi-transparent White"]]},
+                {"k":"subtitleColorHdr","p":"playback","c":"Subtitle Customization","l":"Text Fill Color (HDR)","t":"text","o":[["#ffffff","White"],["#cccccc","Light Gray"],["#808080","Gray"],["#404040","Dark Gray"],["#000000","Black"],["#ffff00","Yellow"],["#00ff00","Green"],["#00ffff","Cyan"],["#0000ff","Blue"],["#ff00ff","Magenta"],["#ff0000","Red"],["#000080","Navy"],["#00000080","Semi-transparent Black"],["#ffffff80","Semi-transparent White"]]},
+                {"k":"subtitleShadowColorHdr","p":"playback","c":"Subtitle Customization","l":"Shadow Color (HDR)","t":"text","o":[["#ffffff","White"],["#cccccc","Light Gray"],["#808080","Gray"],["#404040","Dark Gray"],["#000000","Black"],["#ffff00","Yellow"],["#00ff00","Green"],["#00ffff","Cyan"],["#0000ff","Blue"],["#ff00ff","Magenta"],["#ff0000","Red"],["#000080","Navy"],["#00000000","Transparent"],["#00000080","Semi-transparent Black"],["#ffffff80","Semi-transparent White"]]},
+                {"k":"subtitleShadowOpacityHdr","p":"playback","c":"Subtitle Customization","l":"Shadow Opacity (HDR)","t":"int","min":0,"max":100,"step":5},
+                {"k":"subtitleShadowBlurHdr","p":"playback","c":"Subtitle Customization","l":"Shadow Size (Blur) (HDR)","t":"num","min":0,"max":1,"step":0.1},
+                {"k":"subtitlePositionAbsoluteHdr","p":"playback","c":"Subtitle Customization","l":"Absolute Position (HDR)","t":"int","min":0,"max":100,"step":5},
+                {"k":"pgsSubtitleSize","p":"playback","c":"Subtitle Customization","l":"PGS Size","t":"text","o":[["small","Small"],["medium","Medium"],["large","Large"],["xlarge","Extra Large"]]},
+                {"k":"pgsSubtitlePosition","p":"playback","c":"Subtitle Customization","l":"PGS Position","t":"text","o":[["bottom","Bottom"],["lower","Lower"],["middle","Middle"],["higher","Higher"]]},
+                {"k":"pgsSubtitleOpacity","p":"playback","c":"Subtitle Customization","l":"PGS Opacity","t":"int","min":10,"max":100,"step":5},
+                {"k":"pgsSubtitleBrightness","p":"playback","c":"Subtitle Customization","l":"PGS Brightness","t":"int","min":20,"max":100,"step":5},
+                {"k":"pgsSubtitleBackgroundColor","p":"playback","c":"Subtitle Customization","l":"PGS Background Color","t":"text","o":[["#ffffff","White"],["#cccccc","Light Gray"],["#808080","Gray"],["#404040","Dark Gray"],["#000000","Black"],["#ffff00","Yellow"],["#00ff00","Green"],["#00ffff","Cyan"],["#0000ff","Blue"],["#ff00ff","Magenta"],["#ff0000","Red"],["#000080","Navy"],["#00000000","Transparent"],["#00000080","Semi-transparent Black"],["#ffffff80","Semi-transparent White"]]},
+                {"k":"pgsSubtitleBackground","p":"playback","c":"Subtitle Customization","l":"PGS Background Opacity","t":"int","min":0,"max":100,"step":5},
+                {"k":"seekStep","p":"playback","c":"Player","l":"Seek Step","t":"int","o":[["5","5 seconds"],["10","10 seconds"],["20","20 seconds"],["30","30 seconds"]]},
+                {"k":"rememberSeriesAudio","p":"playback","c":"Audio","l":"Remember Audio Track per Series","t":"bool"},
+                {"k":"animeAudioLanguage","p":"playback","c":"Audio","l":"Anime Audio Language","t":"text","o":[["","Same as default"],["eng","English"],["spa","Spanish"],["fra","French"],["deu","German"],["ita","Italian"],["por","Portuguese"],["jpn","Japanese"],["kor","Korean"],["zho","Chinese"],["afr","Afrikaans"],["ara","Arabic"],["bel","Belarusian"],["ben","Bengali"],["bul","Bulgarian"],["cat","Catalan"],["ces","Czech"],["cym","Welsh"],["dan","Danish"],["ell","Greek"],["est","Estonian"],["fas","Persian"],["fin","Finnish"],["glg","Galician"],["heb","Hebrew"],["hin","Hindi"],["hrv","Croatian"],["hun","Hungarian"],["ind","Indonesian"],["kan","Kannada"],["kaz","Kazakh"],["lav","Latvian"],["lit","Lithuanian"],["mal","Malayalam"],["mkd","Macedonian"],["mon","Mongolian"],["nld","Dutch"],["nob","Norwegian"],["pan","Punjabi"],["pol","Polish"],["ron","Romanian"],["rus","Russian"],["sin","Sinhala"],["slk","Slovak"],["slv","Slovenian"],["sqi","Albanian"],["srp","Serbian"],["swa","Swahili"],["swe","Swedish"],["tam","Tamil"],["tel","Telugu"],["tgl","Tagalog"],["tha","Thai"],["tur","Turkish"],["uig","Uyghur"],["ukr","Ukrainian"],["vie","Vietnamese"]]},
+                {"k":"animeFallbackAudioLanguage","p":"playback","c":"Audio","l":"Anime Fallback Audio Language","t":"text","o":[["","None"],["eng","English"],["spa","Spanish"],["fra","French"],["deu","German"],["ita","Italian"],["por","Portuguese"],["jpn","Japanese"],["kor","Korean"],["zho","Chinese"],["afr","Afrikaans"],["ara","Arabic"],["bel","Belarusian"],["ben","Bengali"],["bul","Bulgarian"],["cat","Catalan"],["ces","Czech"],["cym","Welsh"],["dan","Danish"],["ell","Greek"],["est","Estonian"],["fas","Persian"],["fin","Finnish"],["glg","Galician"],["heb","Hebrew"],["hin","Hindi"],["hrv","Croatian"],["hun","Hungarian"],["ind","Indonesian"],["kan","Kannada"],["kaz","Kazakh"],["lav","Latvian"],["lit","Lithuanian"],["mal","Malayalam"],["mkd","Macedonian"],["mon","Mongolian"],["nld","Dutch"],["nob","Norwegian"],["pan","Punjabi"],["pol","Polish"],["ron","Romanian"],["rus","Russian"],["sin","Sinhala"],["slk","Slovak"],["slv","Slovenian"],["sqi","Albanian"],["srp","Serbian"],["swa","Swahili"],["swe","Swedish"],["tam","Tamil"],["tel","Telugu"],["tgl","Tagalog"],["tha","Thai"],["tur","Turkish"],["uig","Uyghur"],["ukr","Ukrainian"],["vie","Vietnamese"]]},
+                {"k":"preferStereoAudio","p":"playback","c":"Audio","l":"Prefer Stereo Tracks","t":"bool"},
+                {"k":"audioCodecOrder","p":"playback","c":"Quality & Decoding","l":"Audio Codec Order","t":"order","o":[["eac3","E-AC-3 (Dolby Digital Plus)"],["pcm","PCM"],["ac3","AC-3 (Dolby Digital)"],["opus","Opus"],["vorbis","Vorbis"],["aac","AAC"],["mp3","MP3"],["flac","FLAC"],["truehd","Dolby TrueHD"],["dtshd","DTS-HD"],["dts","DTS"]]},
+                {"k":"subtitleDownloadLanguages","p":"playback","c":"Subtitles","l":"Subtitle Download Languages","t":"list"},
+                {"k":"maxVideoResolution","p":"playback","c":"Quality & Decoding","l":"Max Resolution","t":"text","o":[["auto","Auto"],["res480p","480p"],["res720p","720p"],["res1080p","1080p"],["res2160p","2160p (4K)"]]},
+                {"k":"playerZoomMode","p":"playback","c":"Player","l":"Player Zoom Mode","t":"text","o":[["fit","Fit"],["autoCrop","Auto Crop"],["stretch","Stretch"]]},
+                {"k":"xboxNativePlayer","p":"playback","c":"Quality & Decoding","l":"Console Video Player","t":"bool"},
+                {"k":"xboxPassthrough","p":"playback","c":"Audio","l":"Passthrough (Experimental)","t":"bool"},
+                {"k":"trickPlayMode","p":"playback","c":"Player","l":"Trick Play","t":"text","o":[["disabled","Disabled"],["single","Single Thumbnail"],["strip","Filmstrip"],["full","Full Screen"]]},
+                {"k":"trickPlayPreviewScale","p":"playback","c":"Player","l":"Preview Size","t":"int","min":10,"max":100,"step":5},
+                {"k":"trickPlayVerticalPosition","p":"playback","c":"Player","l":"Distance From Seekbar","t":"int","min":0,"max":100,"step":5},
+                {"k":"trickPlayFollowScrub","p":"playback","c":"Player","l":"Follow Scrub Position","t":"bool"},
+                {"k":"trickPlayPauseWhileScrubbing","p":"playback","c":"Player","l":"Pause While Scrubbing","t":"bool"},
+                {"k":"showChapterMarkers","p":"playback","c":"Player","l":"Chapter Marks","t":"bool"},
+                {"k":"assDirectPlay","p":"playback","c":"Subtitles","l":"ASS/SSA Direct Play","t":"bool"},
+                {"k":"waitForAssSubtitles","p":"playback","c":"Subtitles","l":"Wait for ASS/SSA subtitles","t":"bool"},
+                {"k":"audioPassthroughMode","p":"playback","c":"Audio","l":"Passthrough","t":"text","o":[["auto","Auto (match detected device support)"],["manual","Manual (choose formats below)"],["disabled","Disabled (always decode on this device)"]]},
+                {"k":"maxAudioChannels","p":"playback","c":"Audio","l":"Max Audio Channels","t":"int","o":[["0","Auto Detect (Hardware Default)"],["1","Mono"],["2","Stereo"],["3","3.0"],["4","4.0"],["5","5.0"],["6","5.1"],["7","6.1"],["8","7.1"]]},
+                {"k":"transcodeAudioCodecs","p":"playback","c":"Quality & Decoding","l":"Transcode Audio Codecs","t":"list"},
+                {"k":"downmixToStereo","p":"playback","c":"Audio","l":"Downmix to Stereo","t":"bool"},
+                {"k":"syncPlayAdvancedCorrectionEnabled","p":"playback","c":"SyncPlay","l":"Advanced Correction","t":"bool"},
+                {"k":"syncPlayEnableSyncCorrection","p":"playback","c":"SyncPlay","l":"Sync Correction","t":"bool"},
+                {"k":"syncPlayUseSkipToSync","p":"playback","c":"SyncPlay","l":"Skip to Sync","t":"bool"},
+                {"k":"syncPlayMinDelaySkipToSync","p":"playback","c":"SyncPlay","l":"Minimum Skip Delay","t":"num","min":0,"max":15000,"step":250},
+                {"k":"syncPlayExtraTimeOffset","p":"playback","c":"SyncPlay","l":"SyncPlay Extra Offset","t":"num","min":-2000,"max":2000,"step":100},
+                {"k":"theme","p":"appearance","c":"Theme","l":"Theme","t":"text"},
+                {"k":"customHomeRows","p":"home-screen","c":"Rows","l":"Custom Home Rows","t":"list"},
+                {"k":"rememberRowCard","p":"home-screen","c":"Looks","l":"Remember Card in Row","t":"bool"},
+                {"k":"playlistsGroupByType","p":"libraries","c":"Library Pages","l":"Playlists Group By Type","t":"bool"},
+                {"k":"detailsBackdropBlur","p":"details-page","c":"Layout","l":"Background Blur","t":"int","o":[["0","Off"],["10","Light"],["20","Medium"],["30","Strong"],["40","Heavy"]]},
+                {"k":"serverLogging","p":"general","c":"Diagnostics","l":"Server Logging","t":"bool"},
+                {"k":"diagnosticLoggingEnabled","p":"general","c":"Diagnostics","l":"Diagnostic Logging","t":"bool"},
+                {"k":"timeOffsetHours","p":"general","c":"Behavior","l":"Clock Offset","t":"int","min":-12,"max":12,"step":1},
+                {"k":"autoLoginBehavior","p":"account","c":"Sign-in","l":"Auto Login","t":"text","o":[["disabled","Disabled"],["lastUser","Last User"],["currentUser","Current User"]]},
+                {"k":"alwaysAuthenticate","p":"account","c":"Sign-in","l":"Always Authenticate","t":"bool"},
+                {"k":"serverSortBy","p":"account","c":"Sign-in","l":"Sort Servers By","t":"text","o":[["name","Server name"],["recent","Recently Used"],["added","Date Added"]]},
+                {"k":"oledMode","p":"appearance","c":"Display","l":"OLED Mode","t":"text","o":[["off","Off"],["subtle","Subtle"],["vivid","Vivid"]]},
+                {"k":"screensaverEnabled","p":"appearance","c":"Screensaver","l":"In-App Screensaver","t":"bool"},
+                {"k":"screensaverTimeout","p":"appearance","c":"Screensaver","l":"Timeout","t":"text","o":[["s30","30 seconds (TV app only)"],["m1","1 minute"],["s90","90 seconds (TV app only)"],["m2","2 minutes"],["m3","3 minutes"],["m5","5 minutes"],["m10","10 minutes"],["m15","15 minutes"],["m30","30 minutes"]]},
+                {"k":"screensaverDimmingLevel","p":"appearance","c":"Screensaver","l":"Dimming Level","t":"int","o":[["0","Off"],["25","25%"],["50","50%"],["75","75%"],["100","100%"]]},
+                {"k":"screensaverClockMode","p":"appearance","c":"Screensaver","l":"Screensaver Clock Mode","t":"text"},
+                {"k":"cardFocusZoom","p":"appearance","c":"Display","l":"Focus Expansion Animation","t":"bool"},
+                {"k":"modernCardTransitionSpeed","p":"home-screen","c":"Looks","l":"Modern Cards Transition Speed","t":"text","o":[["extraSlow","Extra Slow"],["slow","Slow"],["medium","Medium"],["fast","Fast"],["off","Off"]]},
+                {"k":"detailButtonsMaxVisible","p":"details-page","c":"Layout","l":"Action Buttons on Screen","t":"int","o":[["0","Auto (Theme Default)"],["1","1 (Play only)"],["2","2"],["3","3"],["4","4"],["5","5"],["6","6"],["7","7"],["8","8"],["9","9"],["10","10"],["-1","All (Horizontal Scroll)"]]},
+                {"k":"nextUpBehavior","p":"playback","c":"Autoplay","l":"Next Up Display","t":"text","o":[["extended","Extended"],["minimal","Minimal"],["disabled","Disabled"]]},
+                {"k":"showDescriptionOnPause","p":"playback","c":"Player","l":"Show Description on Pause","t":"bool"},
+                {"k":"playbackTimeAboveLeft","p":"playback","c":"Player","l":"Above bar, left","t":"text","o":[["none","Hidden"],["elapsed","Time elapsed"],["totalDuration","Total duration"],["timeRemaining","Time remaining"],["endsAt","Ends at"],["time","Current Time"]]},
+                {"k":"playbackTimeAboveCenter","p":"playback","c":"Player","l":"Above bar, center","t":"text","o":[["none","Hidden"],["elapsed","Time elapsed"],["totalDuration","Total duration"],["timeRemaining","Time remaining"],["endsAt","Ends at"],["time","Current Time"]]},
+                {"k":"playbackTimeAboveRight","p":"playback","c":"Player","l":"Above bar, right","t":"text","o":[["none","Hidden"],["elapsed","Time elapsed"],["totalDuration","Total duration"],["timeRemaining","Time remaining"],["endsAt","Ends at"],["time","Current Time"]]},
+                {"k":"playbackTimeBelowLeft","p":"playback","c":"Player","l":"Below bar, left","t":"text","o":[["none","Hidden"],["elapsed","Time elapsed"],["totalDuration","Total duration"],["timeRemaining","Time remaining"],["endsAt","Ends at"],["time","Current Time"]]},
+                {"k":"playbackTimeBelowCenter","p":"playback","c":"Player","l":"Below bar, center","t":"text","o":[["none","Hidden"],["elapsed","Time elapsed"],["totalDuration","Total duration"],["timeRemaining","Time remaining"],["endsAt","Ends at"],["time","Current Time"]]},
+                {"k":"playbackTimeBelowRight","p":"playback","c":"Player","l":"Below bar, right","t":"text","o":[["none","Hidden"],["elapsed","Time elapsed"],["totalDuration","Total duration"],["timeRemaining","Time remaining"],["endsAt","Ends at"],["time","Current Time"]]},
+                {"k":"musicPlaybackTimeDisplay","p":"playback","c":"Player","l":"Progress Bar Time","t":"text","o":[["totalDuration","Total duration"],["timeRemaining","Time remaining"],["endsAt","Ends at"]]},
+                {"k":"introAction","p":"playback","c":"Autoplay","l":"Intro Segments","t":"text","o":[["ask","Ask to Skip"],["auto","Auto Skip"],["none","Don't Skip"]]},
+                {"k":"outroAction","p":"playback","c":"Autoplay","l":"Outro Segments","t":"text","o":[["ask","Ask to Skip"],["auto","Auto Skip"],["none","Don't Skip"]]},
+                {"k":"screensaverAgeFilter","p":"appearance","c":"Screensaver","l":"Require Age Rating","t":"bool"},
+                {"k":"screensaverMaxRating","p":"appearance","c":"Screensaver","l":"Max Age Rating","t":"int","o":[["0","G"],["7","PG"],["13","PG-13"],["17","R"],["18","NC-17"]]},
+                {"k":"uiScale","p":"appearance","c":"Display","l":"UI Scaling","t":"num","o":[["0.85","Compact"],["0.9","Small"],["0.95","Slightly Small"],["1","Default"],["1.05","Slightly Large"],["1.1","Large"],["1.15","Extra Large"],["1.2","Huge"],["1.3","Maximum"]]},
+                {"k":"settingsScale","p":"appearance","c":"Display","l":"Settings Size","t":"num","o":[["1","Default"],["0.9","Slightly Smaller"],["0.8","Smaller"],["0.7","Compact"]]},
+                {"k":"enablePgsRendering","p":"playback","c":"Subtitles","l":"PGS Direct Play","t":"bool"},
+                {"k":"syncPlayAutoOpen","p":"playback","c":"SyncPlay","l":"Open SyncPlay","t":"bool"},
+                {"k":"videoStartDelay","p":"playback","c":"Quality & Decoding","l":"Video Start Delay","t":"num","min":0,"max":5,"step":0.5},
+                {"k":"liveTvSkipGuide","p":"playback","c":"Quality & Decoding","l":"Skip TV Guide","t":"bool"},
+                {"k":"stereoUpmixEnabled","p":"playback","c":"Audio","l":"Stereo to Surround Upmix","t":"bool"},
+                {"k":"ac3Passthrough","p":"playback","c":"Audio","l":"AC3 Passthrough","t":"bool"},
+                {"k":"eac3Passthrough","p":"playback","c":"Audio","l":"EAC3 Passthrough","t":"bool"},
+                {"k":"dtsPassthrough","p":"playback","c":"Audio","l":"DTS Core Passthrough","t":"bool"},
+                {"k":"dtshdPassthrough","p":"playback","c":"Audio","l":"DTS-HD MA Passthrough","t":"bool"},
+                {"k":"truehdPassthrough","p":"playback","c":"Audio","l":"TrueHD Passthrough","t":"bool"},
+                {"k":"forceTruehdPassthrough","p":"playback","c":"Audio","l":"Force TrueHD / Atmos Passthrough","t":"bool"},
+                {"k":"searchDefaultTab","p":"integrations","c":"Seerr","l":"Search Opens On","t":"text","o":[["all","All"],["seerr","Seerr"]]},
+                {"k":"muteChatBannersDuringPlayback","p":"playback","c":"Player","l":"Mute Chat Banners During Playback","t":"bool"},
+                {"k":"performanceMode","p":"general","c":"Behavior","l":"Performance","t":"text","o":[["auto","Auto"],["ultra","Ultra"],["high","High"],["midhigh","Medium-High"],["mid","Medium"],["lowmid","Low"],["low","Performance"]]},
+                {"k":"preferSystemImeKeyboard","p":"general","c":"Behavior","l":"Prefer System Keyboard","t":"bool"},
+                {"k":"accentNavigation","p":"appearance","c":"Accent Colors","l":"Navigation","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
+                {"k":"accentHome","p":"appearance","c":"Accent Colors","l":"Home & Browse Highlights","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
+                {"k":"accentSettings","p":"appearance","c":"Accent Colors","l":"Settings & Controls","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
+                {"k":"accentSettingsFocus","p":"appearance","c":"Accent Colors","l":"Settings Focus","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
+                {"k":"accentAchievements","p":"appearance","c":"Accent Colors","l":"Achievement Badges","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
+                {"k":"accentDetails","p":"appearance","c":"Accent Colors","l":"Details Screen","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
+                {"k":"accentPlayer","p":"appearance","c":"Accent Colors","l":"Player & Playback","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
+                {"k":"accentSkip","p":"appearance","c":"Accent Colors","l":"Skip Intro/Recap/Credits","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
+                {"k":"accentLiveTv","p":"appearance","c":"Accent Colors","l":"Live TV & Recordings","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
+                {"k":"accentOther","p":"appearance","c":"Accent Colors","l":"Everything Else","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
+                {"k":"skipOverlayLayout","p":"playback","c":"Segments","l":"Layout","t":"text","o":[["capsule","Capsule"],["rectangle","Rectangle"],["sweep","Sweep"]]},
+                {"k":"nextUpLayout","p":"playback","c":"Segments","l":"Next Episode Layout","t":"text","o":[["card","Card"],["banner","Banner"],["button","Button"]]},
+                {"k":"skipOverlayPosition","p":"playback","c":"Segments","l":"Position","t":"text","o":[["topLeft","Top-Left"],["topCenter","Top-Center"],["topRight","Top-Right"],["middleLeft","Middle-Left"],["middle","Middle"],["middleRight","Middle-Right"],["bottomLeft","Bottom-Left"],["bottomCenter","Bottom-Center"],["bottomRight","Bottom-Right"]]},
+                {"k":"skipOverlaySize","p":"playback","c":"Segments","l":"Size","t":"text","o":[["thumbnail","Thumbnail"],["small","Small"],["medium","Medium"],["large","Large"]]},
+                {"k":"skipOverlayBackground","p":"playback","c":"Segments","l":"Background Color","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
+                {"k":"skipOverlayOpacity","p":"playback","c":"Segments","l":"Background Opacity","t":"int","min":20,"max":100,"step":2},
+                {"k":"skipOverlayAccent","p":"playback","c":"Segments","l":"Accent Color","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]},
+                {"k":"skipOverlayText","p":"playback","c":"Segments","l":"Text Color","t":"text","o":[["","Default"],["#00a4dc","Moonfin Cyan"],["#ff2e92","Neon Magenta"],["#0a84ff","Blue"],["#30d158","Green"],["#ffd60a","Yellow"],["#ff453a","Red"],["#ffffff","White"],["#808080","Gray"],["#000000","Black"],["#6a0dad","Purple"],["#008080","Teal"],["#4b0082","Indigo"],["#003366","Dark Blue"],["#000080","Navy"],["#36454f","Charcoal"],["#708090","Slate"],["#8b4513","Brown"],["#8b0000","Dark Red"],["#006400","Dark Green"]]}
             ];
 
             // "Not set" has its own value so a choice whose value is empty ("Default") can still be picked.
@@ -4576,7 +4569,10 @@
                 var id = 'ClientDefault_' + f.k;
                 var unset = '<option value="' + CLIENT_DEFAULT_UNSET + '">Not set (user decides)</option>';
                 var control;
-                if (f.t === 'bool') {
+                if (f.t === 'order') {
+                    // Drawn by loadButtonPicker: the same sortable list as the button layouts.
+                    control = '<div id="' + id + '"></div>';
+                } else if (f.t === 'bool') {
                     control = '<select id="' + id + '" is="emby-select">' + unset + '<option value="true">Yes</option><option value="false">No</option></select>';
                 } else if (f.o) {
                     control = '<select id="' + id + '" is="emby-select">' + unset + f.o.map(function (o) {
@@ -4591,13 +4587,20 @@
                     control = '<input type="text" id="' + id + '" is="emby-input" placeholder="Not set" />';
                 }
                 var range = f.min != null && f.max != null ? ' Range ' + f.min + ' to ' + f.max + '; a value outside it is moved to the nearest end.' : '';
-                return '<div class="inputContainer"><label class="inputLabel inputLabelUnfocused" for="' + id + '">' + esc(f.l) + '</label>'
+                return '<div class="inputContainer clientDefaultsField"><label class="inputLabel inputLabelUnfocused"' + (f.t === 'order' ? '' : ' for="' + id + '"') + '>' + esc(f.l) + '</label>'
                     + control + '<div class="fieldDescription">Setting: ' + esc(f.k) + '.' + range + '</div></div>';
             }
 
             function fillClientDefaultValue(f, value) {
                 var el = document.getElementById('ClientDefault_' + f.k);
                 if (!el) return;
+                if (f.t === 'order') {
+                    el.dataset.noun = f.l.toLowerCase();
+                    loadButtonPicker('#ClientDefault_' + f.k, f.o.map(function (o) {
+                        return { id: o[0], label: o[1], canHide: false };
+                    }), Array.isArray(value) ? value : null, null);
+                    return;
+                }
                 if (value === null || value === undefined) {
                     el.value = el.tagName === 'SELECT' ? CLIENT_DEFAULT_UNSET : '';
                     return;
@@ -4622,37 +4625,75 @@
             function setClientDefaultValue(f, value) {
                 fillClientDefaultValue(f, value);
                 var el = document.getElementById('ClientDefault_' + f.k);
-                if (el) el.dataset.loaded = el.value;
+                if (!el) return;
+                if (f.t === 'order') {
+                    // The list shows every codec, so a stored partial order looks longer than it is: remember both.
+                    var shown = getButtonPickerValue('#ClientDefault_' + f.k);
+                    el.dataset.loadedStored = JSON.stringify(Array.isArray(value) ? value : null);
+                    el.dataset.loaded = JSON.stringify(shown ? shown.order : null);
+                } else {
+                    el.dataset.loaded = el.value;
+                }
+            }
+
+            // Where a setting goes: the category of that name in the subtab (the page's own, so a setting sits next to
+            // the controls of its kind), or a new category at the end of the subtab when the page has none of that name.
+            function clientDefaultCategoryBody(panelKey, title) {
+                var panel = document.querySelector('#MoonfinConfigPage .defaultsSubtabPanel[data-subtab="' + panelKey + '"]');
+                if (!panel) return null;
+                var wanted = String(title).trim().toLowerCase();
+                var toggles = panel.querySelectorAll('.moonfinCategoryToggle');
+                for (var i = 0; i < toggles.length; i++) {
+                    if (toggles[i].textContent.trim().toLowerCase() === wanted) {
+                        return toggles[i].closest('.moonfinCategory').querySelector('.moonfinCategoryBody');
+                    }
+                }
+                var category = document.createElement('div');
+                category.className = 'moonfinCategory is-collapsed';
+                category.innerHTML = '<h4 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #00a4dc;">'
+                    + '<button type="button" class="moonfinCategoryToggle" aria-expanded="false">' + esc(title) + '</button></h4><div class="moonfinCategoryBody"></div>';
+                var toggle = category.querySelector('.moonfinCategoryToggle');
+                toggle.addEventListener('click', function () {
+                    var collapsed = category.classList.toggle('is-collapsed');
+                    toggle.setAttribute('aria-expanded', String(!collapsed));
+                });
+                panel.appendChild(category);
+                return category.querySelector('.moonfinCategoryBody');
             }
 
             function renderClientDefaults(defaults) {
-                var root = document.querySelector('#ClientDefaultsRoot');
-                if (!root) return;
-                var groups = {};
+                // The page's own headings become categories first, so a setting can join the category of that name.
+                var page = document.querySelector('#MoonfinConfigPage');
+                if (page) initializeDefaultsCategories(page);
+                Array.prototype.slice.call(document.querySelectorAll('.clientDefaultsField')).forEach(function (old) {
+                    old.parentNode.removeChild(old);
+                });
                 CLIENT_DEFAULTS_SCHEMA.forEach(function (f) {
-                    (groups[f.g] = groups[f.g] || []).push(f);
-                });
-                var html = '';
-                Object.keys(groups).sort().forEach(function (g) {
-                    html += '<div class="moonfinCategory is-collapsed"><h4 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #00a4dc;">'
-                        + '<button type="button" class="moonfinCategoryToggle" aria-expanded="false">' + esc(g) + '</button></h4><div class="moonfinCategoryBody">';
-                    groups[g].forEach(function (f) { html += clientDefaultField(f); });
-                    html += '</div></div>';
-                });
-                root.innerHTML = html;
-                root.querySelectorAll('.moonfinCategoryToggle').forEach(function (toggle) {
-                    toggle.addEventListener('click', function () {
-                        var collapsed = toggle.closest('.moonfinCategory').classList.toggle('is-collapsed');
-                        toggle.setAttribute('aria-expanded', String(!collapsed));
-                    });
+                    var body = clientDefaultCategoryBody(f.p, f.c);
+                    if (body) body.insertAdjacentHTML('beforeend', clientDefaultField(f));
                 });
                 CLIENT_DEFAULTS_SCHEMA.forEach(function (f) { setClientDefaultValue(f, defaults[f.k]); });
+                // The Seerr-only settings follow the Seerr switch like the others in their category.
+                if (typeof applyFieldDependencies === 'function') applyFieldDependencies();
             }
 
             function collectClientDefaults(target) {
                 CLIENT_DEFAULTS_SCHEMA.forEach(function (f) {
                     var el = document.getElementById('ClientDefault_' + f.k);
                     if (!el) return;
+                    if (f.t === 'order') {
+                        // An untouched list sends nothing: it shows every codec either way, which would read as a choice.
+                        var arranged = getButtonPickerValue('#ClientDefault_' + f.k);
+                        var now = arranged && arranged.order && arranged.order.length ? arranged.order : null;
+                        if (el.dataset.loaded === JSON.stringify(now) && el.dataset.loadedStored !== undefined) {
+                            // Not moved since it was filled: what was stored stays exactly as it was (an empty list is not set).
+                            var kept = JSON.parse(el.dataset.loadedStored);
+                            target[f.k] = Array.isArray(kept) && kept.length === 0 ? null : kept;
+                        } else {
+                            target[f.k] = now;
+                        }
+                        return;
+                    }
                     // A number box holding text the browser rejects reads as empty: leave the stored value alone.
                     if (el.validity && el.validity.badInput) return;
                     var raw = el.tagName === 'SELECT' ? el.value : el.value.trim();
@@ -5318,9 +5359,10 @@
                 var state = container.querySelector('.detailButtonPickerState');
                 var clear = container.querySelector('.detailButtonClearBtn');
                 if (state) {
+                    var noun = container.dataset.noun || 'button layout';
                     state.textContent = configured
-                        ? 'Set by you. Applying defaults will replace each user\'s button layout.'
-                        : 'Not set. Users keep their own button layout.';
+                        ? 'Set by you. Applying defaults will replace each user\'s ' + noun + '.'
+                        : 'Not set. Users keep their own ' + noun + '.';
                 }
                 if (clear) {
                     clear.style.display = configured ? '' : 'none';
@@ -5439,6 +5481,8 @@
 
             var HOME_ROW_IMAGE_TYPE_OPTIONS = '<option value="">Not set (user decides)</option>'
                 + '<option value="poster">Poster</option>'
+                + '<option value="backdrop">Backdrop</option>'
+                + '<option value="logo">Logo</option>'
                 + '<option value="thumb">Thumbnail</option>'
                 + '<option value="banner">Banner</option>';
 

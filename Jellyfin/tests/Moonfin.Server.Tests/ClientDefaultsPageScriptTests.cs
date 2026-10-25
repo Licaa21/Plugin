@@ -6,7 +6,7 @@ using Xunit;
 namespace Moonfin.Server.Tests;
 
 /// <summary>
-/// The functions on the Moonbase page that fill the "All TV app settings" tab and read it back decide what
+/// The functions on the Moonbase page that fill the TV app setting controls and read them back decide what
 /// gets written into the admin defaults: what "not set" is, what is trimmed, rounded or moved into range.
 /// They are plain JavaScript, so they are taken out of configPage.html and run under node with a small stand-in
 /// for the few DOM calls they make (no packages needed). Where node is not installed the test cannot run and
@@ -45,8 +45,21 @@ public sealed class ClientDefaultsPageScriptTests
         const doc = { getElementById: id => controls[id] || null, createElement: () => ({ value: '', textContent: '' }) };
         const escStart = html.lastIndexOf('function esc(str)', start);
         const escCode = html.slice(escStart, html.indexOf('\n            }', escStart) + 14);
-        const api = new Function('document', escCode + '; ' + code +
-            '; return { schema: CLIENT_DEFAULTS_SCHEMA, set: setClientDefaultValue, collect: collectClientDefaults, field: clientDefaultField, UNSET: CLIENT_DEFAULT_UNSET };')(doc);
+        // loadButtonPicker and getButtonPickerValue belong to the page's sortable lists; these stand-ins keep the order given.
+        const pickers = {};
+        function loadButtonPicker(selector, buttons, order) {
+            // like the page's: the codecs the stored order lacks are added at the end, and ones it does not know are dropped
+            const given = order && order.length;
+            const known = given ? order.filter(id => buttons.some(b => b.id === id)) : [];
+            const all = buttons.map(b => b.id);
+            pickers[selector] = { configured: !!given, order: given ? known.concat(all.filter(id => !known.includes(id))) : all };
+        }
+        function getButtonPickerValue(selector) {
+            const p = pickers[selector];
+            return !p || !p.configured ? { order: null, hidden: null } : { order: p.order, hidden: null };
+        }
+        const api = new Function('document', 'loadButtonPicker', 'getButtonPickerValue', escCode + '; ' + code +
+            '; return { schema: CLIENT_DEFAULTS_SCHEMA, set: setClientDefaultValue, collect: collectClientDefaults, field: clientDefaultField, UNSET: CLIENT_DEFAULT_UNSET };')(doc, loadButtonPicker, getButtonPickerValue);
         const U = api.UNSET;
 
         const scenarios = [
@@ -73,6 +86,12 @@ public sealed class ClientDefaultsPageScriptTests
             { name: 'a list is one entry per line', f: { k: 'a', t: 'list' }, tag: 'TEXTAREA', typed: 'a\n b \r\n\nc', expect: ['a', 'b', 'c'] },
             { name: 'an empty list is not set', f: { k: 'a', t: 'list' }, tag: 'TEXTAREA', typed: '  \n ', expect: null },
             { name: 'a stored list shows one entry per line and comes back', f: { k: 'a', t: 'list' }, tag: 'TEXTAREA', stored: ['x', 'y'], expect: ['x', 'y'], box: 'x\ny' },
+            { name: 'a stored codec order comes back as it was', f: { k: 'a', t: 'order', l: 'Audio Codec Order', o: [['x', 'X'], ['y', 'Y'], ['z', 'Z']] }, tag: 'DIV', stored: ['y', 'x'], expect: ['y', 'x'] },
+            { name: 'a stored partial codec order that nobody moved is saved as it was', f: { k: 'a', t: 'order', l: 'Audio Codec Order', o: [['x', 'X'], ['y', 'Y'], ['z', 'Z']] }, tag: 'DIV', stored: ['y'], expect: ['y'] },
+            { name: 'a stored codec order with an unknown id that nobody moved is saved as it was', f: { k: 'a', t: 'order', l: 'Audio Codec Order', o: [['x', 'X'], ['y', 'Y']] }, tag: 'DIV', stored: ['old', 'y'], expect: ['old', 'y'] },
+            { name: 'a moved codec order is saved as arranged, with every codec', f: { k: 'a', t: 'order', l: 'Audio Codec Order', o: [['x', 'X'], ['y', 'Y'], ['z', 'Z']] }, tag: 'DIV', stored: ['y'], moved: true, expect: ['z', 'x', 'y'] },
+            { name: 'a stored empty codec order is not set', f: { k: 'a', t: 'order', l: 'Audio Codec Order', o: [['x', 'X'], ['y', 'Y']] }, tag: 'DIV', stored: [], expect: null },
+            { name: 'no stored codec order is not set', f: { k: 'a', t: 'order', l: 'Audio Codec Order', o: [['x', 'X'], ['y', 'Y']] }, tag: 'DIV', stored: null, expect: null },
             { name: 'a stored "0" (Auto) is a value, not an empty one', f: { k: 'a', t: 'text' }, tag: 'SELECT', opts: [U, '0', 'auto', '120'], stored: '0', expect: '0' },
             { name: 'a stored "auto" is kept as it is', f: { k: 'a', t: 'text' }, tag: 'SELECT', opts: [U, '0', 'auto', '120'], stored: 'auto', expect: 'auto' },
             { name: 'an old plain-digit bitrate is kept and shown as the current choice', f: { k: 'a', t: 'text' }, tag: 'SELECT', opts: [U, '0', 'auto', '120'], stored: '120000000', expect: '120000000', optionCount: 5 },
@@ -86,6 +105,7 @@ public sealed class ClientDefaultsPageScriptTests
             controls['ClientDefault_' + sc.f.k] = c;
             if ('stored' in sc) api.set(sc.f, sc.stored);
             if ('typed' in sc) c.value = sc.typed;
+            if (sc.moved) pickers['#ClientDefault_' + sc.f.k].order.reverse();
             if (sc.bad) c.validity = { badInput: true };
             const target = {};
             if ('stored' in sc && sc.bad) target[sc.f.k] = sc.stored;
@@ -160,7 +180,7 @@ public sealed class ClientDefaultsPageScriptTests
                 Assert.True(process.ExitCode == 0, "node failed: " + error);
 
                 var outcomes = JsonSerializer.Deserialize<List<Outcome>>(output, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
-                Assert.True(outcomes.Count >= 28, "the scenarios did not run");
+                Assert.True(outcomes.Count >= 34, "the scenarios did not run");
                 var failed = outcomes.Where(o => !o.Ok).Select(o => $"{o.Name}: {o.Detail}").ToList();
                 Assert.True(failed.Count == 0, string.Join(Environment.NewLine, failed));
             }
