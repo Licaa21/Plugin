@@ -1,12 +1,24 @@
 [
-  {
-    "guid": "8c5d0e91-4f2a-4b6d-9e3f-1a7c8d9e0f2b",
-    "name": "Moonbase",
-    "overview": "Moonfin server plugin for Jellyfin with web app hosting, settings sync, theming, and Seerr integrations",
-    "description": "Moonbase is the Moonfin server plugin for Jellyfin, powering settings sync, the Moonfin Web app at /Moonfin/Web/, a built-in theme editor with custom theme APIs, media bar and ratings integrations, and Seerr proxy/SSO with admin defaults and broadcasts across Moonfin clients.",
-    "owner": "Licaa21",
-    "category": "General",
-    "imageUrl": "https://raw.githubusercontent.com/Moonfin-Client/Plugin/master/Jellyfin/backend/assets/logo.png",
-    "versions": []
-  }
+    {
+        "guid":  "8c5d0e91-4f2a-4b6d-9e3f-1a7c8d9e0f2b",
+        "name":  "Moonbase",
+        "overview":  "Moonfin server plugin for Jellyfin with web app hosting, settings sync, theming, and Seerr integrations",
+        "description":  "Moonbase is the Moonfin server plugin for Jellyfin, powering settings sync, the Moonfin Web app at /Moonfin/Web/, a built-in theme editor with custom theme APIs, media bar and ratings integrations, and Seerr proxy/SSO with admin defaults and broadcasts across Moonfin clients.",
+        "owner":  "Licaa21",
+        "category":  "General",
+        "imageUrl":  "https://raw.githubusercontent.com/Moonfin-Client/Plugin/master/Jellyfin/backend/assets/logo.png",
+        "versions":  [
+                         {
+                             "version":  "2.4.0.1",
+                             "changelog":  "First Moonbase fork release, on top of upstream Moonbase 2.4.0 (up to upstream commit e848699). The version is upstream\u0027s number plus a fork digit, so 2.4.0.1 replaces upstream\u0027s Moonbase in place with the same id and keeps its settings.\n\nNew: three routes that let the Moonfin Smart TV app get its TMDB text without a TMDB key of its own, using the server-wide TMDB key set in Moonbase. /Moonfin/Tmdb/Details gives a title\u0027s name, overview, tagline, season names and next episode. /Moonfin/Tmdb/Season gives a season\u0027s episodes with names, descriptions, air dates, crew and guest stars. /Moonfin/Tmdb/Recommendations gives TMDB\u0027s recommendations for a title. They answer with TMDB\u0027s own field names in the viewer\u0027s language, remember answers for 24 hours, and never send the key to a client. They replace the app asking TMDB directly. The existing NextEpisode route is unchanged and still gives the air date.\n\nIncluded from upstream, not the fork\u0027s work: LiveTV incomplete-recording handling and record-future-showings, a Moonbase default for hidden libraries, the Enable SyncPlay user default, and the removal of the legacy jellyseerr routes, settings aliases, ping fields and config migration.\n\nReleases of this fork are published at Licaa21/Plugin, and its catalog lists only the fork\u0027s own releases.",
+                             "targetAbi":  "10.10.0.0",
+                             "sourceUrl":  "https://github.com/Licaa21/Plugin/releases/download/fork-v2.4.0.1/Moonfin.Server-2.4.0.1.zip",
+                             "checksum":  "4580BEFF8FE62068B23313B866520B92",
+                             "timestamp":  "2026-10-25T01:12:25",
+                             "dependencies":  [
+
+                                              ]
+                         }
+                     ]
+    }
 ]
