@@ -87,7 +87,7 @@ This file is committed on `implement` and is the copy to edit. It is not copied 
 
 Jellyfin wants four numbers. Upstream's is `<MoonfinVersion>` in `Jellyfin/backend/Moonfin.Server.csproj` (three numbers). The fork's own digit is `<MoonfinForkRevision>` right next to it, and the version is `MoonfinVersion.MoonfinForkRevision`: 2.4.0.1, 2.4.0.2, and after an upstream bump 2.5.0.1 (the revision goes back to 1). The csproj builds the assembly, file and package version from the two, and `build.ps1`, `build.sh` and the CI step in `.github/workflows/build.yml` read both numbers from the csproj, so there is no second copy to drift (upstream's copy of the version in the scripts and CI's check of it are replaced; see "Upstream changes that are not taken"). Each of the three refuses a version that is not four numbers. The Moonfin clients check the plugin version for some features, so a fork version is never lower than upstream's. Release tags are `fork-v<version>`, for example `fork-v2.4.0.1`.
 
-CI (`build.yml`) runs on pushes and pull requests to `master` only, which is upstream's branch name, so in the fork it does not run for `main` or `implement`. Nothing has changed that yet.
+CI (`build.yml`) runs on pushes to `master`, `main` and `implement`, and on pull requests into `master` and `main`, so the version check, the ABI check, the build and the tests run on the fork's own branches (upstream's file only had `master`; on a merge keep the fork's branch lists). Pushes also build the release zip as a workflow artifact, which is not a release.
 
 ## Releases
 
@@ -117,9 +117,17 @@ Errors: 400 for a missing or bad parameter, 503 when the server has no TMDB key 
 - `Details` returns only the listed fields. A movie answers `id`, `title`, `original_title`, `overview`, `tagline` (whichever TMDB sent); a series answers `name` instead of `title`, `seasons` (every season TMDB lists, specials included) and `next_episode_to_air`, which is `null` when nothing is scheduled. An empty translation stays empty: there is no second call in English, so the client falls back to Seerr's text itself.
 - `mediaType` is `movie` or `tv` (any case), `tmdbId` a positive whole number, `seasonNumber` a whole number from 0, `page` 1 to 500 (a missing or blank page is 1). The service reads all of them as text, so a non-number gets the `{"error": ...}` 400 too, not the framework's own. Anything else is 400, before any TMDB call and before the key is looked at.
 - Errors are `{"error": "..."}` (lower case, whatever the host's JSON naming). 404 when TMDB says 404; 502 for any other TMDB failure (401, 429, 5xx, timeout, network) and for a 200 that is not the right shape (not an object, no `id`, no `episodes` or `results` array, wrong-typed elements).
-- Answers are written with relaxed JSON escaping, so non-English text is not turned into `\uXXXX` escapes. One cache per route, 500 entries each, 24 hours; when full, expired entries go first and then the oldest. Only 200 answers are cached. The ceiling counts entries, not bytes (a `Season` answer can be a few hundred KB), and concurrent misses on one key are not merged.
-- The only log lines are the route name and TMDB's status code or the exception type, never an address. A v3 key still travels in the request URL, so the host's own `System.Net.Http.HttpClient` logging would show it if someone turned it up to Information; the older routes have the same exposure.
+- Answers are written with relaxed JSON escaping, so non-English text is not turned into `\uXXXX` escapes. One cache per route, 500 entries each, 24 hours; when full, expired entries go first and then the oldest. Only 200 answers are cached.
+- The only log lines are the route name and TMDB's status code or the exception type, never an address.
 - Not checked against the real server or the TV app: it needs the key and an installed build.
+
+**Known limits, accepted by the user on 2026-10-25** (do not "fix" these without asking):
+
+- The cache ceiling counts entries, not bytes. A `Season` answer with every crew and guest-star list can be a few hundred KB, so a full `Season` cache can hold tens of MB or more.
+- Concurrent misses on one key are not merged: several clients asking for the same uncached title each call TMDB.
+- Only 200 answers are cached. A 404, 429 or 5xx is asked again every time, and there is no per-user rate limit, so any signed-in user can use up the server key's TMDB quota.
+- A v3 TMDB key travels in the request URL (`api_key=`), so the host's own `System.Net.Http.HttpClient` logging would print it if someone turned it up to Information. The older routes have the same exposure; v4 tokens go in a header and are not affected.
+- The cache drops the oldest entry, not the least recently used.
 
 ## Upstream changes that are not taken
 
