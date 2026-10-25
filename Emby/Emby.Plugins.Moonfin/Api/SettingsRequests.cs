@@ -143,7 +143,6 @@ namespace Emby.Plugins.Moonfin.Api
     }
 
     [Route("/Moonfin/Seerr/Config", "GET")]
-    [Route("/Moonfin/Jellyseerr/Config", "GET")]
     [Authenticated]
     public class GetSeerrConfigRequest : IReturn<object> { }
 

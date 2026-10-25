@@ -4,8 +4,7 @@ namespace Emby.Plugins.Moonfin.Tests;
 
 /// <summary>
 /// The Seerr URL is pasted in by an admin and then concatenated with API paths, so it has to come
-/// out of the config as an absolute http address or not at all. The migration alongside it carries
-/// settings written before the Jellyseerr rename.
+/// out of the config as an absolute http address or not at all.
 /// </summary>
 public class PluginConfigurationTests
 {
@@ -58,69 +57,5 @@ public class PluginConfigurationTests
     public void NormalizeSeerrUrl_KeepsHttpsAndAPath()
     {
         Assert.Equal("https://example.com/seerr", PluginConfiguration.NormalizeSeerrUrl("https://example.com/seerr"));
-    }
-
-    [Fact]
-    public void MigrateLegacyKeys_CopiesEveryLegacyValueAcross()
-    {
-        var config = new PluginConfiguration
-        {
-            JellyseerrUrl = "http://old:5055",
-            JellyseerrEnabled = true,
-            JellyseerrDisplayName = "Requests",
-        };
-
-        Assert.True(config.MigrateLegacyKeys());
-
-        Assert.Equal("http://old:5055", config.SeerrUrl);
-        Assert.True(config.SeerrEnabled);
-        Assert.Equal("Requests", config.SeerrDisplayName);
-    }
-
-    [Fact]
-    public void MigrateLegacyKeys_ClearsTheLegacyFieldsSoItOnlyRunsOnce()
-    {
-        var config = new PluginConfiguration { JellyseerrUrl = "http://old:5055" };
-
-        Assert.True(config.MigrateLegacyKeys());
-        Assert.Null(config.JellyseerrUrl);
-        Assert.False(config.JellyseerrEnabled);
-        Assert.Null(config.JellyseerrDisplayName);
-
-        Assert.False(config.MigrateLegacyKeys());
-    }
-
-    [Fact]
-    public void MigrateLegacyKeys_LeavesACurrentValueAlone()
-    {
-        var config = new PluginConfiguration
-        {
-            SeerrUrl = "http://new:5055",
-            SeerrDisplayName = "Seerr",
-            JellyseerrUrl = "http://old:5055",
-            JellyseerrDisplayName = "Old",
-        };
-
-        config.MigrateLegacyKeys();
-
-        Assert.Equal("http://new:5055", config.SeerrUrl);
-        Assert.Equal("Seerr", config.SeerrDisplayName);
-    }
-
-    [Fact]
-    public void MigrateLegacyKeys_NeverTurnsSeerrOffAgain()
-    {
-        // The enabled flag only ever migrates upward, so a legacy false can't disable a live setup.
-        var config = new PluginConfiguration { SeerrEnabled = true, JellyseerrEnabled = false };
-
-        config.MigrateLegacyKeys();
-
-        Assert.True(config.SeerrEnabled);
-    }
-
-    [Fact]
-    public void MigrateLegacyKeys_ReportsNoChangeOnAConfigWithNoLegacyValues()
-    {
-        Assert.False(new PluginConfiguration { SeerrUrl = "http://new:5055" }.MigrateLegacyKeys());
     }
 }

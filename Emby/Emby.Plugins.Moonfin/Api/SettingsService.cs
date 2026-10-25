@@ -76,9 +76,6 @@ namespace Emby.Plugins.Moonfin.Api
                 serverName = "Emby",
                 seerrEnabled,
                 seerrUrl,
-                // Legacy field names so clients from before the Seerr rename keep reading these.
-                jellyseerrEnabled = seerrEnabled,
-                jellyseerrUrl = seerrUrl,
                 mdblistAvailable = !string.IsNullOrWhiteSpace(config?.MdblistApiKey),
                 tmdbAvailable = !string.IsNullOrWhiteSpace(config?.TmdbApiKey),
                 // Older plugins leave this out, so the app keeps the backdrop Seerr gave it.
@@ -92,6 +89,8 @@ namespace Emby.Plugins.Moonfin.Api
                 // messages button.
                 messagesSupported = true,
                 pinSupported = true,
+                incompleteRecordingsSupported = config?.LiveTvDetectIncompleteRecordings ?? true,
+                extendedCompleteShowingsSupported = config?.LiveTvDetectIncompleteRecordings ?? true,
                 clientLogSupported = config?.EnableClientLogUpload ?? false,
                 defaultSettings = config?.DefaultUserSettings
             });
@@ -324,6 +323,7 @@ namespace Emby.Plugins.Moonfin.Api
                 usersAffected = await Settings.MergeDefaultsToAllUsersAsync(defaults).ConfigureAwait(false);
             }
 
+            PluginServices.HiddenLibraries?.ApplyToAll();
             var liveRefreshDeliveries = Settings.BroadcastSystemEvent("settingsUpdated");
             return Json(new { success = true, overwrite, usersAffected, orphansDeleted, liveRefreshDeliveries });
         }
@@ -344,6 +344,7 @@ namespace Emby.Plugins.Moonfin.Api
             else
                 await Settings.MergeDefaultsToUserAsync(userId, defaults).ConfigureAwait(false);
 
+            PluginServices.HiddenLibraries?.ApplyTo(userId);
             return Json(new { success = true, overwrite });
         }
 

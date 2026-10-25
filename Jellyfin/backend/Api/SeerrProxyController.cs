@@ -15,8 +15,6 @@ namespace Moonfin.Server.Api;
 /// </summary>
 [ApiController]
 [Route("Moonfin/Seerr")]
-// Legacy alias kept active so older clients keep working while they migrate to /Moonfin/Seerr.
-[Route("Moonfin/Jellyseerr")]
 [Produces(MediaTypeNames.Application.Json)]
 public class SeerrProxyController : ControllerBase
 {
@@ -113,7 +111,6 @@ public class SeerrProxyController : ControllerBase
         {
             success = true,
             seerrUserId = result.SeerrUserId,
-            jellyseerrUserId = result.SeerrUserId, // legacy alias for pre-rename clients
             displayName = result.DisplayName,
             avatar = result.Avatar,
             permissions = result.Permissions
@@ -180,7 +177,6 @@ public class SeerrProxyController : ControllerBase
         {
             success = true,
             seerrUserId = result.SeerrUserId,
-            jellyseerrUserId = result.SeerrUserId, // legacy alias for pre-rename clients
             displayName = result.DisplayName,
             avatar = result.Avatar,
             permissions = result.Permissions
@@ -232,7 +228,6 @@ public class SeerrProxyController : ControllerBase
             authenticated = session != null,
             url = seerrUrl,
             seerrUserId = session?.SeerrUserId,
-            jellyseerrUserId = session?.SeerrUserId, // legacy alias for pre-rename clients
             displayName = session?.DisplayName,
             avatar = session?.Avatar,
             permissions = session?.Permissions ?? 0,

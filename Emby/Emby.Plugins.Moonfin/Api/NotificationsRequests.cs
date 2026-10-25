@@ -39,7 +39,6 @@ namespace Emby.Plugins.Moonfin.Api
     // Inbound Seerr webhook. Seerr posts this with no Emby token, so the route has to answer
     // without one and the shared secret below is what vouches for the caller.
     [Route("/Moonfin/Seerr/Webhook", "POST")]
-    [Route("/Moonfin/Jellyseerr/Webhook", "POST")]
     [Unauthenticated]
     public class SeerrWebhookRequest : IReturn<object>, IRequiresRequestStream
     {

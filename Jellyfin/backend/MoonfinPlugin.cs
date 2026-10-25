@@ -11,7 +11,7 @@ public class MoonfinPlugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
     public static MoonfinPlugin? Instance { get; private set; }
 
-    private bool _migrationFailed;
+    private bool _webhookSecretFailed;
 
     public IServiceProvider? ServiceProvider { get; }
 
@@ -30,28 +30,26 @@ public class MoonfinPlugin : BasePlugin<PluginConfiguration>, IHasWebPages
         // as the plugin malfunctioning, writes that into meta.json, and deletes the folder on the
         // next startup. Touching Configuration is enough to get there, since Jellyfin answers an
         // unreadable config by writing defaults over it and a failing write escapes.
-        TryMigrateConfiguration();
+        TryEnsureWebhookSecret();
     }
 
     /// <summary>
     /// Swallows any failure, and is safe to call again since it only writes when something changed.
     /// </summary>
-    private void TryMigrateConfiguration()
+    private void TryEnsureWebhookSecret()
     {
         try
         {
-            var changed = Configuration.MigrateLegacyKeys();
-            changed |= Configuration.EnsureWebhookSecret();
-            if (changed)
+            if (Configuration.EnsureWebhookSecret())
             {
                 SaveConfiguration();
             }
 
-            _migrationFailed = false;
+            _webhookSecretFailed = false;
         }
         catch (Exception)
         {
-            _migrationFailed = true;
+            _webhookSecretFailed = true;
         }
     }
 
@@ -95,10 +93,10 @@ public class MoonfinPlugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <inheritdoc />
     public override void UpdateConfiguration(BasePluginConfiguration configuration)
     {
-        if (_migrationFailed)
+        if (_webhookSecretFailed)
         {
             // Startup failed, most likely on transient I/O. A save is a good moment to retry.
-            TryMigrateConfiguration();
+            TryEnsureWebhookSecret();
         }
 
         var previousUrl = Configuration.PublicServerUrl;
