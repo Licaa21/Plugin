@@ -5,6 +5,11 @@ This is Licaa21's fork of the [Moonfin server plugin](https://github.com/Moonfin
 **What differs from upstream**
 
 - The server holds the TMDB key and serves the TMDB titles, descriptions, season episodes, recommendations and air dates that a client would otherwise need its own key for (`/Moonfin/Tmdb/Details`, `Season`, `Recommendations`).
+- The Moonbase User defaults tab has an extra subtab, **All TV app settings**, where an admin can set a default for every setting of the Moonfin Smart TV app (subtitle styling, audio codec order, accent colors, skip overlay and more), and apply it to users like the other defaults.
+
+**What does not work in the fork**
+
+- Push notifications through Moonfin's hosted relay. That relay needs a key that only upstream's own builds carry, and a key cannot go into a public download. To get push you need your own Firebase project: put its service account in Moonbase (Push Service Account). Whether that reaches the Moonfin app from the App Store is untested.
 
 **Install (replaces upstream's Moonbase in place, with its settings)**
 
