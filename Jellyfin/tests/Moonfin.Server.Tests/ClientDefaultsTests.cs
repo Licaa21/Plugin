@@ -224,6 +224,23 @@ public sealed class ClientDefaultsTests : IDisposable
         Assert.Contains("eac3", order.O!.Select(o => o[0]));
     }
 
+    [Theory]
+    [InlineData("DETAIL_BUTTONS", "collection")]
+    [InlineData("DETAIL_BUTTONS", "playbackInfo")]
+    [InlineData("DETAIL_BUTTONS", "artwork")]
+    [InlineData("OSD_BUTTONS", "episodes")]
+    [InlineData("OSD_BUTTONS", "sleep")]
+    public void TheButtonListsHaveTheButtonsOnlyTheTvAppHas(string list, string id)
+    {
+        // A button the list does not know is dropped from the stored order and hidden list when the page is saved.
+        var html = Page();
+        var from = html.IndexOf($"var {list} = [", StringComparison.Ordinal);
+        Assert.True(from >= 0, $"{list} is missing");
+        var block = html[from..html.IndexOf("];", from, StringComparison.Ordinal)];
+
+        Assert.Contains($"id: '{id}'", block);
+    }
+
     [Fact]
     public void TheTabListsEachKeyOnceAndEveryEntryHasALabelAndAGroup()
     {
