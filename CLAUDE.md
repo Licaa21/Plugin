@@ -18,7 +18,7 @@ The rules that matter most, each explained further down:
 6. **After every merge from upstream**, run the merge checklist, and keep what is in "Upstream changes that are not taken".
 7. **Commits carry no AI names**: authored as Licaa21, no co-author or generated-with lines.
 8. **The TMDB key is never written anywhere**: not in a log, a response, an error text, a test, a commit or this file.
-9. **Every existing route stays as it is.** New routes only. A change to an existing route is asked about first.
+9. **Every existing route stays as it is.** New routes only. A change to an existing route is asked about first. (This is about the fork's own changes. An upstream removal is handled at the merge, see "Upstream changes that are taken although they remove something".)
 10. **The code review is never skipped.** Every change to code, tests, scripts or the manifest is reviewed before it is reported as done, at least two passes, and a merge from upstream is reviewed too (the conflict resolutions especially). Small changes are not exempt, and neither is a change that passed its tests. Only prose alone (CLAUDE.md, the README) is. The report names the passes and what each found, and a report without them is not finished. Do not write "I did not run the code review" as a way out: run it.
 
 ## Repository layout
@@ -46,7 +46,7 @@ This file is committed on `implement` and is the copy to edit. It is not copied 
 ### Merge checklist (after every merge from upstream)
 
 1. Read what upstream added (`git log --no-merges <old>..upstream/master`) and tell the user what is new.
-2. Fix conflicts in `main/`. Keep the fork's version of everything in "Upstream changes that are not taken", and say so.
+2. Fix conflicts in `main/`. Keep the fork's version of everything in "Upstream changes that are not taken", and say so. An upstream removal that touches a route, a setting key or a config key gets the check in "Upstream changes that are taken although they remove something", and the user is told before the merge is pushed.
 3. Check that version numbers still agree (see "Versions").
 4. `dotnet build` and `dotnet test` (see "Checking a change"). Both clean.
 5. Update the README on `main` when something the user can see changed, and add anything newly not taken to the list below.
@@ -135,11 +135,16 @@ Errors: 400 for a missing or bad parameter, 503 when the server has no TMDB key 
 
 ## Upstream changes that are not taken
 
-A change the fork keeps its own version of is listed here: what upstream did, what the fork keeps, what to do on a merge, and the files.
+A change the fork keeps its own version of is listed here (what upstream did that the fork does not take; the section after this one is the opposite): what upstream did, what the fork keeps, what to do on a merge, and the files.
 
 - **Files the fork removed (commit 7dc1ea8).** Upstream's `.coderabbit.yaml` and the workflows `close-stale-issues.yml`, `comment.yml`, `label-triage.yml` and `require-bug-evidence.yml` (only `build.yml` is kept), and the version history in `manifest.json` and `Jellyfin/manifest.json` (upstream's releases, with upstream's download links and the owner RadicalMuffinMan). Upstream will keep editing those files, so a merge shows modify/delete conflicts on the workflows and content conflicts in the two manifests. Keep them deleted, and keep the manifests as the fork's (`versions` holds only the fork's own releases, owner Licaa21), whatever upstream added. Take upstream's `imageUrl` if it changed.
-- **Taken although it removes routes: upstream a289528 (merged 2026-10-25).** Upstream dropped the legacy jellyseerr routes (`Moonfin/Jellyseerr`, `Jellyseerr/Config`), the `jellyseerr*` settings and ping aliases, and the config migration `MigrateLegacyKeys`. Rule 9 is about the fork's own changes, so the fork takes this one, after checking that nothing it relies on uses them: the fork's code does not, the TV app only migrates an old `jellyseerr` key in its own local storage (`context/SeerrContext.js`), and the user's server config has no legacy `Jellyseerr*` keys (read only check, 2026-10-25). If an older client ever needs the aliases back, that is a decision to ask about.
 - **Version in the build scripts and CI.** Upstream keeps a copy of the version as the default in `Jellyfin/build.sh` (`VERSION="${1:-x.y.z.0}"`) and `Jellyfin/build.ps1` (`$Version = "x.y.z.0"`), and the CI step in `.github/workflows/build.yml` compares `build.sh`'s copy with the csproj. The fork reads `MoonfinVersion` and `MoonfinForkRevision` from the csproj instead and has no copy. On a merge, keep the fork's version of those lines (the conflict is on the old default-version lines), take upstream's `MoonfinVersion`, and set `MoonfinForkRevision` back to 1. The scripts' owner, release tag, `sourceUrl` and changelog handling are the fork's too (upstream's say RadicalMuffinMan and strip the last digit for the tag).
+
+## Upstream changes that are taken although they remove something
+
+The opposite of the list above: here the fork does not keep its own version, it takes what upstream did, because nothing the fork relies on needs the removed thing. Each entry says what was checked, so the next merge can repeat the check.
+
+- **Legacy jellyseerr routes, aliases and config migration: upstream a289528 (merged 2026-10-25).** Upstream dropped the routes `Moonfin/Jellyseerr` and `Jellyseerr/Config`, the `jellyseerr*` settings, ping and response aliases (`jellyseerrEnabled`, `jellyseerrUrl`, `jellyseerrUserId`, `jellyseerrApiKey`, `jellyseerrRows`, `jellyseerrBlockNsfw`), the `Jellyseerr*` configuration keys and `MigrateLegacyKeys`, in both the Jellyfin and the Emby plugin and their tests (`PluginConfiguration.cs`, `MoonfinPlugin.cs`, `MoonfinController.cs`, `SeerrProxyController.cs` and the settings models). What was checked on 2026-10-25: the fork's own code does not use any of it; the TV app does not call the routes or read the keys (the only hit in the Smart TV repo is `packages/app/src/context/SeerrContext.js`, which moves an old `jellyseerr` key inside the app's own local storage); and the user's server configuration has no legacy `Jellyseerr*` keys (a read only `GET /Plugins/<guid>/Configuration` as Lica, looking at yes/no values only). Not checked: the other Moonfin clients (Android TV, mobile, web), which the user does not use; they would get a 404 or lose those fields. On a merge, take upstream's version of these files; if upstream restores or reworks the aliases, take that too. Rule 9 (existing routes stay) is about changes the fork makes itself; an upstream removal is decided at the merge, with this check, and the user is told. If an older client needs the aliases back, ask the user.
 
 ## Talking to the Smart TV chat
 
