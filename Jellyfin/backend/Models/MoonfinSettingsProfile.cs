@@ -629,7 +629,7 @@ public class MoonfinSettingsProfile
     public List<string>? HiddenDetailSectionsDesktop { get; set; }
 
     [JsonPropertyName("videoStartDelay")]
-    public int? VideoStartDelay { get; set; }
+    public double? VideoStartDelay { get; set; }
 
     [JsonPropertyName("liveTvDirectPlayEnabled")]
     public bool? LiveTvDirectPlayEnabled { get; set; }
@@ -1028,6 +1028,314 @@ public class MoonfinSettingsProfile
 
     [JsonPropertyName("showLoadingAnimationText")]
     public bool? ShowLoadingAnimationText { get; set; }
+
+    // TV app settings the plugin carries as defaults. Named as the app sends them.
+
+    [JsonPropertyName("preferTranscode")]
+    public bool? PreferTranscode { get; set; }
+
+    [JsonPropertyName("forceDirectPlay")]
+    public bool? ForceDirectPlay { get; set; }
+
+    [JsonPropertyName("experimentalTruehd")]
+    public bool? ExperimentalTruehd { get; set; }
+
+    [JsonPropertyName("forceCompatibleAv1Transcode")]
+    public bool? ForceCompatibleAv1Transcode { get; set; }
+
+    [JsonPropertyName("dolbyVisionAsHdr10")]
+    public bool? DolbyVisionAsHdr10 { get; set; }
+
+    [JsonPropertyName("allowManyStreams")]
+    public bool? AllowManyStreams { get; set; }
+
+    [JsonPropertyName("allowHevcLevel52")]
+    public bool? AllowHevcLevel52 { get; set; }
+
+    [JsonPropertyName("subtitleSize")]
+    public string? SubtitleSize { get; set; }
+
+    [JsonPropertyName("subtitlePosition")]
+    public string? SubtitlePosition { get; set; }
+
+    [JsonPropertyName("subtitleOpacity")]
+    public double? SubtitleOpacity { get; set; }
+
+    [JsonPropertyName("subtitleBackground")]
+    public double? SubtitleBackground { get; set; }
+
+    [JsonPropertyName("subtitleBackgroundColor")]
+    public string? SubtitleBackgroundColor { get; set; }
+
+    [JsonPropertyName("subtitleColor")]
+    public string? SubtitleColor { get; set; }
+
+    [JsonPropertyName("subtitleShadowColor")]
+    public string? SubtitleShadowColor { get; set; }
+
+    [JsonPropertyName("subtitleShadowOpacity")]
+    public double? SubtitleShadowOpacity { get; set; }
+
+    [JsonPropertyName("subtitleShadowBlur")]
+    public double? SubtitleShadowBlur { get; set; }
+
+    [JsonPropertyName("subtitlePositionAbsolute")]
+    public double? SubtitlePositionAbsolute { get; set; }
+
+    [JsonPropertyName("subtitleHdrSeparate")]
+    public bool? SubtitleHdrSeparate { get; set; }
+
+    [JsonPropertyName("subtitleSizeHdr")]
+    public string? SubtitleSizeHdr { get; set; }
+
+    [JsonPropertyName("subtitlePositionHdr")]
+    public string? SubtitlePositionHdr { get; set; }
+
+    [JsonPropertyName("subtitleOpacityHdr")]
+    public double? SubtitleOpacityHdr { get; set; }
+
+    [JsonPropertyName("subtitleBackgroundHdr")]
+    public double? SubtitleBackgroundHdr { get; set; }
+
+    [JsonPropertyName("subtitleBackgroundColorHdr")]
+    public string? SubtitleBackgroundColorHdr { get; set; }
+
+    [JsonPropertyName("subtitleColorHdr")]
+    public string? SubtitleColorHdr { get; set; }
+
+    [JsonPropertyName("subtitleShadowColorHdr")]
+    public string? SubtitleShadowColorHdr { get; set; }
+
+    [JsonPropertyName("subtitleShadowOpacityHdr")]
+    public double? SubtitleShadowOpacityHdr { get; set; }
+
+    [JsonPropertyName("subtitleShadowBlurHdr")]
+    public double? SubtitleShadowBlurHdr { get; set; }
+
+    [JsonPropertyName("subtitlePositionAbsoluteHdr")]
+    public double? SubtitlePositionAbsoluteHdr { get; set; }
+
+    [JsonPropertyName("pgsSubtitleSize")]
+    public string? PgsSubtitleSize { get; set; }
+
+    [JsonPropertyName("pgsSubtitlePosition")]
+    public string? PgsSubtitlePosition { get; set; }
+
+    [JsonPropertyName("pgsSubtitleOpacity")]
+    public double? PgsSubtitleOpacity { get; set; }
+
+    [JsonPropertyName("pgsSubtitleBrightness")]
+    public double? PgsSubtitleBrightness { get; set; }
+
+    [JsonPropertyName("pgsSubtitleBackgroundColor")]
+    public string? PgsSubtitleBackgroundColor { get; set; }
+
+    [JsonPropertyName("pgsSubtitleBackground")]
+    public double? PgsSubtitleBackground { get; set; }
+
+    [JsonPropertyName("seekStep")]
+    public double? SeekStep { get; set; }
+
+    [JsonPropertyName("rememberSeriesAudio")]
+    public bool? RememberSeriesAudio { get; set; }
+
+    [JsonPropertyName("animeAudioLanguage")]
+    public string? AnimeAudioLanguage { get; set; }
+
+    [JsonPropertyName("animeFallbackAudioLanguage")]
+    public string? AnimeFallbackAudioLanguage { get; set; }
+
+    [JsonPropertyName("preferStereoAudio")]
+    public bool? PreferStereoAudio { get; set; }
+
+    [JsonPropertyName("audioCodecOrder")]
+    public List<string>? AudioCodecOrder { get; set; }
+
+    [JsonPropertyName("subtitleDownloadLanguages")]
+    public List<string>? SubtitleDownloadLanguages { get; set; }
+
+    [JsonPropertyName("xboxNativePlayer")]
+    public bool? XboxNativePlayer { get; set; }
+
+    [JsonPropertyName("xboxPassthrough")]
+    public bool? XboxPassthrough { get; set; }
+
+    [JsonPropertyName("trickPlayMode")]
+    public string? TrickPlayMode { get; set; }
+
+    [JsonPropertyName("trickPlayPreviewScale")]
+    public double? TrickPlayPreviewScale { get; set; }
+
+    [JsonPropertyName("trickPlayVerticalPosition")]
+    public double? TrickPlayVerticalPosition { get; set; }
+
+    [JsonPropertyName("trickPlayFollowScrub")]
+    public bool? TrickPlayFollowScrub { get; set; }
+
+    [JsonPropertyName("trickPlayPauseWhileScrubbing")]
+    public bool? TrickPlayPauseWhileScrubbing { get; set; }
+
+    [JsonPropertyName("waitForAssSubtitles")]
+    public bool? WaitForAssSubtitles { get; set; }
+
+    [JsonPropertyName("audioPassthroughMode")]
+    public string? AudioPassthroughMode { get; set; }
+
+    [JsonPropertyName("maxAudioChannels")]
+    public double? MaxAudioChannels { get; set; }
+
+    [JsonPropertyName("transcodeAudioCodecs")]
+    public List<string>? TranscodeAudioCodecs { get; set; }
+
+    [JsonPropertyName("downmixToStereo")]
+    public bool? DownmixToStereo { get; set; }
+
+    [JsonPropertyName("theme")]
+    public string? Theme { get; set; }
+
+    [JsonPropertyName("customHomeRows")]
+    public List<string>? CustomHomeRows { get; set; }
+
+    [JsonPropertyName("rememberRowCard")]
+    public bool? RememberRowCard { get; set; }
+
+    [JsonPropertyName("playlistsGroupByType")]
+    public bool? PlaylistsGroupByType { get; set; }
+
+    [JsonPropertyName("serverLogging")]
+    public bool? ServerLogging { get; set; }
+
+    [JsonPropertyName("timeOffsetHours")]
+    public double? TimeOffsetHours { get; set; }
+
+    [JsonPropertyName("autoLoginBehavior")]
+    public string? AutoLoginBehavior { get; set; }
+
+    [JsonPropertyName("alwaysAuthenticate")]
+    public bool? AlwaysAuthenticate { get; set; }
+
+    [JsonPropertyName("serverSortBy")]
+    public string? ServerSortBy { get; set; }
+
+    [JsonPropertyName("screensaverDimmingLevel")]
+    public double? ScreensaverDimmingLevel { get; set; }
+
+    [JsonPropertyName("cardFocusZoom")]
+    public bool? CardFocusZoom { get; set; }
+
+    [JsonPropertyName("modernCardTransitionSpeed")]
+    public string? ModernCardTransitionSpeed { get; set; }
+
+    [JsonPropertyName("detailButtonsMaxVisible")]
+    public double? DetailButtonsMaxVisible { get; set; }
+
+    [JsonPropertyName("introAction")]
+    public string? IntroAction { get; set; }
+
+    [JsonPropertyName("outroAction")]
+    public string? OutroAction { get; set; }
+
+    [JsonPropertyName("screensaverAgeFilter")]
+    public bool? ScreensaverAgeFilter { get; set; }
+
+    [JsonPropertyName("screensaverMaxRating")]
+    public double? ScreensaverMaxRating { get; set; }
+
+    [JsonPropertyName("uiScale")]
+    public double? UiScale { get; set; }
+
+    [JsonPropertyName("settingsScale")]
+    public double? SettingsScale { get; set; }
+
+    [JsonPropertyName("enablePgsRendering")]
+    public bool? EnablePgsRendering { get; set; }
+
+    [JsonPropertyName("liveTvSkipGuide")]
+    public bool? LiveTvSkipGuide { get; set; }
+
+    [JsonPropertyName("stereoUpmixEnabled")]
+    public bool? StereoUpmixEnabled { get; set; }
+
+    [JsonPropertyName("ac3Passthrough")]
+    public bool? Ac3Passthrough { get; set; }
+
+    [JsonPropertyName("eac3Passthrough")]
+    public bool? Eac3Passthrough { get; set; }
+
+    [JsonPropertyName("dtsPassthrough")]
+    public bool? DtsPassthrough { get; set; }
+
+    [JsonPropertyName("dtshdPassthrough")]
+    public bool? DtshdPassthrough { get; set; }
+
+    [JsonPropertyName("truehdPassthrough")]
+    public bool? TruehdPassthrough { get; set; }
+
+    [JsonPropertyName("forceTruehdPassthrough")]
+    public bool? ForceTruehdPassthrough { get; set; }
+
+    [JsonPropertyName("searchDefaultTab")]
+    public string? SearchDefaultTab { get; set; }
+
+    [JsonPropertyName("muteChatBannersDuringPlayback")]
+    public bool? MuteChatBannersDuringPlayback { get; set; }
+
+    [JsonPropertyName("performanceMode")]
+    public string? PerformanceMode { get; set; }
+
+    [JsonPropertyName("accentNavigation")]
+    public string? AccentNavigation { get; set; }
+
+    [JsonPropertyName("accentHome")]
+    public string? AccentHome { get; set; }
+
+    [JsonPropertyName("accentSettings")]
+    public string? AccentSettings { get; set; }
+
+    [JsonPropertyName("accentSettingsFocus")]
+    public string? AccentSettingsFocus { get; set; }
+
+    [JsonPropertyName("accentAchievements")]
+    public string? AccentAchievements { get; set; }
+
+    [JsonPropertyName("accentDetails")]
+    public string? AccentDetails { get; set; }
+
+    [JsonPropertyName("accentPlayer")]
+    public string? AccentPlayer { get; set; }
+
+    [JsonPropertyName("accentSkip")]
+    public string? AccentSkip { get; set; }
+
+    [JsonPropertyName("accentLiveTv")]
+    public string? AccentLiveTv { get; set; }
+
+    [JsonPropertyName("accentOther")]
+    public string? AccentOther { get; set; }
+
+    [JsonPropertyName("skipOverlayLayout")]
+    public string? SkipOverlayLayout { get; set; }
+
+    [JsonPropertyName("nextUpLayout")]
+    public string? NextUpLayout { get; set; }
+
+    [JsonPropertyName("skipOverlayPosition")]
+    public string? SkipOverlayPosition { get; set; }
+
+    [JsonPropertyName("skipOverlaySize")]
+    public string? SkipOverlaySize { get; set; }
+
+    [JsonPropertyName("skipOverlayBackground")]
+    public string? SkipOverlayBackground { get; set; }
+
+    [JsonPropertyName("skipOverlayOpacity")]
+    public double? SkipOverlayOpacity { get; set; }
+
+    [JsonPropertyName("skipOverlayAccent")]
+    public string? SkipOverlayAccent { get; set; }
+
+    [JsonPropertyName("skipOverlayText")]
+    public string? SkipOverlayText { get; set; }
 }
 
 
