@@ -222,7 +222,7 @@ if (-not $SkipManifestUpdate -and (Test-Path $ManifestFile)) {
 # committed and pushed, which is when installs can see it.
 if ($Publish) {
     # A file, since Windows PowerShell 5.1 mangles double quotes in native arguments.
-    $NotesFile = Join-Path $RootDir "release-notes.tmp"
+    $NotesFile = [System.IO.Path]::GetTempFileName()
     [System.IO.File]::WriteAllText($NotesFile, $Changelog, (New-Object System.Text.UTF8Encoding $false))
     & $Gh release create $ReleaseTag $ZipPath --repo Licaa21/Plugin --target (git -C $RootDir rev-parse HEAD) --title "Moonbase $Version (fork)" --notes-file $NotesFile
     $GhExit = $LASTEXITCODE
