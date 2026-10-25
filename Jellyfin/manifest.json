@@ -9,6 +9,17 @@
         "imageUrl":  "https://raw.githubusercontent.com/Moonfin-Client/Plugin/master/Jellyfin/backend/assets/logo.png",
         "versions":  [
                          {
+                             "version":  "2.4.0.4",
+                             "changelog":  "Fourth fork release, on the same upstream base as before (Moonbase 2.4.0 up to upstream commit e848699).\n\nFixed: the Moonfin button in Jellyfin web (the web app served at /Moonfin/Web/) did not work in releases 2.4.0.1 to 2.4.0.3, because their download did not contain the web app and the page answered 404. The download now carries it, so the button works after an install and after every update. The web app is upstream\u0027s Moonfin web build from the 2.4.0 release, unchanged; its source is https://github.com/Moonfin-Client/Moonfin-Core. The download is about 66 MB instead of 2 MB.\n\nNothing else changed. The TMDB routes, the 102 settings and the editor from 2.4.0.3 are as they were. Push notifications through Moonfin\u0027s hosted relay are still off in this fork.",
+                             "targetAbi":  "10.10.0.0",
+                             "sourceUrl":  "https://github.com/Licaa21/Plugin/releases/download/fork-v2.4.0.4/Moonfin.Server-2.4.0.4.zip",
+                             "checksum":  "3A0CAFBBC61CDF49430DF2943B9FDE3E",
+                             "timestamp":  "2026-10-25T17:17:04",
+                             "dependencies":  [
+
+                                              ]
+                         },
+                         {
                              "version":  "2.4.0.3",
                              "changelog":  "Third fork release, on the same upstream base as before (Moonbase 2.4.0 up to upstream commit e848699).\n\nFixed: in the All TV app settings editor, two settings now offer the values the Moonfin apps actually write. Max Streaming Bitrate offers Mbps as text, with both forms of Auto (0 for the TV app, auto for the Moonfin app). Screensaver Timeout offers the minute codes both apps read, plus the TV app\u0027s 30 and 90 seconds. Before, the editor offered plain numbers (120000000 and 30) that the Moonfin app could not read; a value already saved that way shows as (current) until you pick a new one.\n\nNothing else changed. The TMDB routes, the 102 settings and everything else from 2.4.0.2 are as they were.",
                              "targetAbi":  "10.10.0.0",
