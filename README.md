@@ -4,7 +4,7 @@ This is Licaa21's fork of the [Moonfin server plugin](https://github.com/Moonfin
 
 **What differs from upstream**
 
-- The server holds the TMDB key and serves the TMDB titles, descriptions, season episodes, recommendations and air dates that a client would otherwise need its own key for (`/Moonfin/Tmdb/Details`, `Season`, `Recommendations`). Work in progress, see the releases.
+- The server holds the TMDB key and serves the TMDB titles, descriptions, season episodes, recommendations and air dates that a client would otherwise need its own key for (`/Moonfin/Tmdb/Details`, `Season`, `Recommendations`).
 
 **Install (replaces upstream's Moonbase in place, with its settings)**
 
