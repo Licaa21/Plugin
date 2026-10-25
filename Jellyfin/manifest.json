@@ -9,6 +9,17 @@
         "imageUrl":  "https://raw.githubusercontent.com/Moonfin-Client/Plugin/master/Jellyfin/backend/assets/logo.png",
         "versions":  [
                          {
+                             "version":  "2.4.0.3",
+                             "changelog":  "Third fork release, on the same upstream base as before (Moonbase 2.4.0 up to upstream commit e848699).\n\nFixed: in the All TV app settings editor, two settings now offer the values the Moonfin apps actually write. Max Streaming Bitrate offers Mbps as text, with both forms of Auto (0 for the TV app, auto for the Moonfin app). Screensaver Timeout offers the minute codes both apps read, plus the TV app\u0027s 30 and 90 seconds. Before, the editor offered plain numbers (120000000 and 30) that the Moonfin app could not read; a value already saved that way shows as (current) until you pick a new one.\n\nNothing else changed. The TMDB routes, the 102 settings and everything else from 2.4.0.2 are as they were.",
+                             "targetAbi":  "10.10.0.0",
+                             "sourceUrl":  "https://github.com/Licaa21/Plugin/releases/download/fork-v2.4.0.3/Moonfin.Server-2.4.0.3.zip",
+                             "checksum":  "38FB6CEC8591EC7896AA14E98C5753B6",
+                             "timestamp":  "2026-10-25T12:48:15",
+                             "dependencies":  [
+
+                                              ]
+                         },
+                         {
                              "version":  "2.4.0.2",
                              "changelog":  "Second fork release, on top of upstream Moonbase 2.4.0 (up to upstream commit e848699), the same base as 2.4.0.1.\n\nNew: the Moonbase admin defaults can now hold a default for every setting of the Moonfin Smart TV app. The plugin has 102 new settings, named as the app sends them (subtitle styling, audio codec order and passthrough, accent colors, the skip overlay, the playback time display, the screensaver, trick play and more), and they are merged, resolved and applied to users like the existing ones. A new subtab, All TV app settings, under User defaults lets an admin set them. Not set leaves the user\u0027s own choice, a number typed outside its range is moved into it, a value you did not touch is saved as it was, and the settings search finds them.\n\nKept out on purpose: the app\u0027s PIN, kids-mode and auto-login state, and the device switches allowInsecureCerts, pinCodeProtection and useMoonfinPlugin.\n\nChanged: Video Start Delay is now a decimal, because the app moves it in half seconds; a whole number is stored as before. maxBitrate and screensaverTimeout are still stored as text.\n\nThe three TMDB routes and everything else from 2.4.0.1 are unchanged. Push notifications through Moonfin\u0027s hosted relay are still off in this fork, because that relay\u0027s key is not in the download; use your own Firebase service account in Moonbase if you need push.",
                              "targetAbi":  "10.10.0.0",
