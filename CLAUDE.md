@@ -128,6 +128,8 @@ Errors: 400 for a missing or bad parameter, 503 when the server has no TMDB key 
 - Only 200 answers are cached. A 404, 429 or 5xx is asked again every time, and there is no per-user rate limit, so any signed-in user can use up the server key's TMDB quota.
 - A v3 TMDB key travels in the request URL (`api_key=`), so the host's own `System.Net.Http.HttpClient` logging would print it if someone turned it up to Information. The older routes have the same exposure; v4 tokens go in a header and are not affected.
 - The cache drops the oldest entry, not the least recently used.
+- `language` is only checked for the shape `xx` or `xx-YY`, not against the languages TMDB has, so a caller can make many cache keys for one id (the same quota and eviction effect as the points above).
+- A failed `-Publish` after `gh` created the release but not the asset leaves a half-made release that blocks a retry (releases are never replaced): delete that release by hand, or raise `MoonfinForkRevision`.
 
 ## Upstream changes that are not taken
 

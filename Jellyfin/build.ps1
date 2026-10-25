@@ -224,8 +224,10 @@ if ($Publish) {
     # A file, since Windows PowerShell 5.1 mangles double quotes in native arguments.
     $NotesFile = [System.IO.Path]::GetTempFileName()
     [System.IO.File]::WriteAllText($NotesFile, $Changelog, (New-Object System.Text.UTF8Encoding $false))
+    $ErrorActionPreference = "Continue"
     & $Gh release create $ReleaseTag $ZipPath --repo Licaa21/Plugin --target (git -C $RootDir rev-parse HEAD) --title "Moonbase $Version (fork)" --notes-file $NotesFile
     $GhExit = $LASTEXITCODE
+    $ErrorActionPreference = "Stop"
     Remove-Item $NotesFile -Force
     if ($GhExit -ne 0) {
         # The tree was clean when -Publish started, so the manifests can be put back as they were.
