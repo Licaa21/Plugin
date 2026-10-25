@@ -335,6 +335,7 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("glassQuality")] public string? GlassQuality { get; set; }
         [JsonPropertyName("desktopUiScale")] public string? DesktopUiScale { get; set; }
         [JsonPropertyName("preferSystemImeKeyboard")] public bool? PreferSystemImeKeyboard { get; set; }
+        [JsonPropertyName("keyboardStyle")] public string? KeyboardStyle { get; set; }
         [JsonPropertyName("clockBehavior")] public string? ClockBehavior { get; set; }
         [JsonPropertyName("use24HourClock")] public bool? Use24HourClock { get; set; }
         [JsonPropertyName("homeRowInfoOverlay")] public bool? HomeRowInfoOverlay { get; set; }

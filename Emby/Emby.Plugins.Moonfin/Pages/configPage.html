@@ -1556,6 +1556,17 @@
                                 <div class="fieldDescription">Ask before the back button leaves the app.</div>
                             </div>
                             <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultKeyboardStyle">Keyboard style (TV clients only)</label>
+                                <select id="DefaultKeyboardStyle" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="native">Native</option>
+                                    <option value="classic">Classic</option>
+                                    <option value="glass">Glass</option>
+                                    <option value="docked">Docked</option>
+                                </select>
+                                <div class="fieldDescription">Native uses the TV's own keyboard, the others are Moonfin's on-screen keyboard. Keep Not set to let users choose.</div>
+                            </div>
+                            <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultUpdateNotificationsEnabled">Update Notifications</label>
                                 <select id="DefaultUpdateNotificationsEnabled" is="emby-select">
                                     <option value="">Not set (user decides)</option>

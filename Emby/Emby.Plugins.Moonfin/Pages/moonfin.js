@@ -2544,6 +2544,7 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
             loadSeerrDiscoveryPicker(view, seerrPicker.order, seerrPicker.hidden);
 
             setNullableBoolSelect(view, '#DefaultConfirmExit', defaults.confirmExit);
+            setSelectValue(view, '#DefaultKeyboardStyle', defaults.keyboardStyle, 'Configured style');
             setNullableBoolSelect(view, '#DefaultUpdateNotificationsEnabled', defaults.updateNotificationsEnabled);
             setNullableBoolSelect(view, '#DefaultHideDetailsMediaDescription', defaults.hideDetailsMediaDescription);
             setNullableBoolSelect(view, '#DefaultDetailTrailersExternal', defaults.detailTrailersExternal);
@@ -2911,6 +2912,7 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
             d.seerrRows = seerrRows;
 
             d.confirmExit = getNullableBoolSelect(view, '#DefaultConfirmExit');
+            d.keyboardStyle = view.querySelector('#DefaultKeyboardStyle').value || null;
             d.updateNotificationsEnabled = getNullableBoolSelect(view, '#DefaultUpdateNotificationsEnabled');
             d.hideDetailsMediaDescription = getNullableBoolSelect(view, '#DefaultHideDetailsMediaDescription');
             d.detailTrailersExternal = getNullableBoolSelect(view, '#DefaultDetailTrailersExternal');
