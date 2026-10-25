@@ -12,7 +12,7 @@ Thanks for wanting to help. Moonbase is the server plugin behind every Moonfin c
 
 ## Setting up
 
-You need the .NET 8 SDK, plus `zip`, `jq` and an MD5 tool for `build.sh` (or use `build.ps1` on Windows, which needs none of them). [Building from Source](https://github.com/Moonfin-Client/Plugin/wiki/Building-from-Source) takes you from a clean machine to the same zips the Releases page ships.
+You need the .NET 8 SDK, plus `zip`, `jq`, `curl`, `unzip` and an MD5 tool for `build.sh`, which also downloads the web app from upstream's release (about 66 MB), or use `build.ps1` on Windows, which needs none of them. [Building from Source](https://github.com/Moonfin-Client/Plugin/wiki/Building-from-Source) takes you from a clean machine to the same zips the Releases page ships.
 
 ```bash
 git clone https://github.com/Moonfin-Client/Plugin.git

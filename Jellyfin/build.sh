@@ -6,7 +6,7 @@
 # The version is read from the csproj (MoonfinVersion.MoonfinForkRevision) unless given.
 # PUBLISH=1 also creates the GitHub release fork-v<version> on Licaa21/Plugin with the zip, at the
 # commit being built, which has to be on origin/main.
-# Needs jq and zip. build.ps1 is the same script for a PC without them.
+# Needs jq and zip, and curl and unzip for the web app. build.ps1 is the same script for a PC without them.
 
 set -e
 
@@ -84,11 +84,73 @@ if ! command -v "$DOTNET_BIN" &> /dev/null; then
     fi
 fi
 
-# Validate expected Flutter web bundle location
-if [ ! -f "$FRONTEND_DIR/index.html" ]; then
+# The Flutter web app (the Moonfin button in Jellyfin web, served at /Moonfin/Web/) is not in git. Upstream builds it
+# from Moonfin-Core and adds it to its zip by hand, so this build takes it from upstream's published release: a
+# pinned version, checked against its checksum (SHA-256; the file's MD5 is also upstream's own, E4B38A94589F515CBE975D186748E08E),
+# unchanged. Its source is https://github.com/Moonfin-Client/Moonfin-Core. Needs curl and unzip.
+WEB_BUNDLE_URL="https://github.com/Moonfin-Client/Plugin/releases/download/2.4.0/Moonfin.Server-2.4.0.0.zip"
+WEB_BUNDLE_SHA256="2DADFF3D8F4F797E18B394BF9825173F9BC2F49022D6A0220EF5FB6EB4FBD35B"
+sha256_upper() {
+    if command -v sha256sum &> /dev/null; then sha256sum < "$1" | awk '{print toupper($1)}'
+    else shasum -a 256 < "$1" | awk '{print toupper($1)}'; fi
+}
+web_app_ready() {
+    [ -f "$FRONTEND_DIR/index.html" ] && [ -f "$FRONTEND_DIR/main.dart.js" ] && [ -f "$FRONTEND_DIR/version.json" ] \
+        && [ -f "$FRONTEND_DIR/assets/AssetManifest.bin" ] && [ -f "$FRONTEND_DIR/canvaskit/canvaskit.wasm" ]
+}
+web_app_fail() {
+    # A build that is not a release (SKIP_MANIFEST_UPDATE=1) can go on without the web app, a release cannot.
+    if [ "${SKIP_MANIFEST_UPDATE:-0}" = "1" ]; then
+        echo "Warning: $1"
+    else
+        echo "Error: $1" >&2
+        exit 1
+    fi
+}
+if ! web_app_ready; then
     echo ""
-    echo "Warning: frontend/index.html not found."
-    echo "Run Mobile-Desktop/build-web-plugin.sh before packaging if you need bundled web assets."
+    echo "The web app is missing or incomplete in frontend/, taking it from upstream's 2.4.0.0 release (about 66 MB)..."
+    if ! command -v curl &> /dev/null || ! command -v unzip &> /dev/null; then
+        web_app_fail "curl and unzip are needed to fetch the web app."
+    else
+        # A private folder, so nobody else can swap the file between the checksum and the unpacking.
+        WEB_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/moonfin-build"
+        mkdir -p "$WEB_CACHE" && chmod 700 "$WEB_CACHE"
+        WEB_ZIP="$WEB_CACHE/moonfin-upstream-2.4.0.0.zip"
+        WEB_ZIP_OK=0
+        if [ -f "$WEB_ZIP" ] && [ "$(sha256_upper "$WEB_ZIP")" = "$WEB_BUNDLE_SHA256" ]; then
+            WEB_ZIP_OK=1
+        elif curl -fL "$WEB_BUNDLE_URL" -o "$WEB_ZIP"; then
+            if [ "$(sha256_upper "$WEB_ZIP")" = "$WEB_BUNDLE_SHA256" ]; then
+                WEB_ZIP_OK=1
+            else
+                rm -f "$WEB_ZIP"
+                web_app_fail "the downloaded upstream zip does not match its known checksum, not using it."
+            fi
+        else
+            rm -f "$WEB_ZIP"
+            web_app_fail "could not download the upstream zip."
+        fi
+        if [ "$WEB_ZIP_OK" = "1" ]; then
+            # Unpacked into a staging folder first, so a failure leaves frontend/ as it was. Everything but the plugin's own
+            # three files is taken, because Info-ZIP's 'frontend/*' pattern misses what is inside the subfolders.
+            WEB_STAGING="$(mktemp -d)"
+            # unzip exits 1 for warnings that still unpacked everything, so only a higher status is a failure.
+            if { unzip -q -o "$WEB_ZIP" -x 'Moonfin.Server.dll' 'SharpCompress.dll' 'meta.json' -d "$WEB_STAGING" || [ $? -eq 1 ]; } && [ -f "$WEB_STAGING/frontend/index.html" ]; then
+                # Leftovers of an earlier or other web app would ship next to these files, so the folder starts clean
+                # (theme and editor are tracked here and stay).
+                find "$FRONTEND_DIR" -mindepth 1 -maxdepth 1 ! -name theme ! -name editor ! -name .gitkeep -exec rm -rf {} +
+                find "$WEB_STAGING/frontend" -mindepth 1 -maxdepth 1 ! -name theme ! -name editor -exec cp -R {} "$FRONTEND_DIR/" \;
+                rm -rf "$WEB_STAGING"
+            else
+                rm -rf "$WEB_STAGING"
+                web_app_fail "could not unpack the web app."
+            fi
+        fi
+    fi
+fi
+if ! web_app_ready; then
+    web_app_fail "the web app (frontend/index.html, main.dart.js, version.json) is missing, so the zip would have no web app and the Moonfin button would be dead. Not building a release without it."
 fi
 
 # Optional push relay key, read from a gitignored .env at the repo root. Without
@@ -138,7 +200,7 @@ cp "$PUBLISH_DIR/Moonfin.Server.dll" "$RELEASE_DIR/"
 cp "$PUBLISH_DIR/SharpCompress.dll" "$RELEASE_DIR/"
 
 # Bundle Flutter web files next to plugin DLL for local/sideload installs
-if [ -f "$FRONTEND_DIR/index.html" ]; then
+if web_app_ready; then
     mkdir -p "$RELEASE_DIR/frontend"
     cp -R "$FRONTEND_DIR/." "$RELEASE_DIR/frontend/"
     rm -rf "$RELEASE_DIR/frontend/node_modules"
@@ -172,6 +234,20 @@ rm -f "$ROOT_DIR/$ZIP_NAME"
 cd "$RELEASE_DIR"
 zip -r "$ROOT_DIR/$ZIP_NAME" .
 cd "$ROOT_DIR"
+
+# What was just written is checked, since a wrong zip only shows after it is installed.
+if unzip -Z1 "$ROOT_DIR/$ZIP_NAME" | grep -q '\\'; then
+    echo "Error: the zip has backslashes in its entry names." >&2
+    exit 1
+fi
+if [ "${SKIP_MANIFEST_UPDATE:-0}" != "1" ]; then
+    for required in index.html main.dart.js version.json assets/AssetManifest.bin canvaskit/canvaskit.wasm; do
+        if ! unzip -Z1 "$ROOT_DIR/$ZIP_NAME" | grep -qx "frontend/$required"; then
+            echo "Error: the zip has no frontend/$required, so its web app is incomplete." >&2
+            exit 1
+        fi
+    done
+fi
 
 # Calculate MD5 checksum (cross-platform)
 if command -v md5sum &> /dev/null; then

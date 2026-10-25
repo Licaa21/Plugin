@@ -60,12 +60,80 @@ $VerifyProject = Join-Path $VerifyDir "VerifyPlugin.csproj"
 Write-Host "Building Moonfin v${Version} for Jellyfin ${TargetAbi}..."
 Write-Host "Build Time: ${BuildTimestamp}"
 
-# Validate expected Flutter web bundle location
-$FrontendIndex = Join-Path $FrontendDir "index.html"
-if (-not (Test-Path $FrontendIndex)) {
+# The Flutter web app (the Moonfin button in Jellyfin web, served at /Moonfin/Web/) is not in git. Upstream builds it
+# from Moonfin-Core and adds it to its zip by hand, so this build takes it from upstream's published release: a
+# pinned version, checked against its checksum (SHA-256; the file's MD5 is also upstream's own, E4B38A94589F515CBE975D186748E08E),
+# unchanged. Its source is https://github.com/Moonfin-Client/Moonfin-Core.
+$WebBundleUrl = "https://github.com/Moonfin-Client/Plugin/releases/download/2.4.0/Moonfin.Server-2.4.0.0.zip"
+$WebBundleSha256 = "2DADFF3D8F4F797E18B394BF9825173F9BC2F49022D6A0220EF5FB6EB4FBD35B"
+$WebBundleRequired = @("index.html", "main.dart.js", "version.json", "assets/AssetManifest.bin", "canvaskit/canvaskit.wasm")
+function Test-WebApp { -not ($WebBundleRequired | Where-Object { -not (Test-Path (Join-Path $FrontendDir $_)) }) }
+if (-not (Test-WebApp)) {
     Write-Host ""
-    Write-Host "Warning: frontend/index.html not found."
-    Write-Host "Run Mobile-Desktop/build-web-plugin.sh before packaging if you need bundled web assets."
+    Write-Host "The web app is missing or incomplete in frontend/, taking it from upstream's 2.4.0.0 release (about 66 MB)..."
+    try {
+        # A folder of the user's own, not the shared temp folder, so nobody else can swap the file after the checksum.
+        $WebCache = Join-Path $env:LOCALAPPDATA "moonfin-build"
+        New-Item -ItemType Directory -Path $WebCache -Force | Out-Null
+        $WebZip = Join-Path $WebCache "moonfin-upstream-2.4.0.0.zip"
+        if (-not (Test-Path $WebZip) -or (Get-FileHash $WebZip -Algorithm SHA256).Hash -ne $WebBundleSha256) {
+            $PreviousProgress = $ProgressPreference
+            $ProgressPreference = "SilentlyContinue"
+            # Windows PowerShell 5.1 may default to a TLS version GitHub no longer accepts.
+            [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+            try {
+                Invoke-WebRequest -Uri $WebBundleUrl -OutFile $WebZip -UseBasicParsing
+            } finally {
+                $ProgressPreference = $PreviousProgress
+            }
+            if ((Get-FileHash $WebZip -Algorithm SHA256).Hash -ne $WebBundleSha256) {
+                Remove-Item $WebZip -Force
+                throw "The downloaded upstream zip does not match its known checksum, not using it."
+            }
+        }
+        # Unpacked into a staging folder first, so a failure while unpacking leaves frontend/ as it was.
+        Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+        $Staging = Join-Path ([System.IO.Path]::GetTempPath()) ("moonfin-web-" + [guid]::NewGuid().ToString("N"))
+        $StagingRoot = $Staging + [System.IO.Path]::DirectorySeparatorChar
+        try {
+            $Extracted = 0
+            $Archive = [System.IO.Compression.ZipFile]::OpenRead($WebZip)
+            try {
+                foreach ($Entry in $Archive.Entries) {
+                    # Only the web app. The theme and editor folders are tracked here, so they stay as they are.
+                    if (-not $Entry.FullName.StartsWith("frontend/", [System.StringComparison]::Ordinal) -or $Entry.FullName.EndsWith("/") -or
+                        $Entry.FullName.StartsWith("frontend/theme/", [System.StringComparison]::Ordinal) -or
+                        $Entry.FullName.StartsWith("frontend/editor/", [System.StringComparison]::Ordinal)) { continue }
+                    $Target = [System.IO.Path]::GetFullPath((Join-Path $Staging ($Entry.FullName -replace '/', '\')))
+                    if (-not $Target.StartsWith($StagingRoot, [System.StringComparison]::OrdinalIgnoreCase)) { throw "Unsafe path in the upstream zip: $($Entry.FullName)" }
+                    New-Item -ItemType Directory -Path (Split-Path $Target -Parent) -Force | Out-Null
+                    [System.IO.Compression.ZipFileExtensions]::ExtractToFile($Entry, $Target, $true)
+                    $Extracted++
+                }
+            } finally {
+                $Archive.Dispose()
+            }
+            if ($Extracted -eq 0) { throw "The upstream zip held no frontend/ files in the layout this script expects." }
+            # Leftovers of an earlier or other web app would ship next to these files, so the folder starts clean
+            # (theme and editor are tracked here and stay).
+            Get-ChildItem $FrontendDir -Force | Where-Object { $_.Name -notin @("theme", "editor", ".gitkeep") } | Remove-Item -Recurse -Force
+            Copy-Item (Join-Path $Staging "frontend\*") $FrontendDir -Recurse -Force
+        } finally {
+            if (Test-Path $Staging) { Remove-Item $Staging -Recurse -Force }
+        }
+        Write-Host "Took $Extracted web files from upstream's zip."
+    } catch {
+        # A build that is not a release (-SkipManifestUpdate) can go on without the web app, a release cannot.
+        if (-not $SkipManifestUpdate) { throw }
+        Write-Host "Warning: could not get the web app: $($_.Exception.Message)"
+    }
+}
+if (-not (Test-WebApp)) {
+    if ($SkipManifestUpdate) {
+        Write-Host "Warning: the web app is not in frontend/, this zip has none."
+    } else {
+        throw "The web app (frontend/index.html, main.dart.js, version.json) is missing, so the zip would have no web app and the Moonfin button would be dead. Not building a release without it."
+    }
 }
 
 # Build the .NET plugin from clean Release state so the package cannot reuse an
@@ -121,7 +189,7 @@ $SharpCompressPath = Join-Path $PublishDir "SharpCompress.dll"
 Copy-Item $SharpCompressPath $ReleaseDir
 
 # Bundle Flutter web files next to plugin DLL for local/sideload installs
-if (Test-Path $FrontendIndex) {
+if (Test-WebApp) {
     $ReleaseFrontend = Join-Path $ReleaseDir "frontend"
     New-Item -ItemType Directory -Path $ReleaseFrontend -Force | Out-Null
     Copy-Item (Join-Path $FrontendDir "*") $ReleaseFrontend -Recurse -Force
@@ -162,7 +230,36 @@ $MetaPath = Join-Path $ReleaseDir "meta.json"
 $ZipName = "Moonfin.Server-${Version}.zip"
 $ZipPath = Join-Path $RootDir $ZipName
 if (Test-Path $ZipPath) { Remove-Item $ZipPath -Force }
-Compress-Archive -Path (Join-Path $ReleaseDir "*") -DestinationPath $ZipPath
+# Not Compress-Archive: Windows PowerShell writes backslashes in the entry names, which a Linux Jellyfin would
+# extract as files literally named "frontend\index.html", and the web app would not load.
+Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+$ZipStream = $null
+$ZipArchive = $null
+try {
+    $ZipStream = [System.IO.File]::Open($ZipPath, [System.IO.FileMode]::Create)
+    $ZipArchive = New-Object System.IO.Compression.ZipArchive($ZipStream, [System.IO.Compression.ZipArchiveMode]::Create)
+    foreach ($ReleaseFile in Get-ChildItem $ReleaseDir -Recurse -File -Force) {
+        $EntryName = $ReleaseFile.FullName.Substring($ReleaseDir.Length + 1) -replace '\\', '/'
+        [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($ZipArchive, $ReleaseFile.FullName, $EntryName, [System.IO.Compression.CompressionLevel]::Optimal)
+    }
+} finally {
+    if ($ZipArchive) { $ZipArchive.Dispose() }
+    if ($ZipStream) { $ZipStream.Dispose() }
+}
+
+# What was just written is checked, since a wrong zip only shows after it is installed.
+$Check = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
+try {
+    $EntryNames = @($Check.Entries | ForEach-Object { $_.FullName })
+} finally {
+    $Check.Dispose()
+}
+if (@($EntryNames | Where-Object { $_.Contains('\') }).Count -gt 0) { throw "The zip has backslashes in its entry names." }
+if (-not $SkipManifestUpdate) {
+    foreach ($Required in $WebBundleRequired) {
+        if ($EntryNames -notcontains "frontend/$Required") { throw "The zip has no frontend/$Required, so its web app is incomplete." }
+    }
+}
 
 # Calculate MD5 checksum
 $Hash = (Get-FileHash $ZipPath -Algorithm MD5).Hash.ToUpper()
