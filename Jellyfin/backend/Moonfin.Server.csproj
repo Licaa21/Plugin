@@ -8,7 +8,7 @@
          read the version from here, and the scripts pass it back with -p: switches. -->
     <MoonfinVersion>2.4.0</MoonfinVersion>
     <!-- The fork's own digit, the fourth number: 2.4.0.1, 2.4.0.2. Back to 1 when MoonfinVersion moves. -->
-    <MoonfinForkRevision>1</MoonfinForkRevision>
+    <MoonfinForkRevision>2</MoonfinForkRevision>
     <AssemblyVersion>$(MoonfinVersion).$(MoonfinForkRevision)</AssemblyVersion>
     <FileVersion>$(MoonfinVersion).$(MoonfinForkRevision)</FileVersion>
     <Version>$(MoonfinVersion).$(MoonfinForkRevision)</Version>
