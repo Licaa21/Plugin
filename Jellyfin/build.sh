@@ -34,6 +34,10 @@ if [ "${SKIP_MANIFEST_UPDATE:-0}" != "1" ] && [ -z "$CHANGELOG" ]; then
     exit 1
 fi
 if [ "${PUBLISH:-0}" = "1" ]; then
+    if [ -n "$SOURCE_URL" ]; then
+        echo "Error: PUBLISH=1: a source-url would make the manifest point somewhere the release is not." >&2
+        exit 1
+    fi
     if [ -n "$(git -C "$ROOT_DIR" status --porcelain)" ]; then
         echo "Error: PUBLISH=1: commit or remove the changes first, the zip is built from the working tree and the release is cut at the commit." >&2
         exit 1
@@ -94,6 +98,10 @@ ENV_FILE="$ROOT_DIR/../.env"
 if [ -f "$ENV_FILE" ]; then
     RELAY_APP_KEY="$(grep -E '^[[:space:]]*MOONFIN_RELAY_APP_KEY[[:space:]]*=' "$ENV_FILE" \
         | tail -1 | cut -d= -f2- | tr -d '"'"'"' \r')"
+fi
+if [ -n "$RELAY_APP_KEY" ] && [ "${PUBLISH:-0}" = "1" ]; then
+    echo "Error: PUBLISH=1: a push relay key is in .env and would be stamped into the public release. Move .env away for the release." >&2
+    exit 1
 fi
 if [ -n "$RELAY_APP_KEY" ]; then
     echo "Push relay key found, stamping it into this build."
@@ -237,7 +245,9 @@ fi
 if [ "${PUBLISH:-0}" = "1" ]; then
     gh release create "$RELEASE_TAG" "$ROOT_DIR/$ZIP_NAME" --repo Licaa21/Plugin \
         --target "$(git -C "$ROOT_DIR" rev-parse HEAD)" --title "Moonbase $VERSION (fork)" --notes "$CHANGELOG" || {
-        echo "Error: gh release create failed. The manifest entry is already written: undo it with git checkout on both manifest.json files before running again." >&2
+        # The tree was clean when PUBLISH=1 started, so the manifests can be put back as they were.
+        git -C "$ROOT_DIR" checkout -- ':/manifest.json' ':/Jellyfin/manifest.json'
+        echo "Error: gh release create failed. The manifest entries were undone, nothing was published." >&2
         exit 1
     }
     echo "Published release $RELEASE_TAG. Commit and push the manifest.json files, then merge main into implement."

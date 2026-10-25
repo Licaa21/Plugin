@@ -33,6 +33,7 @@ if (-not $SkipManifestUpdate -and [string]::IsNullOrWhiteSpace($Changelog)) {
     throw "Give the release a changelog (-Changelog ""..."") or build without a manifest entry (-SkipManifestUpdate)"
 }
 if ($Publish) {
+    if ($SourceUrl) { throw "-Publish: -SourceUrl would make the manifest point somewhere the release is not" }
     if (git -C $RootDir status --porcelain) { throw "-Publish: commit or remove the changes first, the zip is built from the working tree and the release is cut at the commit" }
     git -C $RootDir fetch --quiet origin main
     if ($LASTEXITCODE -ne 0) { throw "-Publish: could not fetch origin/main, so the check that the commit is on it cannot be made" }
@@ -89,6 +90,7 @@ if (Test-Path $EnvFile) {
     $match = Select-String -Path $EnvFile -Pattern '^\s*MOONFIN_RELAY_APP_KEY\s*=' | Select-Object -Last 1
     if ($match) { $RelayAppKey = ($match.Line -split '=', 2)[1].Trim().Trim('"').Trim("'") }
 }
+if ($RelayAppKey -and $Publish) { throw "-Publish: a push relay key is in .env and would be stamped into the public release. Move .env away for the release." }
 if ($RelayAppKey) {
     Write-Host "Push relay key found, stamping it into this build."
 } else {
@@ -225,7 +227,11 @@ if ($Publish) {
     & $Gh release create $ReleaseTag $ZipPath --repo Licaa21/Plugin --target (git -C $RootDir rev-parse HEAD) --title "Moonbase $Version (fork)" --notes-file $NotesFile
     $GhExit = $LASTEXITCODE
     Remove-Item $NotesFile -Force
-    if ($GhExit -ne 0) { throw "gh release create failed. The manifest entry is already written: undo it with git checkout on both manifest.json files before running again." }
+    if ($GhExit -ne 0) {
+        # The tree was clean when -Publish started, so the manifests can be put back as they were.
+        git -C $RootDir checkout -- ':/manifest.json' ':/Jellyfin/manifest.json'
+        throw "gh release create failed. The manifest entries were undone, nothing was published."
+    }
     Write-Host "Published release $ReleaseTag. Commit and push the manifest.json files, then merge main into implement."
 }
 

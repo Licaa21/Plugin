@@ -240,10 +240,15 @@ public sealed class TmdbProxyService
         {
             lock (_items)
             {
-                if (_items.TryGetValue(key, out var hit) && _now() - hit.At < CacheTtl)
+                if (_items.TryGetValue(key, out var hit))
                 {
-                    json = hit.Json;
-                    return true;
+                    if (_now() - hit.At < CacheTtl)
+                    {
+                        json = hit.Json;
+                        return true;
+                    }
+
+                    _items.Remove(key);
                 }
             }
 
