@@ -11,7 +11,7 @@ The fork replaces the upstream plugin in place: same GUID (`8c5d0e91-4f2a-4b6d-9
 The rules that matter most, each explained further down:
 
 1. **Ask before every change.** Questions come first, with options and a recommendation. See "Working rules".
-2. **Before any change, bring upstream in first, then work.** Fetch upstream, merge it into `main` (fix conflicts there, ask the user about anything unclear, check what upstream removed), build, test and push `main`; only then merge `origin/main` into `implement` and start the change. Every change then starts on what upstream added. (The user's rule of 2026-10-25; the repository has no daily branch, so the order is upstream, `main`, `implement`.)
+2. **Before any change, bring upstream in first, then work.** Fetch upstream, merge it into `main` (fix conflicts there, ask the user about anything unclear, check what upstream removed), build, test and push `main`; only then merge `origin/main` into `implement` and start the change. Every change then starts on what upstream added. If upstream has nothing new, say so and go on. If something waits on the user's answer (a conflict, a removal), stop and ask: nothing goes into `implement` until `main` is pushed. (The user's rule of 2026-10-25; the repository has no daily branch, so the order is upstream, `main`, `implement`. The sessions work from `implement/`, where this file is.)
 3. **Work goes on `implement`.** `main` only receives merges (upstream, then `implement`), the README, and the release commits that add a version to `manifest.json`.
 4. **Build and release only from `main/`.**
 5. **A change is done only when** it builds, the tests pass, the code review found nothing real, and this file and the README are up to date.
@@ -37,7 +37,7 @@ This file is committed on `implement` and is the copy to edit. It is not copied 
 
 ## How changes flow
 
-0. Before any change, at the start of each piece of work: in `main/`, `git fetch --all`, `git merge upstream/master` (step 1 below, with the merge checklist, even when upstream only added one commit), push `main`; then in `implement/`, `git merge origin/main`. Only then start the change.
+0. Before any change, at the start of each piece of work: in `main/`, `git fetch --all`, `git merge upstream/master` (step 1 below, with the whole merge checklist, which includes build and test, even when upstream only added one commit), push `main`; then in `implement/`, `git merge origin/main` (checklist step 6). Only then start the change.
 1. Upstream moves. In `main/`: `git fetch upstream`, then `git merge upstream/master`. A conflict is fixed in `main/` and committed there (see the merge checklist), then `implement` takes it with `git merge origin/main`, so the resolution is not redone. `main` is never rewritten.
 2. The fork's changes are committed on `implement`, in `implement/`, and pushed.
 3. To release, in `main/`: `git merge origin/implement`, run the checks, and cut the release (see "Releases").
@@ -62,7 +62,7 @@ This file is committed on `implement` and is the copy to edit. It is not copied 
 
 ### Checking a change
 
-- From `Jellyfin/`: `dotnet build backend/Moonfin.Server.csproj -c Release` and `dotnet test tests/Moonfin.Server.Tests`. The baseline on 2026-10-24 was 835 tests, all passing. After merging upstream up to 1c86196 (2026-10-25) it is 957 on `main`; `implement` has 1043, with the TMDB routes' 71 (`TmdbProxyServiceTests`) and the client defaults' 15 (`ClientDefaultsTests`, and `ClientDefaultsPageScriptTests`, which runs the page's save logic under node and does nothing where node is missing), with the .NET 8 SDK (the PC also has 10.0, which `build.sh` and CI do not use).
+- From `Jellyfin/`: `dotnet build backend/Moonfin.Server.csproj -c Release` and `dotnet test tests/Moonfin.Server.Tests`. The suite grows with the work: 835 tests on 2026-10-24, 1043 on `implement` on 2026-10-25 (the TMDB routes' tests in `TmdbProxyServiceTests`, the client defaults' in `ClientDefaultsTests` and `ClientDefaultsPageScriptTests`, which runs the page's save logic under node and fails on CI, but does nothing on a PC without it). Compare with a fresh `dotnet test` run before the work, not with these numbers, with the .NET 8 SDK (the PC also has 10.0, which `build.sh` and CI do not use).
 - After every fix, feature or addition, and after every merge from upstream, run the code review (`/code-review`, or a read-only review agent given the diff and the context), and run it more than once: fix what it finds, then review again, until a pass finds nothing real. Do this before reporting the work as done and before a release. It is part of the work, not an extra to offer afterwards: if it was not run, the work is not done. The order before every report: build, tests, code review (two passes or more), `verification-before-completion`.
 - Every change ships with a test for what can be tested, added in the same commit (the test project is xUnit; fake TMDB with a `HttpMessageHandler`). What needs the real server (a real TMDB key, the Moonfin client talking to it) is said so in the report instead.
 
