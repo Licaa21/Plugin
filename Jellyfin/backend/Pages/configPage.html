@@ -2423,6 +2423,15 @@
                                 </select>
                             </div>
                             <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultMediaBarRowPeek">Peek Home Rows</label>
+                                <select id="DefaultMediaBarRowPeek" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                                <div class="fieldDescription">Show the top half of the first home row along the bottom of the media bar on TV and desktop. The Banner style ignores it.</div>
+                            </div>
+                            <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultMediaBarTrailerPreview">Trailer Preview</label>
                                 <select id="DefaultMediaBarTrailerPreview" is="emby-select">
                                     <option value="">Not set (user decides)</option>
@@ -4268,7 +4277,7 @@
                 { parent: 'DefaultDisplaySinceYouWatchedRows', fields: ['DefaultSinceYouWatchedSource', 'DefaultSinceYouWatchedSourceType', 'DefaultSinceYouWatchedSourceItem', 'DefaultSinceYouWatched1Enabled', 'DefaultSinceYouWatched2Enabled', 'DefaultSinceYouWatched3Enabled', 'DefaultSinceYouWatched4Enabled', 'DefaultSinceYouWatched5Enabled'] },
                 { parent: 'DefaultSinceYouWatchedSource', off: ['online'], fields: ['DefaultSinceYouWatchedIncludeWatched'] },
                 { parent: 'DefaultDisplayStudiosRows', fields: ['DefaultStudiosRowSortBy', 'DefaultStudiosRowSortOrder'] },
-                { parent: 'DefaultMediaBarMode', off: ['off'], fields: ['DefaultMediaBarContentType', 'DefaultMediaBarItemCount', 'DefaultMediaBarSourceType', 'DefaultCollectionPickerSection', 'DefaultLibraryPickerSection', 'DefaultGenrePicker', 'DefaultMediaBarAutoAdvance', 'DefaultMediaBarOpacity', 'DefaultMediaBarOverlayColor', 'DefaultMediaBarTrailerPreview'] },
+                { parent: 'DefaultMediaBarMode', off: ['off'], fields: ['DefaultMediaBarContentType', 'DefaultMediaBarItemCount', 'DefaultMediaBarSourceType', 'DefaultCollectionPickerSection', 'DefaultLibraryPickerSection', 'DefaultGenrePicker', 'DefaultMediaBarAutoAdvance', 'DefaultMediaBarOpacity', 'DefaultMediaBarOverlayColor', 'DefaultMediaBarRowPeek', 'DefaultMediaBarTrailerPreview'] },
                 { parent: 'DefaultMediaBarAutoAdvance', fields: ['DefaultMediaBarIntervalMs'] },
                 { parent: 'DefaultMediaBarTrailerPreview', fields: ['DefaultMediaBarTrailerAudio', 'DefaultTrailerVolume', 'DefaultMediaBarTrailerCaptions'] },
                 { parent: 'DefaultHomeRowsStyle', off: ['v1'], fields: ['DefaultModernCardsOnMyMediaRow', 'DefaultModernHomeRowsPadding'] },
@@ -7474,6 +7483,7 @@
                     setSelectValue('#DefaultMediaBarItemCount', defaults.mediaBarItemCount, 'Configured item count');
                     setNullableBoolSelect('#DefaultMediaBarAutoAdvance', defaults.mediaBarAutoAdvance);
                     setSelectValue('#DefaultMediaBarIntervalMs', defaults.mediaBarIntervalMs, 'Configured interval');
+                    setNullableBoolSelect('#DefaultMediaBarRowPeek', defaults.mediaBarRowPeek);
                     setNullableBoolSelect('#DefaultMediaBarTrailerPreview', defaults.mediaBarTrailerPreview);
                     setNullableBoolSelect('#DefaultMediaBarTrailerAudio', defaults.mediaBarTrailerAudio);
                     bindNullableRangeInput('#DefaultTrailerVolume', '%');
@@ -8369,6 +8379,7 @@
                         config.DefaultUserSettings.mediaBarItemCount = getNullableIntInput('#DefaultMediaBarItemCount');
                         config.DefaultUserSettings.mediaBarAutoAdvance = getNullableBoolSelect('#DefaultMediaBarAutoAdvance');
                         config.DefaultUserSettings.mediaBarIntervalMs = getNullableIntInput('#DefaultMediaBarIntervalMs');
+                        config.DefaultUserSettings.mediaBarRowPeek = getNullableBoolSelect('#DefaultMediaBarRowPeek');
                         config.DefaultUserSettings.mediaBarTrailerPreview = getNullableBoolSelect('#DefaultMediaBarTrailerPreview');
                         config.DefaultUserSettings.mediaBarTrailerAudio = getNullableBoolSelect('#DefaultMediaBarTrailerAudio');
                         config.DefaultUserSettings.trailerVolume = getNullableRangeInput('#DefaultTrailerVolume');
