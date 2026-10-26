@@ -175,6 +175,9 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("mediaBarIntervalMs")]
     public int? MediaBarIntervalMs { get; set; }
 
+    [JsonPropertyName("mediaBarRowPeek")]
+    public bool? MediaBarRowPeek { get; set; }
+
     [JsonPropertyName("mediaBarTrailerPreview")]
     public bool? MediaBarTrailerPreview { get; set; }
 

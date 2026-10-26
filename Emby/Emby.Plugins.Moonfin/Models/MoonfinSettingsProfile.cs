@@ -51,6 +51,7 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("mediaBarOverlayColor")] public string? MediaBarOverlayColor { get; set; }
         [JsonPropertyName("mediaBarAutoAdvance")] public bool? MediaBarAutoAdvance { get; set; }
         [JsonPropertyName("mediaBarIntervalMs")] public int? MediaBarIntervalMs { get; set; }
+        [JsonPropertyName("mediaBarRowPeek")] public bool? MediaBarRowPeek { get; set; }
         [JsonPropertyName("mediaBarTrailerPreview")] public bool? MediaBarTrailerPreview { get; set; }
         [JsonPropertyName("mediaBarTrailerAudio")] public bool? MediaBarTrailerAudio { get; set; }
         [JsonPropertyName("trailerVolume")] public int? TrailerVolume { get; set; }
