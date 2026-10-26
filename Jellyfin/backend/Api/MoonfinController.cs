@@ -138,6 +138,7 @@ public class MoonfinController : ControllerBase
             TmdbThumbsSupported = true,
             TmdbPersonLinksSupported = true,
             TmdbReviewsSupported = true,
+            TmdbDetailsSupported = true,
             MessagesSupported = true,
             PinSupported = true,
             IncompleteRecordingsSupported = config?.LiveTvDetectIncompleteRecordings ?? true,
@@ -1570,6 +1571,13 @@ public class MoonfinPingResponse
     /// </summary>
     [JsonPropertyName("tmdbReviewsSupported")]
     public bool? TmdbReviewsSupported { get; set; }
+
+    /// <summary>
+    /// True when this plugin has the Tmdb/Details endpoint. Older plugins leave it out, so the
+    /// app shows an outside title with only what its list carried.
+    /// </summary>
+    [JsonPropertyName("tmdbDetailsSupported")]
+    public bool? TmdbDetailsSupported { get; set; }
 
     /// <summary>
     /// True when this plugin has the admin messages endpoints. Older plugins leave it out, so

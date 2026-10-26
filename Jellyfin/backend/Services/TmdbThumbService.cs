@@ -2,13 +2,14 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Text.Json;
 using MediaBrowser.Controller.Configuration;
+using Moonfin.Tmdb;
 
 namespace Moonfin.Server.Services;
 
 /// <summary>
-/// Picks the wide image a client shows for a movie or show the server doesn't have. It prefers
+/// Reads what a client shows for a movie or show the server doesn't have. The wide image prefers
 /// a backdrop in the metadata language, since those carry the title the way a library thumb
-/// does, and falls back to the main backdrop.
+/// does, and falls back to the main backdrop. The details come from the same call.
 /// </summary>
 public class TmdbThumbService
 {
@@ -17,7 +18,7 @@ public class TmdbThumbService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IServerConfigurationManager _configManager;
     private readonly TmdbRatingService _ratings;
-    private readonly ConcurrentDictionary<string, (string? Path, DateTimeOffset CachedAt)> _cache = new();
+    private readonly ConcurrentDictionary<string, (Entry? Value, DateTimeOffset CachedAt)> _cache = new();
 
     public TmdbThumbService(
         IHttpClientFactory httpClientFactory,
@@ -34,6 +35,20 @@ public class TmdbThumbService
     /// only used when there is no TMDB id.
     /// </summary>
     public async Task<string?> GetPathAsync(string mediaType, long? tmdbId, string? imdbId, string apiKey, CancellationToken cancellationToken)
+    {
+        return (await GetEntryAsync(mediaType, tmdbId, imdbId, apiKey, cancellationToken).ConfigureAwait(false))?.ThumbPath;
+    }
+
+    /// <summary>
+    /// The overview, score, logo and trailer TMDB holds for the title in the server's metadata
+    /// language, or null when TMDB doesn't know it.
+    /// </summary>
+    public async Task<TmdbTitleDetails?> GetDetailsAsync(string mediaType, long? tmdbId, string? imdbId, string apiKey, CancellationToken cancellationToken)
+    {
+        return (await GetEntryAsync(mediaType, tmdbId, imdbId, apiKey, cancellationToken).ConfigureAwait(false))?.Details;
+    }
+
+    private async Task<Entry?> GetEntryAsync(string mediaType, long? tmdbId, string? imdbId, string apiKey, CancellationToken cancellationToken)
     {
         if (tmdbId == null && !string.IsNullOrWhiteSpace(imdbId))
         {
@@ -55,11 +70,11 @@ public class TmdbThumbService
         var key = $"{mediaType}:{tmdbId}";
         if (_cache.TryGetValue(key, out var cached) && DateTimeOffset.UtcNow - cached.CachedAt < CacheTtl)
         {
-            return cached.Path;
+            return cached.Value;
         }
 
         var language = MetadataLanguage(_configManager.Configuration.PreferredMetadataLanguage);
-        var url = $"https://api.themoviedb.org/3/{mediaType}/{tmdbId}?append_to_response=images&include_image_language={language},null";
+        var url = $"https://api.themoviedb.org/3/{mediaType}/{tmdbId}?{TmdbTitleDetails.Query(language)}";
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
         TmdbRequestHelper.ApplyAuth(request, apiKey);
 
@@ -79,9 +94,9 @@ public class TmdbThumbService
             }
 
             using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false));
-            var path = PickPath(doc.RootElement, language);
-            _cache[key] = (path, DateTimeOffset.UtcNow);
-            return path;
+            var entry = new Entry(PickPath(doc.RootElement, language), TmdbTitleDetails.Parse(doc.RootElement, language));
+            _cache[key] = (entry, DateTimeOffset.UtcNow);
+            return entry;
         }
         catch (HttpRequestException)
         {
@@ -125,4 +140,6 @@ public class TmdbThumbService
             ? path.GetString()
             : null;
     }
+
+    private sealed record Entry(string? ThumbPath, TmdbTitleDetails Details);
 }

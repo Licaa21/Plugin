@@ -584,6 +584,27 @@ namespace Emby.Plugins.Moonfin.Api
             return null!;
         }
 
+        public async Task<object?> Get(GetTmdbDetailsRequest request)
+        {
+            var apiKey = await GetUserTmdbApiKey().ConfigureAwait(false);
+            var thumbs = Plugin.Instance?.TmdbThumbs;
+            if (string.IsNullOrWhiteSpace(apiKey) || thumbs == null)
+            {
+                Request.Response.StatusCode = 404;
+                return null!;
+            }
+
+            var mediaType = string.Equals(request.Type, "tv", StringComparison.OrdinalIgnoreCase) ? "tv" : "movie";
+            var details = await thumbs.GetDetailsAsync(mediaType, request.TmdbId, request.ImdbId, apiKey!, System.Threading.CancellationToken.None).ConfigureAwait(false);
+            if (details == null)
+            {
+                Request.Response.StatusCode = 404;
+                return null!;
+            }
+
+            return Json(details);
+        }
+
         private async Task<string?> GetUserTmdbApiKey()
         {
             var userId = AuthHelpers.GetCurrentUserId(Request, _authContext);

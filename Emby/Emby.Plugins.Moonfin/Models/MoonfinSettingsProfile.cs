@@ -56,12 +56,14 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("mediaBarTrailerAudio")] public bool? MediaBarTrailerAudio { get; set; }
         [JsonPropertyName("trailerVolume")] public int? TrailerVolume { get; set; }
         [JsonPropertyName("episodePreviewEnabled")] public bool? EpisodePreviewEnabled { get; set; }
+        [JsonPropertyName("mediaPreviewMode")] public string? MediaPreviewMode { get; set; }
         [JsonPropertyName("previewAudioEnabled")] public bool? PreviewAudioEnabled { get; set; }
         [JsonPropertyName("previewVolume")] public int? PreviewVolume { get; set; }
         [JsonPropertyName("mediaBarSourceType")] public string? MediaBarSourceType { get; set; }
         [JsonPropertyName("mediaBarCollectionIds")] public List<string>? MediaBarCollectionIds { get; set; }
         [JsonPropertyName("mediaBarLibraryIds")] public List<string>? MediaBarLibraryIds { get; set; }
         [JsonPropertyName("mediaBarExcludedGenres")] public List<string>? MediaBarExcludedGenres { get; set; }
+        [JsonPropertyName("mediaBarExternalLists")] public List<string>? MediaBarExternalLists { get; set; }
         [JsonPropertyName("seasonalSurprise")] public string? SeasonalSurprise { get; set; }
         [JsonPropertyName("seasonalDensity")] public string? SeasonalDensity { get; set; }
         [JsonPropertyName("seasonalRowEnabled")] public bool? SeasonalRowEnabled { get; set; }
@@ -311,6 +313,12 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("playlistsRowSortOrder")] public string? PlaylistsRowSortOrder { get; set; }
         [JsonPropertyName("audioRowsSortBy")] public string? AudioRowsSortBy { get; set; }
         [JsonPropertyName("audioRowsSortOrder")] public string? AudioRowsSortOrder { get; set; }
+        [JsonPropertyName("imdbRowsSortBy")] public string? ImdbRowsSortBy { get; set; }
+        [JsonPropertyName("imdbRowsSortOrder")] public string? ImdbRowsSortOrder { get; set; }
+        [JsonPropertyName("tmdbRowsSortBy")] public string? TmdbRowsSortBy { get; set; }
+        [JsonPropertyName("tmdbRowsSortOrder")] public string? TmdbRowsSortOrder { get; set; }
+        [JsonPropertyName("seerrRowsSortBy")] public string? SeerrRowsSortBy { get; set; }
+        [JsonPropertyName("seerrRowsSortOrder")] public string? SeerrRowsSortOrder { get; set; }
         [JsonPropertyName("displayStudiosRows")] public bool? DisplayStudiosRows { get; set; }
         [JsonPropertyName("studiosRowSortBy")] public string? StudiosRowSortBy { get; set; }
         [JsonPropertyName("studiosRowSortOrder")] public string? StudiosRowSortOrder { get; set; }

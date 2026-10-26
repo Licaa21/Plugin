@@ -190,6 +190,13 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("episodePreviewEnabled")]
     public bool? EpisodePreviewEnabled { get; set; }
 
+    /// <summary>
+    /// What a focused home card plays when EpisodePreviewEnabled is on: media for a clip of the
+    /// title, trailer for its trailer. Off is written along with the switch turned off.
+    /// </summary>
+    [JsonPropertyName("mediaPreviewMode")]
+    public string? MediaPreviewMode { get; set; }
+
     [JsonPropertyName("previewAudioEnabled")]
     public bool? PreviewAudioEnabled { get; set; }
 
@@ -207,6 +214,12 @@ public class MoonfinSettingsProfile
 
     [JsonPropertyName("mediaBarExcludedGenres")]
     public List<string>? MediaBarExcludedGenres { get; set; }
+
+    /// <summary>
+    /// The outside lists the media bar also draws from, by the home row id each list has.
+    /// </summary>
+    [JsonPropertyName("mediaBarExternalLists")]
+    public List<string>? MediaBarExternalLists { get; set; }
 
     [JsonPropertyName("seasonalSurprise")]
     public string? SeasonalSurprise { get; set; }
@@ -877,6 +890,24 @@ public class MoonfinSettingsProfile
 
     [JsonPropertyName("audioRowsSortOrder")]
     public string? AudioRowsSortOrder { get; set; }
+
+    [JsonPropertyName("imdbRowsSortBy")]
+    public string? ImdbRowsSortBy { get; set; }
+
+    [JsonPropertyName("imdbRowsSortOrder")]
+    public string? ImdbRowsSortOrder { get; set; }
+
+    [JsonPropertyName("tmdbRowsSortBy")]
+    public string? TmdbRowsSortBy { get; set; }
+
+    [JsonPropertyName("tmdbRowsSortOrder")]
+    public string? TmdbRowsSortOrder { get; set; }
+
+    [JsonPropertyName("seerrRowsSortBy")]
+    public string? SeerrRowsSortBy { get; set; }
+
+    [JsonPropertyName("seerrRowsSortOrder")]
+    public string? SeerrRowsSortOrder { get; set; }
 
     [JsonPropertyName("displayStudiosRows")]
     public bool? DisplayStudiosRows { get; set; }
