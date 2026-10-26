@@ -580,7 +580,7 @@ namespace Emby.Plugins.Moonfin.Api
             var imageScheme = string.Equals(request.Scheme, "http", StringComparison.OrdinalIgnoreCase) ? "http" : "https";
             Request.Response.StatusCode = 302;
             Request.Response.AddHeader("Cache-Control", "public,max-age=86400");
-            Request.Response.AddHeader("Location", imageScheme + "://image.tmdb.org/t/p/w1280" + path);
+            Request.Response.AddHeader("Location", imageScheme + "://image.tmdb.org/t/p/" + TmdbImageSize.Choose(request.Size) + path);
             return null!;
         }
 

@@ -70,6 +70,9 @@ namespace Emby.Plugins.Moonfin.Api
 
         /// <summary>http for a client that can't follow a redirect from http to https, like a Roku on a plain http server.</summary>
         public string? Scheme { get; set; }
+
+        /// <summary>w300, w780 or w1280 (the default); anything else is w1280.</summary>
+        public string? Size { get; set; }
     }
 
     [Route("/Moonfin/Tmdb/Details", "GET")]

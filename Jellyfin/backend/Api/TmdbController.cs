@@ -656,6 +656,7 @@ public class TmdbController : ControllerBase
     /// <param name="tmdbId">TMDB id of the title.</param>
     /// <param name="imdbId">IMDb id, used when there is no TMDB id.</param>
     /// <param name="scheme">http for a client that can't follow a redirect from http to https, like a Roku on a plain http server.</param>
+    /// <param name="size">w300, w780 or w1280 (the default); anything else is w1280.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     [HttpGet("Thumb")]
     [Authorize]
@@ -666,6 +667,7 @@ public class TmdbController : ControllerBase
         [FromQuery] long? tmdbId,
         [FromQuery] string? imdbId,
         [FromQuery] string? scheme,
+        [FromQuery] string? size,
         CancellationToken cancellationToken)
     {
         var apiKey = await GetUserApiKey();
@@ -683,7 +685,7 @@ public class TmdbController : ControllerBase
 
         var imageScheme = string.Equals(scheme, "http", StringComparison.OrdinalIgnoreCase) ? "http" : "https";
         Response.Headers["Cache-Control"] = "public,max-age=86400";
-        return Redirect($"{imageScheme}://image.tmdb.org/t/p/w1280{path}");
+        return Redirect($"{imageScheme}://image.tmdb.org/t/p/{TmdbImageSize.Choose(size)}{path}");
     }
 
     /// <summary>
