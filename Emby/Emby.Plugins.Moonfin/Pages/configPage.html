@@ -1284,6 +1284,16 @@
                             </div>
                         </div>
                         <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="AnimeAudioLabelStyle">Audio pill wording</label>
+                            <select is="emby-select" id="AnimeAudioLabelStyle">
+                                <option value="full">Full: Subbed / Dubbed / Subbed/Dubbed</option>
+                                <option value="short">Short: Sub / Dub / Sub/Dub</option>
+                            </select>
+                            <div class="fieldDescription">
+                                Full wording is longer while on Phones and Tablets a shorter label fits better.
+                            </div>
+                        </div>
+                        <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="AnimeMarkerPlacement">Where to put the pills</label>
                             <select is="emby-select" id="AnimeMarkerPlacement">
                                 <option value="below">Below the runtime</option>
@@ -2636,12 +2646,14 @@
                                 </select>
                             </div>
                             <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultEpisodePreviewEnabled">Media Preview</label>
-                                <select id="DefaultEpisodePreviewEnabled" is="emby-select">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultMediaPreviewMode">Media Preview</label>
+                                <select id="DefaultMediaPreviewMode" is="emby-select">
                                     <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
+                                    <option value="off">Off</option>
+                                    <option value="media">Media Preview</option>
+                                    <option value="trailer">Trailer Preview</option>
                                 </select>
+                                <div class="fieldDescription">What a focused home card plays after a moment: a clip of the title or its trailer.</div>
                             </div>
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultPreviewAudioEnabled">Preview Audio</label>
@@ -2665,6 +2677,18 @@
                             </div>
                             <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">External Sources</h4>
                             <div class="fieldDescription" style="margin-bottom:0.75em;">Chart rows the home sections page can offer. IMDb rows need IMDb Charts enabled above, TMDB rows need a TMDB API key.</div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultImdbRowsSortBy">IMDb Rows Sorting</label>
+                                <select id="DefaultImdbRowsSortBy" is="emby-select"></select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultImdbRowsSortOrder">IMDb Rows Sort Direction</label>
+                                <select id="DefaultImdbRowsSortOrder" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="ascending">Ascending</option>
+                                    <option value="descending">Descending</option>
+                                </select>
+                            </div>
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultImdbTop250MoviesEnabled">IMDb Top 250 Movies</label>
                                 <select id="DefaultImdbTop250MoviesEnabled" is="emby-select">
@@ -2711,6 +2735,18 @@
                                     <option value="">Not set (user decides)</option>
                                     <option value="true">Yes</option>
                                     <option value="false">No</option>
+                                </select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbRowsSortBy">TMDB Rows Sorting</label>
+                                <select id="DefaultTmdbRowsSortBy" is="emby-select"></select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbRowsSortOrder">TMDB Rows Sort Direction</label>
+                                <select id="DefaultTmdbRowsSortOrder" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="ascending">Ascending</option>
+                                    <option value="descending">Descending</option>
                                 </select>
                             </div>
                             <div class="inputContainer">
@@ -3611,6 +3647,18 @@
                                     <option value="">Not set (user decides)</option>
                                     <option value="true">Yes</option>
                                     <option value="false">No</option>
+                                </select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultSeerrRowsSortBy">Seerr Rows Sorting</label>
+                                <select id="DefaultSeerrRowsSortBy" is="emby-select"></select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultSeerrRowsSortOrder">Seerr Rows Sort Direction</label>
+                                <select id="DefaultSeerrRowsSortOrder" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="ascending">Ascending</option>
+                                    <option value="descending">Descending</option>
                                 </select>
                             </div>
                             <div class="inputContainer">

@@ -85,6 +85,9 @@ namespace Emby.Plugins.Moonfin.Api
                 tmdbPersonLinksSupported = true,
                 // Older plugins leave this out, so the app hides the Reviews section.
                 tmdbReviewsSupported = true,
+                // Older plugins leave this out, so the app shows an outside title with only what
+                // its list carried.
+                tmdbDetailsSupported = true,
                 // Older plugins leave this out, which the app reads as false and hides the
                 // messages button.
                 messagesSupported = true,

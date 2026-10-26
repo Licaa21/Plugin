@@ -20,7 +20,7 @@
                 margin: 0;
             }
 
-            #MoonfinConfigPage #AnimeMarkersSection .checkboxContainer > label > span {
+            #MoonfinConfigPage #AnimeMarkersSection .checkboxContainer > label > span:not(.checkboxOutline) {
                 flex: 1 1 auto;
                 white-space: normal;
                 line-height: 1.4;
@@ -1166,6 +1166,16 @@
                                 A file holding the Japanese audio <em>and</em> a dub can be watched either way, so it
                                 shows as <strong>Subbed/Dubbed</strong> rather than just Dubbed. Leave off for the
                                 shorter label.
+                            </div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="AnimeAudioLabelStyle">Audio pill wording</label>
+                            <select is="emby-select" id="AnimeAudioLabelStyle">
+                                <option value="full">Full: Subbed / Dubbed / Subbed/Dubbed</option>
+                                <option value="short">Short: Sub / Dub / Sub/Dub</option>
+                            </select>
+                            <div class="fieldDescription">
+                                Full wording is longer while on Phones and Tablets a shorter label fits better.
                             </div>
                         </div>
                         <div class="inputContainer">
@@ -2587,12 +2597,14 @@
                                 </select>
                             </div>
                             <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultEpisodePreviewEnabled">Media Preview</label>
-                                <select id="DefaultEpisodePreviewEnabled" is="emby-select">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultMediaPreviewMode">Media Preview</label>
+                                <select id="DefaultMediaPreviewMode" is="emby-select">
                                     <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
+                                    <option value="off">Off</option>
+                                    <option value="media">Media Preview</option>
+                                    <option value="trailer">Trailer Preview</option>
                                 </select>
+                                <div class="fieldDescription">What a focused home card plays after a moment: a clip of the title or its trailer.</div>
                             </div>
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultPreviewAudioEnabled">Preview Audio</label>
@@ -2616,6 +2628,18 @@
                             </div>
                             <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">External Sources</h4>
                             <div class="fieldDescription" style="margin-bottom:0.75em;">Chart rows the home sections page can offer. IMDb rows need IMDb Charts enabled above, TMDB rows need a TMDB API key.</div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultImdbRowsSortBy">IMDb Rows Sorting</label>
+                                <select id="DefaultImdbRowsSortBy" is="emby-select"></select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultImdbRowsSortOrder">IMDb Rows Sort Direction</label>
+                                <select id="DefaultImdbRowsSortOrder" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="ascending">Ascending</option>
+                                    <option value="descending">Descending</option>
+                                </select>
+                            </div>
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultImdbTop250MoviesEnabled">IMDb Top 250 Movies</label>
                                 <select id="DefaultImdbTop250MoviesEnabled" is="emby-select">
@@ -2662,6 +2686,18 @@
                                     <option value="">Not set (user decides)</option>
                                     <option value="true">Yes</option>
                                     <option value="false">No</option>
+                                </select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbRowsSortBy">TMDB Rows Sorting</label>
+                                <select id="DefaultTmdbRowsSortBy" is="emby-select"></select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbRowsSortOrder">TMDB Rows Sort Direction</label>
+                                <select id="DefaultTmdbRowsSortOrder" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="ascending">Ascending</option>
+                                    <option value="descending">Descending</option>
                                 </select>
                             </div>
                             <div class="inputContainer">
@@ -3565,6 +3601,18 @@
                                 </select>
                             </div>
                             <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultSeerrRowsSortBy">Seerr Rows Sorting</label>
+                                <select id="DefaultSeerrRowsSortBy" is="emby-select"></select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultSeerrRowsSortOrder">Seerr Rows Sort Direction</label>
+                                <select id="DefaultSeerrRowsSortOrder" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="ascending">Ascending</option>
+                                    <option value="descending">Descending</option>
+                                </select>
+                            </div>
+                            <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused">Seerr Discovery Rows &amp; Order</label>
                                 <div class="fieldDescription">Enable rows to see on Seerr mainpage and use the arrows to set their order.</div>
                                 <div id="DefaultSeerrDiscoveryList" style="max-height:260px;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:6px;margin-top:6px;"></div>
@@ -4250,14 +4298,14 @@
             // hides anything. A hidden parent counts as off and hides its own fields too, so a rule
             // has to come after the rule that hides its parent.
             var FIELD_DEPENDENCIES = [
-                { parent: 'SeerrEnabled', fields: ['SeerrUrl', 'SeerrDisplayName', 'PublicServerUrl', 'DefaultShowSeerrButton', 'DefaultSeerrHeading', 'ClientDefault_searchDefaultTab', 'DefaultSeerrBlockNsfw', 'DefaultSeerrShowMissingCollectionItems', 'DefaultShowSeerrAvailabilityBadges', 'DefaultSeerrDiscoveryList', 'DefaultEnableRadarrCalendar', 'DefaultEnableSonarrCalendar'] },
+                { parent: 'SeerrEnabled', fields: ['SeerrUrl', 'SeerrDisplayName', 'PublicServerUrl', 'DefaultShowSeerrButton', 'DefaultSeerrHeading', 'ClientDefault_searchDefaultTab', 'DefaultSeerrBlockNsfw', 'DefaultSeerrShowMissingCollectionItems', 'DefaultShowSeerrAvailabilityBadges', 'DefaultSeerrDiscoveryList', 'DefaultEnableRadarrCalendar', 'DefaultEnableSonarrCalendar', 'DefaultSeerrRowsSortBy', 'DefaultSeerrRowsSortOrder'] },
                 { parent: 'SeerrEnabled', off: ['true'], fields: ['DefaultSeerrOffNote'] },
                 { parent: 'DefaultEnableRadarrCalendar', fields: ['DefaultRadarrCalendarShowCinema', 'DefaultRadarrCalendarShowDigital', 'DefaultRadarrCalendarShowPhysical', 'DefaultRadarrCalendarShowDate', 'DefaultMergeRadarrSonarrCalendars'] },
                 { parent: 'DefaultEnableSonarrCalendar', fields: ['DefaultSonarrCalendarShowDate', 'DefaultSonarrCalendarShowEpisodeInfo', 'DefaultMergeRadarrSonarrCalendars'] },
                 { parent: 'MdblistOfficialListsEnabled', fields: ['MdblistOfficialListsMaxItems'] },
                 { parent: 'LiveTvDetectIncompleteRecordings', fields: ['LiveTvAutoRecordCompleteShowing', 'LiveTvDeleteIncompleteCopies', 'LiveTvIncompleteThresholdPercent'] },
                 { parent: 'AnimeMarkersEnabled', fields: ['AnimeMarkerRecapLookup', 'AnimeMarkerShowFiller', 'AnimeMarkerMaxAgeDays'] },
-                { parent: 'AnimeAudioMarkersEnabled', fields: ['AnimeAudioMarkersMovies', 'AnimeAudioSeparateDualAudio'] },
+                { parent: 'AnimeAudioMarkersEnabled', fields: ['AnimeAudioMarkersMovies', 'AnimeAudioSeparateDualAudio', 'AnimeAudioLabelStyle'] },
                 { parent: ['AnimeMarkersEnabled', 'AnimeAudioMarkersEnabled'], fields: ['AnimeMarkerLibraryPicker', 'AnimeAudioTrustSelectedLibraries', 'AnimeMarkerPlacement', 'AnimeMarkerDiagBtn', 'AnimeMarkerPreviewName', 'AnimeMarkerVerboseLogging', 'AnimeMarkerLogBtn'] },
                 { parent: 'GamesEnabled', fields: ['GameCoresStatus', 'GameCoresFile', 'GameLibraryPicker', 'GamesRommUrl', 'GamesRommToken', 'GamesRommLibraryId', 'GamesRommTestBtn'] },
                 { parent: 'DefaultNavbarPosition', off: ['top', 'left'], fields: ['DefaultBottomNavbarStyle', 'DefaultBottomNavbarTab1'] },
@@ -4284,7 +4332,7 @@
                 { parent: 'DefaultHomeRowsStyle', off: ['v2'], fields: ['DefaultClassicHomeRowsPadding', 'DefaultHomeRowInfoOverlay'] },
                 { parent: 'DefaultHomeRowsImageTypeOverride', fields: ['DefaultHomeRowsImageType'] },
                 { parent: 'DefaultHomeRowsImageTypeOverride', off: ['true'], fields: ['DefaultHomeRowImageTypesSection'] },
-                { parent: 'DefaultEpisodePreviewEnabled', fields: ['DefaultPreviewAudioEnabled'] },
+                { parent: 'DefaultMediaPreviewMode', off: ['off'], fields: ['DefaultPreviewAudioEnabled'] },
                 { parent: 'DefaultSeasonalRowEnabled', fields: ['DefaultSeasonalRowCountry', 'DefaultSeasonalRowHolidays'] },
                 { parent: 'DefaultDetailScreenStyle', off: ['modern', 'spotlight', 'nouveau', 'minimalist'], fields: ['DefaultDetailUseSeriesThumbnails'] },
                 { parent: 'DefaultDetailScreenStyle', off: ['classic', 'spotlight', 'nouveau', 'minimalist'], fields: ['DefaultDetailExpandedTabs'] },
@@ -4374,6 +4422,14 @@
                     if (value && picked.indexOf(value) === -1) picked.push(value);
                 }
                 return picked.length ? picked : null;
+            }
+
+            // The switch says whether a card plays anything, and the mode says which kind. Defaults
+            // saved before the mode existed only have the switch.
+            function mediaPreviewModeOf(defaults) {
+                if (defaults.episodePreviewEnabled === false) return 'off';
+                if (defaults.episodePreviewEnabled !== true) return '';
+                return defaults.mediaPreviewMode === 'trailer' ? 'trailer' : 'media';
             }
 
             function setSelectValue(selector, value, dynamicLabelPrefix) {
@@ -5447,6 +5503,26 @@
                 var html = '<option value="">Not set (user decides)</option>';
                 LIBRARY_SORT_OPTIONS.forEach(function(option) {
                     if (option[2] && !includeDedicated) return;
+                    html += '<option value="' + esc(option[0]) + '">' + esc(option[1]) + '</option>';
+                });
+                select.innerHTML = html;
+            }
+
+            var EXTERNAL_ROW_SORT_OPTIONS = [
+                ['none', 'Default (List Order)'],
+                ['name', 'Name'],
+                ['releaseDate', 'Release Date'],
+                ['rating', 'Rating'],
+                ['popularity', 'Popularity'],
+                ['shuffle', 'Shuffle']
+            ];
+
+            function fillExternalRowSortSelect(selector) {
+                var select = document.querySelector(selector);
+                if (!select || select.dataset.filled) return;
+                select.dataset.filled = 'true';
+                var html = '<option value="">Not set (user decides)</option>';
+                EXTERNAL_ROW_SORT_OPTIONS.forEach(function(option) {
                     html += '<option value="' + esc(option[0]) + '">' + esc(option[1]) + '</option>';
                 });
                 select.innerHTML = html;
@@ -7386,6 +7462,7 @@
                     document.querySelector('#AnimeAudioSeparateDualAudio').checked = config.AnimeAudioSeparateDualAudio === true;
                     document.querySelector('#AnimeAudioTrustSelectedLibraries').checked = config.AnimeAudioTrustSelectedLibraries === true;
                     document.querySelector('#AnimeMarkerPlacement').value = config.AnimeMarkerPlacement || 'below';
+                    document.querySelector('#AnimeAudioLabelStyle').value = config.AnimeAudioLabelStyle || 'full';
                     document.querySelector('#AnimeMarkerShowFiller').checked = config.AnimeMarkerShowFiller !== false;
                     document.querySelector('#AnimeMarkerShowMixed').checked = config.AnimeMarkerShowMixed !== false;
                     document.querySelector('#AnimeMarkerShowRecap').checked = config.AnimeMarkerShowRecap !== false;
@@ -7489,7 +7566,7 @@
                     bindNullableRangeInput('#DefaultTrailerVolume', '%');
                     setNullableRangeInput('#DefaultTrailerVolume', defaults.trailerVolume, '%');
                     setNullableBoolSelect('#DefaultMediaBarTrailerCaptions', defaults.mediaBarTrailerCaptions);
-                    setNullableBoolSelect('#DefaultEpisodePreviewEnabled', defaults.episodePreviewEnabled);
+                    setSelectValue('#DefaultMediaPreviewMode', mediaPreviewModeOf(defaults), 'Configured preview');
                     setNullableBoolSelect('#DefaultPreviewAudioEnabled', defaults.previewAudioEnabled);
                     bindNullableRangeInput('#DefaultPreviewVolume', '%');
                     setNullableRangeInput('#DefaultPreviewVolume', defaults.previewVolume, '%');
@@ -7588,6 +7665,9 @@
                     setNullableBoolSelect('#DefaultSeerrBlockNsfw', defaults.seerrBlockNsfw);
                     setNullableBoolSelect('#DefaultSeerrShowMissingCollectionItems', defaults.seerrShowMissingCollectionItems);
                     setNullableBoolSelect('#DefaultShowSeerrAvailabilityBadges', defaults.showSeerrAvailabilityBadges);
+                    fillExternalRowSortSelect('#DefaultSeerrRowsSortBy');
+                    setSelectValue('#DefaultSeerrRowsSortBy', defaults.seerrRowsSortBy, 'Configured sort');
+                    setSelectValue('#DefaultSeerrRowsSortOrder', defaults.seerrRowsSortOrder, 'Configured direction');
                     var seerrPicker = seerrRowsToPicker(defaults.seerrRows);
                     loadSeerrDiscoveryPicker(seerrPicker.order, seerrPicker.hidden);
 
@@ -7619,12 +7699,18 @@
                     setNullableBoolSelect('#DefaultDisplayAudioAlbumArtists', defaults.displayAudioAlbumArtists);
                     setNullableBoolSelect('#DefaultDisplayAudioArtists', defaults.displayAudioArtists);
                     setNullableBoolSelect('#DefaultDisplayAudioAlbums', defaults.displayAudioAlbums);
+                    fillExternalRowSortSelect('#DefaultImdbRowsSortBy');
+                    setSelectValue('#DefaultImdbRowsSortBy', defaults.imdbRowsSortBy, 'Configured sort');
+                    setSelectValue('#DefaultImdbRowsSortOrder', defaults.imdbRowsSortOrder, 'Configured direction');
                     setNullableBoolSelect('#DefaultImdbTop250MoviesEnabled', defaults.imdbTop250MoviesEnabled);
                     setNullableBoolSelect('#DefaultImdbTop250TvShowsEnabled', defaults.imdbTop250TvShowsEnabled);
                     setNullableBoolSelect('#DefaultImdbMostPopularMoviesEnabled', defaults.imdbMostPopularMoviesEnabled);
                     setNullableBoolSelect('#DefaultImdbMostPopularTvShowsEnabled', defaults.imdbMostPopularTvShowsEnabled);
                     setNullableBoolSelect('#DefaultImdbTopEnglishMoviesEnabled', defaults.imdbTopEnglishMoviesEnabled);
                     setNullableBoolSelect('#DefaultImdbLowestRatedMoviesEnabled', defaults.imdbLowestRatedMoviesEnabled);
+                    fillExternalRowSortSelect('#DefaultTmdbRowsSortBy');
+                    setSelectValue('#DefaultTmdbRowsSortBy', defaults.tmdbRowsSortBy, 'Configured sort');
+                    setSelectValue('#DefaultTmdbRowsSortOrder', defaults.tmdbRowsSortOrder, 'Configured direction');
                     setNullableBoolSelect('#DefaultTmdbTrendingAllWeeklyEnabled', defaults.tmdbTrendingAllWeeklyEnabled);
                     setNullableBoolSelect('#DefaultTmdbTrendingMovieDailyEnabled', defaults.tmdbTrendingMovieDailyEnabled);
                     setNullableBoolSelect('#DefaultTmdbTrendingMovieWeeklyEnabled', defaults.tmdbTrendingMovieWeeklyEnabled);
@@ -7991,7 +8077,8 @@
                             : '') +
                         ', of which ' + info.markedEpisodes + ' got a marker (' + info.fillerEpisodes + ' filler).<br>' +
                         'Your library numbers this series <strong>' + esc(info.numbering) + '</strong>' +
-                        (info.recapKnown ? ', and recap flags were looked up.' : ', and recap flags were not looked up.');
+                        (info.recapKnown ? ', and recap flags were looked up.' : ', and recap flags were not looked up.') +
+                        '<br>' + describeAnimeMarkerMatching(info);
 
                     var rows = info.episodes || [];
                     if (rows.length === 0) return;
@@ -8013,7 +8100,8 @@
                         html += '<tr style="border-top:1px solid rgba(255,255,255,0.06);">' +
                             '<td style="padding:4px 8px;white-space:nowrap;color:rgba(255,255,255,0.6);">S' +
                             String(row.season) + 'E' + String(row.index) + '</td>' +
-                            '<td style="padding:4px 8px;color:rgba(255,255,255,0.4);">' + String(row.absolute) + '</td>' +
+                            '<td style="padding:4px 8px;color:rgba(255,255,255,0.4);">' + String(row.absolute) +
+                            (row.siteNumber != null && row.siteNumber !== row.absolute ? ' &rarr; #' + String(row.siteNumber) : '') + '</td>' +
                             '<td style="padding:4px 8px;">' + esc(row.name || '') + '</td>' +
                             '<td style="padding:4px 8px;white-space:nowrap;"><span style="display:inline-block;padding:1px 8px;border-radius:10px;font-size:0.9em;background:' +
                             color + '33;color:' + color + ';">' + esc(label) + '</span></td>' +
@@ -8021,6 +8109,18 @@
                     }
 
                     result.innerHTML = html + '</tbody></table>';
+                }
+
+                function describeAnimeMarkerMatching(info) {
+                    if (info.matchedBy === 'airdate') {
+                        return 'Episodes were paired by <strong>air date</strong>, because only ' + info.numberAgreements + ' of ' +
+                            info.datedEpisodes + ' dated episodes aired when the site says their number did. The arrow shows the site&#39;s number.';
+                    }
+                    if (info.airDatesKnown === false) {
+                        return 'Episodes were paired by <strong>number</strong>. This table was cached before air dates were read, so use Fetch now to let them check the numbering.';
+                    }
+                    return 'Episodes were paired by <strong>number</strong>' +
+                        (info.datedEpisodes > 0 ? ' (' + info.numberAgreements + ' of ' + info.datedEpisodes + ' dated episodes agree with the site&#39;s air dates).' : '.');
                 }
 
                 function previewAnimeMarkers() {
@@ -8245,6 +8345,7 @@
                         config.AnimeAudioSeparateDualAudio = document.querySelector('#AnimeAudioSeparateDualAudio').checked;
                         config.AnimeAudioTrustSelectedLibraries = document.querySelector('#AnimeAudioTrustSelectedLibraries').checked;
                         config.AnimeMarkerPlacement = document.querySelector('#AnimeMarkerPlacement').value || 'below';
+                        config.AnimeAudioLabelStyle = document.querySelector('#AnimeAudioLabelStyle').value || 'full';
                         config.AnimeMarkerShowFiller = document.querySelector('#AnimeMarkerShowFiller').checked;
                         config.AnimeMarkerShowMixed = document.querySelector('#AnimeMarkerShowMixed').checked;
                         config.AnimeMarkerShowRecap = document.querySelector('#AnimeMarkerShowRecap').checked;
@@ -8384,7 +8485,10 @@
                         config.DefaultUserSettings.mediaBarTrailerAudio = getNullableBoolSelect('#DefaultMediaBarTrailerAudio');
                         config.DefaultUserSettings.trailerVolume = getNullableRangeInput('#DefaultTrailerVolume');
                         config.DefaultUserSettings.mediaBarTrailerCaptions = getNullableBoolSelect('#DefaultMediaBarTrailerCaptions');
-                        config.DefaultUserSettings.episodePreviewEnabled = getNullableBoolSelect('#DefaultEpisodePreviewEnabled');
+                        var mediaPreviewMode = document.querySelector('#DefaultMediaPreviewMode').value;
+                        // Older apps only read the on and off switch, so it's written alongside the mode.
+                        config.DefaultUserSettings.episodePreviewEnabled = mediaPreviewMode ? mediaPreviewMode !== 'off' : null;
+                        config.DefaultUserSettings.mediaPreviewMode = mediaPreviewMode || null;
                         config.DefaultUserSettings.previewAudioEnabled = getNullableBoolSelect('#DefaultPreviewAudioEnabled');
                         config.DefaultUserSettings.previewVolume = getNullableRangeInput('#DefaultPreviewVolume');
                         config.DefaultUserSettings.seasonalSurprise = document.querySelector('#DefaultSeasonalSurprise').value || null;
@@ -8506,6 +8610,8 @@
                         var seerrRows = Object.assign({}, config.DefaultUserSettings.seerrRows || {});
                         seerrRows.rowOrder = getSeerrDiscoveryRowOrder();
                         config.DefaultUserSettings.seerrRows = seerrRows;
+                        config.DefaultUserSettings.seerrRowsSortBy = document.querySelector('#DefaultSeerrRowsSortBy').value || null;
+                        config.DefaultUserSettings.seerrRowsSortOrder = document.querySelector('#DefaultSeerrRowsSortOrder').value || null;
 
                         config.DefaultUserSettings.confirmExit = getNullableBoolSelect('#DefaultConfirmExit');
                         config.DefaultUserSettings.keyboardStyle = document.querySelector('#DefaultKeyboardStyle').value || null;
@@ -8535,12 +8641,16 @@
                         config.DefaultUserSettings.displayAudioAlbumArtists = getNullableBoolSelect('#DefaultDisplayAudioAlbumArtists');
                         config.DefaultUserSettings.displayAudioArtists = getNullableBoolSelect('#DefaultDisplayAudioArtists');
                         config.DefaultUserSettings.displayAudioAlbums = getNullableBoolSelect('#DefaultDisplayAudioAlbums');
+                        config.DefaultUserSettings.imdbRowsSortBy = document.querySelector('#DefaultImdbRowsSortBy').value || null;
+                        config.DefaultUserSettings.imdbRowsSortOrder = document.querySelector('#DefaultImdbRowsSortOrder').value || null;
                         config.DefaultUserSettings.imdbTop250MoviesEnabled = getNullableBoolSelect('#DefaultImdbTop250MoviesEnabled');
                         config.DefaultUserSettings.imdbTop250TvShowsEnabled = getNullableBoolSelect('#DefaultImdbTop250TvShowsEnabled');
                         config.DefaultUserSettings.imdbMostPopularMoviesEnabled = getNullableBoolSelect('#DefaultImdbMostPopularMoviesEnabled');
                         config.DefaultUserSettings.imdbMostPopularTvShowsEnabled = getNullableBoolSelect('#DefaultImdbMostPopularTvShowsEnabled');
                         config.DefaultUserSettings.imdbTopEnglishMoviesEnabled = getNullableBoolSelect('#DefaultImdbTopEnglishMoviesEnabled');
                         config.DefaultUserSettings.imdbLowestRatedMoviesEnabled = getNullableBoolSelect('#DefaultImdbLowestRatedMoviesEnabled');
+                        config.DefaultUserSettings.tmdbRowsSortBy = document.querySelector('#DefaultTmdbRowsSortBy').value || null;
+                        config.DefaultUserSettings.tmdbRowsSortOrder = document.querySelector('#DefaultTmdbRowsSortOrder').value || null;
                         config.DefaultUserSettings.tmdbTrendingAllWeeklyEnabled = getNullableBoolSelect('#DefaultTmdbTrendingAllWeeklyEnabled');
                         config.DefaultUserSettings.tmdbTrendingMovieDailyEnabled = getNullableBoolSelect('#DefaultTmdbTrendingMovieDailyEnabled');
                         config.DefaultUserSettings.tmdbTrendingMovieWeeklyEnabled = getNullableBoolSelect('#DefaultTmdbTrendingMovieWeeklyEnabled');

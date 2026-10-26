@@ -72,6 +72,15 @@ namespace Emby.Plugins.Moonfin.Api
         public string? Scheme { get; set; }
     }
 
+    [Route("/Moonfin/Tmdb/Details", "GET")]
+    [Authenticated]
+    public class GetTmdbDetailsRequest : IReturn<object>
+    {
+        public string? Type { get; set; }
+        public long? TmdbId { get; set; }
+        public string? ImdbId { get; set; }
+    }
+
     [Route("/Moonfin/Tmdb/NextEpisode", "GET")]
     [Authenticated]
     public class GetTmdbNextEpisodeRequest : IReturn<object>

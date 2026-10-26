@@ -8,13 +8,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Emby.Plugins.Moonfin.Api;
 using MediaBrowser.Controller.Configuration;
+using Moonfin.Tmdb;
 
 namespace Emby.Plugins.Moonfin.Services
 {
     /// <summary>
-    /// Picks the wide image a client shows for a movie or show the server doesn't have. It prefers
-    /// a backdrop in the metadata language, since those carry the title the way a library thumb
-    /// does, and falls back to the main backdrop.
+    /// Reads what a client shows for a movie or show the server doesn't have. The wide image
+    /// prefers a backdrop in the metadata language, since those carry the title the way a library
+    /// thumb does, and falls back to the main backdrop. The details come from the same call.
     /// </summary>
     public class TmdbThumbService
     {
@@ -23,8 +24,8 @@ namespace Emby.Plugins.Moonfin.Services
         private readonly IServerConfigurationManager _configManager;
         private readonly TmdbRatingService _ratings;
         private readonly HttpClient _client = MoonfinHttp.CreateClient(TimeSpan.FromSeconds(15), "Moonfin/1.0");
-        private readonly ConcurrentDictionary<string, (string? Path, DateTimeOffset CachedAt)> _cache =
-            new ConcurrentDictionary<string, (string?, DateTimeOffset)>();
+        private readonly ConcurrentDictionary<string, (Entry? Value, DateTimeOffset CachedAt)> _cache =
+            new ConcurrentDictionary<string, (Entry?, DateTimeOffset)>();
 
         public TmdbThumbService(IServerConfigurationManager configManager, TmdbRatingService ratings)
         {
@@ -37,6 +38,20 @@ namespace Emby.Plugins.Moonfin.Services
         /// is only used when there is no TMDB id.
         /// </summary>
         public async Task<string?> GetPathAsync(string mediaType, long? tmdbId, string? imdbId, string apiKey, CancellationToken cancellationToken)
+        {
+            return (await GetEntryAsync(mediaType, tmdbId, imdbId, apiKey, cancellationToken).ConfigureAwait(false))?.ThumbPath;
+        }
+
+        /// <summary>
+        /// The overview, score, logo and trailer TMDB holds for the title in the server's metadata
+        /// language, or null when TMDB doesn't know it.
+        /// </summary>
+        public async Task<TmdbTitleDetails?> GetDetailsAsync(string mediaType, long? tmdbId, string? imdbId, string apiKey, CancellationToken cancellationToken)
+        {
+            return (await GetEntryAsync(mediaType, tmdbId, imdbId, apiKey, cancellationToken).ConfigureAwait(false))?.Details;
+        }
+
+        private async Task<Entry?> GetEntryAsync(string mediaType, long? tmdbId, string? imdbId, string apiKey, CancellationToken cancellationToken)
         {
             if (tmdbId == null && !string.IsNullOrWhiteSpace(imdbId))
             {
@@ -51,10 +66,10 @@ namespace Emby.Plugins.Moonfin.Services
 
             var key = mediaType + ":" + tmdbId;
             if (_cache.TryGetValue(key, out var cached) && DateTimeOffset.UtcNow - cached.CachedAt < CacheTtl)
-                return cached.Path;
+                return cached.Value;
 
             var language = MetadataLanguage(_configManager.Configuration.PreferredMetadataLanguage);
-            var url = "https://api.themoviedb.org/3/" + mediaType + "/" + tmdbId + "?append_to_response=images&include_image_language=" + language + ",null";
+            var url = "https://api.themoviedb.org/3/" + mediaType + "/" + tmdbId + "?" + TmdbTitleDetails.Query(language);
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             MoonfinHttp.ApplyTmdbAuth(request, apiKey);
 
@@ -70,9 +85,9 @@ namespace Emby.Plugins.Moonfin.Services
                 if (!response.IsSuccessStatusCode) return null;
 
                 using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
-                var path = PickPath(doc.RootElement, language);
-                _cache[key] = (path, DateTimeOffset.UtcNow);
-                return path;
+                var entry = new Entry(PickPath(doc.RootElement, language), TmdbTitleDetails.Parse(doc.RootElement, language));
+                _cache[key] = (entry, DateTimeOffset.UtcNow);
+                return entry;
             }
             catch (HttpRequestException)
             {
@@ -110,6 +125,19 @@ namespace Emby.Plugins.Moonfin.Services
             return titled.ValueKind == JsonValueKind.Object && titled.TryGetProperty("file_path", out var path) && path.ValueKind == JsonValueKind.String
                 ? path.GetString()
                 : null;
+        }
+
+        private sealed class Entry
+        {
+            public Entry(string? thumbPath, TmdbTitleDetails details)
+            {
+                ThumbPath = thumbPath;
+                Details = details;
+            }
+
+            public string? ThumbPath { get; }
+
+            public TmdbTitleDetails Details { get; }
         }
     }
 }

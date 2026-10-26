@@ -62,6 +62,13 @@ public class AnimeMarkersController : ControllerBase
     private static string PlacementOf(PluginConfiguration? configuration) =>
         configuration?.AnimeMarkerPlacement is { Length: > 0 } value ? value : "below";
 
+    /// <summary>
+    /// What clients should show for the audio pills: "full" for Subbed / Dubbed / Subbed/Dubbed,
+    /// or "short" for Sub / Dub / Sub/Dub. Read by the clients.
+    /// </summary>
+    private static string LabelStyleOf(PluginConfiguration? configuration) =>
+        configuration?.AnimeAudioLabelStyle is { Length: > 0 } value ? value : "full";
+
     private static TimeSpan CacheMaxAge =>
         TimeSpan.FromDays(Math.Max(1, MoonfinPlugin.Instance?.Configuration?.AnimeMarkerMaxAgeDays ?? 30));
 
@@ -161,7 +168,7 @@ public class AnimeMarkersController : ControllerBase
         {
             _diagnostics.Write(
                 $"  -> matched={result.Slug ?? "(nothing)"} pending={result.Pending} " +
-                $"markers={result.Episodes.Count} recapKnown={result.RecapKnown} " +
+                $"markers={result.Episodes.Count} matchedBy={result.MatchMode ?? "-"} recapKnown={result.RecapKnown} " +
                 $"audioEpisodes={audio.Episodes.Count} audioSeasons={audio.Seasons.Count}");
 
             // The episode ids are the join the client matches on, so a couple go out
@@ -220,7 +227,8 @@ public class AnimeMarkersController : ControllerBase
                 pair => pair.Key,
                 pair => new { audio = Present(pair.Value, separateDualAudio) }),
 
-            placement = PlacementOf(configuration)
+            placement = PlacementOf(configuration),
+            labelStyle = LabelStyleOf(configuration)
         });
     }
 
@@ -392,7 +400,7 @@ public class AnimeMarkersController : ControllerBase
             $"{notCandidate} outside the chosen libraries or not anime, {noAudioTags} with no audio language tags, " +
             $"{notFound} unknown ids)");
 
-        return Ok(new { enabled = true, items = answer, placement = PlacementOf(configuration) });
+        return Ok(new { enabled = true, items = answer, placement = PlacementOf(configuration), labelStyle = LabelStyleOf(configuration) });
     }
 
     /// <summary>
@@ -456,22 +464,26 @@ public class AnimeMarkersController : ControllerBase
             });
         }
 
-        var markersByNumber = entry.Episodes.ToDictionary(episode => episode.Number);
-        var numbering = _resolver.BuildNumbering(series);
+        var matched = _resolver.MatchEpisodes(series, entry);
+        var numbering = matched.Numbering;
 
         // One row per episode, carrying how many library files sit behind it.
         var rows = numbering.Episodes
-            .GroupBy(numbered => (numbered.Episode.ParentIndexNumber, numbered.Episode.IndexNumber))
+            .GroupBy(numbered => (numbered.Episode.ParentIndexNumber!.Value, numbered.Episode.IndexNumber!.Value))
             .Select(group =>
             {
                 var numbered = group.First();
-                markersByNumber.TryGetValue(numbered.AbsoluteNumber, out var marker);
+                matched.BySlot.TryGetValue(group.Key, out var marker);
 
                 return new
                 {
                     season = numbered.Episode.ParentIndexNumber,
                     index = numbered.Episode.IndexNumber,
                     absolute = numbered.AbsoluteNumber,
+
+                    // The site's number for the episode this one was paired with. Differs from
+                    // the absolute number only when the air dates did the pairing.
+                    siteNumber = marker?.Number,
                     name = numbered.Episode.Name,
                     kind = marker?.Kind.ToString(),
                     recap = marker?.Recap ?? false,
@@ -492,6 +504,10 @@ public class AnimeMarkersController : ControllerBase
             pending = false,
             recapKnown = entry.RecapMalId != null,
             numbering = numbering.Mode,
+            matchedBy = matched.Match.Mode,
+            datedEpisodes = matched.Match.DatedEpisodes,
+            numberAgreements = matched.Match.NumberAgreements,
+            airDatesKnown = entry.Format >= AnimeMarkerCacheEntry.CurrentFormat,
             showEpisodes = entry.Episodes.Count,
             libraryEpisodes = rows.Count,
             libraryFiles = numbering.Episodes.Count,

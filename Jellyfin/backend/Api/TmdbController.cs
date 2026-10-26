@@ -687,9 +687,18 @@ public class TmdbController : ControllerBase
     }
 
     /// <summary>
-    /// Title, overview, tagline, season names and next air date for a movie or show, in TMDB's own
-    /// field names, so the Smart TV app needs no TMDB key. Uses the server-wide key only.
+    /// Two callers share this path. A request with <c>mediaType</c> is the Smart TV app's: title,
+    /// overview, tagline, season names and next air date in TMDB's own field names, from the
+    /// server-wide key only. Without it, it is Moonfin's own: the overview, score, genres, runtime,
+    /// logo, plain backdrop and trailer TMDB holds for a movie or show the server doesn't have, so a
+    /// client can show it like a library title (image paths are TMDB paths).
     /// </summary>
+    /// <param name="mediaType">movie or tv; its presence selects the Smart TV answer.</param>
+    /// <param name="type">movie or tv, for Moonfin's own answer.</param>
+    /// <param name="tmdbId">TMDB id of the title.</param>
+    /// <param name="imdbId">IMDb id, used when there is no TMDB id (Moonfin's own answer).</param>
+    /// <param name="language">Language for the Smart TV answer.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     [HttpGet("Details")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -699,10 +708,38 @@ public class TmdbController : ControllerBase
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> GetDetails(
         [FromQuery] string? mediaType,
+        [FromQuery] string? type,
         [FromQuery] string? tmdbId,
+        [FromQuery] string? imdbId,
         [FromQuery] string? language,
-        CancellationToken cancellationToken) =>
-        Proxied(await _proxy.DetailsAsync(CreateClient(), ServerApiKey(), mediaType, tmdbId, language, cancellationToken));
+        CancellationToken cancellationToken)
+    {
+        if (mediaType != null)
+        {
+            return Proxied(await _proxy.DetailsAsync(CreateClient(), ServerApiKey(), mediaType, tmdbId, language, cancellationToken));
+        }
+
+        long? id = null;
+        if (!string.IsNullOrWhiteSpace(tmdbId))
+        {
+            if (!long.TryParse(tmdbId, out var parsed))
+            {
+                return BadRequest();
+            }
+
+            id = parsed;
+        }
+
+        var apiKey = await GetUserApiKey();
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            return NotFound();
+        }
+
+        var kind = string.Equals(type, "tv", StringComparison.OrdinalIgnoreCase) ? "tv" : "movie";
+        var details = await _thumbs.GetDetailsAsync(kind, id, imdbId, apiKey, cancellationToken);
+        return details == null ? NotFound() : Ok(details);
+    }
 
     /// <summary>
     /// A season's name, overview and episodes in TMDB's own field names. Uses the server-wide key only.
