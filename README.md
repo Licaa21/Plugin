@@ -2,6 +2,10 @@
 
 This is Licaa21's fork of the [Moonfin server plugin](https://github.com/Moonfin-Client/Plugin) (Moonbase, for Jellyfin 10.10 and newer). It is made for one server and is not a project for everyone: upstream's plugin is the one to use unless you want what is below.
 
+**Credit.** Almost all of this plugin is not mine. Moonfin and Moonbase were created by **RadicalMuffinMan** ([GitHub](https://github.com/RadicalMuffinMan)) and are built by the [Moonfin contributors](https://github.com/Moonfin-Client/Plugin/graphs/contributors) at [Moonfin-Client/Plugin](https://github.com/Moonfin-Client/Plugin); the web app comes from [Moonfin-Core](https://github.com/Moonfin-Client/Moonfin-Core). This fork only adds the small set of changes listed below on top of their work, and it is published under the same GPL-3.0 license. All credit for Moonfin goes to them.
+
+**Compatibility.** This fork is made for, and supported only with, my own fork of the Moonfin Smart TV app: [Licaa21/Smart-TV](https://github.com/Licaa21/Smart-TV) (Samsung Tizen and LG webOS). It is not tested or supported with any other Moonfin client (the official Smart TV, Android TV, mobile, desktop or Emby apps). If you use those, install upstream's plugin instead.
+
 **What differs from upstream**
 
 - The server holds the TMDB key and serves the TMDB titles, descriptions, season episodes, recommendations and air dates that a client would otherwise need its own key for (`/Moonfin/Tmdb/Details`, `Season`, `Recommendations`).
