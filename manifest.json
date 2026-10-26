@@ -9,6 +9,17 @@
         "imageUrl":  "https://raw.githubusercontent.com/Moonfin-Client/Plugin/master/Jellyfin/backend/assets/logo.png",
         "versions":  [
                          {
+                             "version":  "2.4.0.7",
+                             "changelog":  "Thumb redirect takes an optional size (w300, w780 or w1280; no size or any other value keeps w1280). Merged upstream\u0027s new Tmdb Details answer (overview, score, logo, trailer) and synced-settings additions; Details now serves both it and the Smart TV answer from one route.",
+                             "targetAbi":  "10.10.0.0",
+                             "sourceUrl":  "https://github.com/Licaa21/Plugin/releases/download/fork-v2.4.0.7/Moonfin.Server-2.4.0.7.zip",
+                             "checksum":  "D9E1E0A51504910C28490707312BEFD3",
+                             "timestamp":  "2026-10-26T16:56:28",
+                             "dependencies":  [
+
+                                              ]
+                         },
+                         {
                              "version":  "2.4.0.6",
                              "changelog":  "Sixth fork release, on upstream commit a365f72 (Moonbase 2.4.0 plus the keyboard style and Peek Home Rows settings).\n\nNew from upstream: the Peek Home Rows setting (Moonbase, User defaults, media bar). It shows the top half of the first home row along the bottom of the media bar on TV and desktop, and the Smart TV app can now get a server default for it. The Banner style ignores it.\n\nNothing else changed. The TMDB routes, the TV app settings editor and the secondary subtitle defaults from 2.4.0.5 are as they were. The web app is still upstream\u0027s 2.4.0 build, unchanged. Push notifications through Moonfin\u0027s hosted relay are still off in this fork.",
                              "targetAbi":  "10.10.0.0",
