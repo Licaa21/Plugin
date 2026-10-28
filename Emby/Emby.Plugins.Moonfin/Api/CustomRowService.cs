@@ -55,6 +55,9 @@ namespace Emby.Plugins.Moonfin.Api
         private TmdbRatingService Ratings => Plugin.Instance?.TmdbRatings
             ?? throw new InvalidOperationException("TmdbRatingService not initialized");
 
+        private TmdbThumbService Thumbs => Plugin.Instance?.TmdbThumbs
+            ?? throw new InvalidOperationException("TmdbThumbService not initialized");
+
         private ServerRatingLimitService RatingLimits => Plugin.Instance?.RatingLimits
             ?? throw new InvalidOperationException("ServerRatingLimitService not initialized");
 
@@ -162,7 +165,9 @@ namespace Emby.Plugins.Moonfin.Api
                         return Json(400, new { error = "Unsupported custom row source: " + source });
                 }
 
-                await Ratings.FillRatingsAsync(items, await ResolveTmdbKey(userId.Value).ConfigureAwait(false), CancellationToken.None).ConfigureAwait(false);
+                var tmdbKey = await ResolveTmdbKey(userId.Value).ConfigureAwait(false);
+                await Ratings.FillRatingsAsync(items, tmdbKey, CancellationToken.None).ConfigureAwait(false);
+                await Thumbs.FillDetailsAsync(items, tmdbKey, CancellationToken.None).ConfigureAwait(false);
 
                 // Don't cache empty results. An empty row cached for 24h looks like a
                 // broken list when the real cause was an upstream hiccup.
@@ -644,6 +649,7 @@ namespace Emby.Plugins.Moonfin.Api
                 if (!string.IsNullOrWhiteSpace(apiKey))
                 {
                     await Ratings.FillRatingsAsync(items, apiKey, CancellationToken.None).ConfigureAwait(false);
+                    await Thumbs.FillDetailsAsync(items, apiKey, CancellationToken.None).ConfigureAwait(false);
                     ImdbCache.MarkRatingsFilled(type);
                     await ImdbCache.FlushAsync().ConfigureAwait(false);
                 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -7,7 +8,9 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Emby.Plugins.Moonfin.Api;
+using Emby.Plugins.Moonfin.Models;
 using MediaBrowser.Controller.Configuration;
+using MediaBrowser.Model.Logging;
 using Moonfin.Tmdb;
 
 namespace Emby.Plugins.Moonfin.Services
@@ -23,14 +26,61 @@ namespace Emby.Plugins.Moonfin.Services
 
         private readonly IServerConfigurationManager _configManager;
         private readonly TmdbRatingService _ratings;
+        private readonly ILogger _logger;
         private readonly HttpClient _client = MoonfinHttp.CreateClient(TimeSpan.FromSeconds(15), "Moonfin/1.0");
         private readonly ConcurrentDictionary<string, (Entry? Value, DateTimeOffset CachedAt)> _cache =
             new ConcurrentDictionary<string, (Entry?, DateTimeOffset)>();
 
-        public TmdbThumbService(IServerConfigurationManager configManager, TmdbRatingService ratings)
+        public TmdbThumbService(IServerConfigurationManager configManager, TmdbRatingService ratings, ILogger logger)
         {
             _configManager = configManager;
             _ratings = ratings;
+            _logger = logger;
+        }
+
+        /// <summary>
+        /// Gives items from outside lists the overview, genres and runtime TMDB holds for them, so
+        /// a focused card can describe the title the way it does a library one. Only items without
+        /// an overview are looked up, and nothing happens without a key.
+        /// </summary>
+        public async Task FillDetailsAsync(IReadOnlyList<CustomRowItem> items, string? apiKey, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(apiKey)) return;
+
+            var pending = items.Where(i => string.IsNullOrEmpty(i.Overview)).ToList();
+            if (pending.Count == 0) return;
+
+            using var gate = new SemaphoreSlim(TmdbRatingService.Parallelism);
+            await Task.WhenAll(pending.Select(async item =>
+            {
+                await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    long? tmdbId = long.TryParse(item.ProviderIds?.Tmdb, out var parsed) ? parsed : (long?)null;
+                    var details = await GetDetailsAsync(TmdbRatingService.MediaTypeOf(item), tmdbId, item.ProviderIds?.Imdb, apiKey!, cancellationToken).ConfigureAwait(false);
+                    if (details != null) ApplyDetails(item, details);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.Debug("Could not look up details for " + item.Name + ": " + ex.Message);
+                }
+                finally
+                {
+                    gate.Release();
+                }
+            })).ConfigureAwait(false);
+        }
+
+        /// <summary>Fills in whatever the item is missing from what TMDB holds for it.</summary>
+        internal static void ApplyDetails(CustomRowItem item, TmdbTitleDetails details)
+        {
+            if (string.IsNullOrEmpty(item.Overview)) item.Overview = details.Overview;
+            if ((item.Genres == null || item.Genres.Count == 0) && details.Genres.Count > 0) item.Genres = details.Genres.ToList();
+            if (item.RunTimeTicks == null) item.RunTimeTicks = details.RunTimeTicks;
         }
 
         /// <summary>

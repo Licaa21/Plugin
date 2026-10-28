@@ -14,7 +14,7 @@ namespace Moonfin.Server.Services;
 public class TmdbRatingService
 {
     private static readonly TimeSpan CacheTtl = TimeSpan.FromDays(30);
-    private const int Parallelism = 6;
+    internal const int Parallelism = 6;
 
     // Theatrical first, then limited, digital, physical, TV and premiere, since a festival
     // premiere often carries no rating at all.
@@ -207,7 +207,7 @@ public class TmdbRatingService
         }
     }
 
-    private static string MediaTypeOf(CustomRowItem item)
+    internal static string MediaTypeOf(CustomRowItem item)
     {
         return string.Equals(item.Type, "Series", StringComparison.OrdinalIgnoreCase) ? "tv" : "movie";
     }
