@@ -9,6 +9,17 @@
         "imageUrl":  "https://raw.githubusercontent.com/Moonfin-Client/Plugin/master/Jellyfin/backend/assets/logo.png",
         "versions":  [
                          {
+                             "version":  "2.4.0.8",
+                             "changelog":  "Takes upstream\u0027s newest changes: the Home Screen Backdrop setting is now a style (Off, Corner or Full Screen) with a new Details Backdrop Size setting for phones, IMDb, TMDB chart, MDBList and Letterboxd rows get descriptions, genres and runtimes from TMDB, and the seasonal effect picker adds Valentine\u0027s Day, Easter, Pride, Lunar New Year and Diwali.",
+                             "targetAbi":  "10.10.0.0",
+                             "sourceUrl":  "https://github.com/Licaa21/Plugin/releases/download/fork-v2.4.0.8/Moonfin.Server-2.4.0.8.zip",
+                             "checksum":  "09D4E3B3A9DFB6B43A4615E8A47885EF",
+                             "timestamp":  "2026-10-28T09:43:30",
+                             "dependencies":  [
+
+                                              ]
+                         },
+                         {
                              "version":  "2.4.0.7",
                              "changelog":  "Thumb redirect takes an optional size (w300, w780 or w1280; no size or any other value keeps w1280). Merged upstream\u0027s new Tmdb Details answer (overview, score, logo, trailer) and synced-settings additions; Details now serves both it and the Smart TV answer from one route.",
                              "targetAbi":  "10.10.0.0",
