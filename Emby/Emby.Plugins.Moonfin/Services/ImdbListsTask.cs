@@ -74,6 +74,8 @@ namespace Emby.Plugins.Moonfin.Services
                         if (ratings != null && !string.IsNullOrWhiteSpace(config?.TmdbApiKey))
                         {
                             await ratings.FillRatingsAsync(items, config!.TmdbApiKey, cancellationToken).ConfigureAwait(false);
+                            var thumbs = Plugin.Instance?.TmdbThumbs;
+                            if (thumbs != null) await thumbs.FillDetailsAsync(items, config.TmdbApiKey, cancellationToken).ConfigureAwait(false);
                             CacheService.MarkRatingsFilled(key);
                         }
 

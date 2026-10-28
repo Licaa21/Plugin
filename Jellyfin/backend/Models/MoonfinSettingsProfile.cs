@@ -241,8 +241,23 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("homeBackdropEnabled")]
     public bool? HomeBackdropEnabled { get; set; }
 
+    /// <summary>
+    /// How TV and desktop apps draw the home backdrop when HomeBackdropEnabled is on: fullScreen
+    /// behind everything, or corner faded out from the top right. Off is written along with the
+    /// switch turned off.
+    /// </summary>
+    [JsonPropertyName("homeBackdropStyle")]
+    public string? HomeBackdropStyle { get; set; }
+
     [JsonPropertyName("detailsBackdropEnabled")]
     public bool? DetailsBackdropEnabled { get; set; }
+
+    /// <summary>
+    /// How phones size the details backdrop: fullScreen zooms it to fill the screen, fit shows the
+    /// whole picture across the top fading into the page.
+    /// </summary>
+    [JsonPropertyName("detailsBackdropSize")]
+    public string? DetailsBackdropSize { get; set; }
 
     [JsonPropertyName("homeRowsImageTypeOverride")]
     public bool? HomeRowsImageTypeOverride { get; set; }

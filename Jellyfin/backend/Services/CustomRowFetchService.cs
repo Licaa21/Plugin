@@ -24,6 +24,7 @@ public class CustomRowFetchService
     private readonly MoonfinSettingsService _settingsService;
     private readonly ImdbListsCacheService _imdbCacheService;
     private readonly TmdbRatingService _ratingService;
+    private readonly TmdbThumbService _thumbService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<CustomRowFetchService> _logger;
     private readonly ILogger<ImdbListsTask> _taskLogger;
@@ -38,6 +39,7 @@ public class CustomRowFetchService
         MoonfinSettingsService settingsService,
         ImdbListsCacheService imdbCacheService,
         TmdbRatingService ratingService,
+        TmdbThumbService thumbService,
         IHttpClientFactory httpClientFactory,
         ILogger<CustomRowFetchService> logger,
         ILogger<ImdbListsTask> taskLogger)
@@ -45,6 +47,7 @@ public class CustomRowFetchService
         _settingsService = settingsService;
         _imdbCacheService = imdbCacheService;
         _ratingService = ratingService;
+        _thumbService = thumbService;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _taskLogger = taskLogger;
@@ -134,7 +137,9 @@ public class CustomRowFetchService
             _ => throw new NotSupportedException($"Unsupported custom row source: {source}")
         };
 
-        await _ratingService.FillRatingsAsync(items, await ResolveTmdbApiKey(userId), cancellationToken).ConfigureAwait(false);
+        var apiKey = await ResolveTmdbApiKey(userId);
+        await _ratingService.FillRatingsAsync(items, apiKey, cancellationToken).ConfigureAwait(false);
+        await _thumbService.FillDetailsAsync(items, apiKey, cancellationToken).ConfigureAwait(false);
         return items;
     }
 
@@ -829,6 +834,7 @@ public class CustomRowFetchService
             if (!string.IsNullOrWhiteSpace(apiKey))
             {
                 await _ratingService.FillRatingsAsync(items, apiKey, cancellationToken).ConfigureAwait(false);
+                await _thumbService.FillDetailsAsync(items, apiKey, cancellationToken).ConfigureAwait(false);
                 _imdbCacheService.MarkRatingsFilled(type);
                 await _imdbCacheService.FlushAsync().ConfigureAwait(false);
             }
@@ -858,7 +864,7 @@ public class CustomRowFetchService
             _logger.LogInformation("IMDb chart {Type} cache miss or expired, fetching on-demand", type);
             try
             {
-                var task = new ImdbListsTask(_httpClientFactory, _imdbCacheService, _ratingService, _taskLogger);
+                var task = new ImdbListsTask(_httpClientFactory, _imdbCacheService, _ratingService, _thumbService, _taskLogger);
                 var items = await task.FetchChartAsync(type, cancellationToken);
                 if (items != null && items.Count > 0)
                 {

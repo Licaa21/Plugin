@@ -166,6 +166,14 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
         return defaults.mediaPreviewMode === 'trailer' ? 'trailer' : 'media';
     }
 
+    // The switch says whether Home shows a backdrop, and the style says how. Defaults saved
+    // before the style existed only have the switch.
+    function homeBackdropStyleOf(defaults) {
+        if (defaults.homeBackdropEnabled === false) return 'off';
+        if (defaults.homeBackdropEnabled !== true) return '';
+        return defaults.homeBackdropStyle === 'corner' ? 'corner' : 'fullScreen';
+    }
+
     function setSelectValue(view, selector, value, dynamicLabelPrefix) {
         var select = view.querySelector(selector);
         if (!select) return;
@@ -2415,8 +2423,9 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
             setSelectValue(view, '#DefaultClockBehavior', defaults.clockBehavior, 'Configured clock');
             setNullableBoolSelect(view, '#DefaultUse24HourClock', defaults.use24HourClock);
             setSelectValue(view, '#DefaultDesktopUiScale', defaults.desktopUiScale, 'Configured scale');
-            setNullableBoolSelect(view, '#DefaultHomeBackdropEnabled', defaults.homeBackdropEnabled);
+            setSelectValue(view, '#DefaultHomeBackdropStyle', homeBackdropStyleOf(defaults), 'Configured style');
             setNullableBoolSelect(view, '#DefaultDetailsBackdropEnabled', defaults.detailsBackdropEnabled);
+            setSelectValue(view, '#DefaultDetailsBackdropSize', defaults.detailsBackdropSize, 'Configured size');
             setNullableBoolSelect(view, '#DefaultShowBookDiscoverTab', defaults.showBookDiscoverTab);
             bindNullableRangeInput(view, '#DefaultBrowsingBlur');
             setNullableRangeInput(view, '#DefaultBrowsingBlur', defaults.browsingBlur);
@@ -2786,8 +2795,12 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
             d.clockBehavior = view.querySelector('#DefaultClockBehavior').value || null;
             d.use24HourClock = getNullableBoolSelect(view, '#DefaultUse24HourClock');
             d.desktopUiScale = view.querySelector('#DefaultDesktopUiScale').value || null;
-            d.homeBackdropEnabled = getNullableBoolSelect(view, '#DefaultHomeBackdropEnabled');
+            var homeBackdropStyle = view.querySelector('#DefaultHomeBackdropStyle').value;
+            // Phones and older apps only read the on and off switch, so it's written alongside the style.
+            d.homeBackdropEnabled = homeBackdropStyle ? homeBackdropStyle !== 'off' : null;
+            d.homeBackdropStyle = homeBackdropStyle || null;
             d.detailsBackdropEnabled = getNullableBoolSelect(view, '#DefaultDetailsBackdropEnabled');
+            d.detailsBackdropSize = view.querySelector('#DefaultDetailsBackdropSize').value || null;
             d.showBookDiscoverTab = getNullableBoolSelect(view, '#DefaultShowBookDiscoverTab');
             d.browsingBlur = getNullableRangeInputAsText(view, '#DefaultBrowsingBlur');
             d.detailsScreenBlur = getNullableRangeInputAsText(view, '#DefaultDetailsScreenBlur');

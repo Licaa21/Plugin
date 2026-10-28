@@ -170,7 +170,7 @@ namespace Emby.Plugins.Moonfin
             var configManager = appHost.Resolve<IServerConfigurationManager>();
             TmdbRatingCache = new TmdbRatingCacheService(mdbLogger);
             TmdbRatings = new TmdbRatingService(TmdbRatingCache, configManager, mdbLogger);
-            TmdbThumbs = new TmdbThumbService(configManager, TmdbRatings);
+            TmdbThumbs = new TmdbThumbService(configManager, TmdbRatings, mdbLogger);
             RatingLimits = new ServerRatingLimitService(appHost.Resolve<ILocalizationManager>(), configManager);
             var seasonalLogger = logManager.GetLogger("MoonfinSeasonal");
             SeasonalKeywords = new SeasonalKeywordStoreService(seasonalLogger);
