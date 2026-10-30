@@ -1646,6 +1646,15 @@
                                 </select>
                             </div>
                             <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultShowLibrariesIndividually">Show Libraries Individually</label>
+                                <select id="DefaultShowLibrariesIndividually" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                                <div class="fieldDescription">Show each library as its own button in the navigation bar instead of in the Libraries menu.</div>
+                            </div>
+                            <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultShowSyncPlayButton">Show SyncPlay Button</label>
                                 <select id="DefaultShowSyncPlayButton" is="emby-select">
                                     <option value="">Not set (user decides)</option>
@@ -1769,8 +1778,9 @@
                                     <option value="off">Off</option>
                                     <option value="fullScreen">Full Screen</option>
                                     <option value="corner">Corner</option>
+                                    <option value="top">Top</option>
                                 </select>
-                                <div class="fieldDescription">Corner fades the backdrop out from the top right on TV and desktop. Phones show it full screen.</div>
+                                <div class="fieldDescription">On TV and desktop, Corner fades the backdrop out from the top right and Top shows only its top half, fading out toward the middle. Phones show it full screen.</div>
                             </div>
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultDetailsBackdropEnabled">Details Screen Backdrop</label>
@@ -1839,6 +1849,15 @@
                                     <option value="normal">Normal</option>
                                     <option value="heavy">Heavy</option>
                                 </select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultSeasonalFollower">Focus Follower</label>
+                                <select id="DefaultSeasonalFollower" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                                <div class="fieldDescription">A holiday piece, like Halloween's planchette, follows what is selected on Home. In the desktop layout it replaces the mouse pointer.</div>
                             </div>
 
                             <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Loading Animation</h4>
@@ -2007,6 +2026,62 @@
                                     <div id="DefaultHomeAvailableTabs" class="homeLayoutTabs"></div>
                                     <input id="DefaultHomeAvailableSearch" class="homeLayoutSearch" type="search" placeholder="Search rows" />
                                     <div id="DefaultHomeAvailableRows" class="homeLayoutList"></div>
+                                    <div id="DefaultHomeCustomListForm" class="homeLayoutList homeCustomListForm" style="display:none;">
+                                        <div class="homeCustomListIntro">A row from a TMDB, Letterboxd or MDBList list, the same as Add Custom Home Row in the apps.</div>
+                                        <label class="homeCustomListLabel" for="DefaultCustomListSource">Source</label>
+                                        <select id="DefaultCustomListSource" class="homeCustomListInput">
+                                            <option value="tmdb">TMDB</option>
+                                            <option value="letterboxd">Letterboxd</option>
+                                            <option value="mdblist">MDBList</option>
+                                        </select>
+                                        <div id="DefaultCustomListTypeField">
+                                            <label class="homeCustomListLabel" for="DefaultCustomListType">Type</label>
+                                            <select id="DefaultCustomListType" class="homeCustomListInput"></select>
+                                        </div>
+                                        <div id="DefaultCustomListLetterboxdField">
+                                            <label class="homeCustomListLabel" for="DefaultCustomListLetterboxdUser">Letterboxd Username</label>
+                                            <input id="DefaultCustomListLetterboxdUser" class="homeCustomListInput" type="text" placeholder="Username" autocomplete="off" />
+                                        </div>
+                                        <div id="DefaultCustomListTmdbField">
+                                            <label class="homeCustomListLabel" id="DefaultCustomListTmdbIdLabel" for="DefaultCustomListTmdbId">TMDB List ID or URL</label>
+                                            <input id="DefaultCustomListTmdbId" class="homeCustomListInput" type="text" autocomplete="off" />
+                                        </div>
+                                        <div id="DefaultCustomListMdblistUrlField">
+                                            <label class="homeCustomListLabel" for="DefaultCustomListMdblistUrl">MDBList URL</label>
+                                            <input id="DefaultCustomListMdblistUrl" class="homeCustomListInput" type="text" placeholder="e.g. https://mdblist.com/lists/username/list-slug" autocomplete="off" />
+                                        </div>
+                                        <div id="DefaultCustomListMdblistUserField">
+                                            <label class="homeCustomListLabel" for="DefaultCustomListMdblistUser">MDBList Username</label>
+                                            <input id="DefaultCustomListMdblistUser" class="homeCustomListInput" type="text" placeholder="Username" autocomplete="off" />
+                                            <label class="homeCustomListLabel" for="DefaultCustomListMdblistList">List Name (slug)</label>
+                                            <input id="DefaultCustomListMdblistList" class="homeCustomListInput" type="text" placeholder="list-name-slug" autocomplete="off" />
+                                        </div>
+                                        <div id="DefaultCustomListKeyWarning" class="homeCustomListWarning" style="display:none;"></div>
+                                        <label class="homeCustomListLabel" for="DefaultCustomListSortBy">Sort By</label>
+                                        <select id="DefaultCustomListSortBy" class="homeCustomListInput">
+                                            <option value="none">Default (When Added)</option>
+                                            <option value="title">Film Name</option>
+                                            <option value="popularity">Film Popularity</option>
+                                            <option value="year">Release Date</option>
+                                            <option value="rating">Average Rating</option>
+                                            <option value="shuffle">Shuffle</option>
+                                        </select>
+                                        <div id="DefaultCustomListSortOrderField">
+                                            <label class="homeCustomListLabel" for="DefaultCustomListSortOrder">Sort Order</label>
+                                            <select id="DefaultCustomListSortOrder" class="homeCustomListInput"></select>
+                                        </div>
+                                        <label id="DefaultCustomListUserRatingsField" class="homeCustomListCheckbox">
+                                            <input id="DefaultCustomListUserRatings" type="checkbox" />
+                                            <span>Show User Ratings</span>
+                                        </label>
+                                        <label class="homeCustomListLabel" for="DefaultCustomListName">Home Row Custom Name</label>
+                                        <input id="DefaultCustomListName" class="homeCustomListInput" type="text" placeholder="Enter row name..." autocomplete="off" />
+                                        <div id="DefaultCustomListResult" class="homeCustomListResult" style="display:none;"></div>
+                                        <div class="homeCustomListActions">
+                                            <button type="button" id="DefaultCustomListCancel" class="homeLayoutAddButton" style="display:none;">Cancel</button>
+                                            <button type="button" id="DefaultCustomListSave" class="homeLayoutAddButton">Add to Layout</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Row Options</h4>
@@ -2494,6 +2569,37 @@
                                  </select>
                                  <div class="fieldDescription">Show closed captions on YouTube trailers when available.</div>
                              </div>
+                            <h4 id="DefaultMediaBarRatingsHeading" style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Media Bar Ratings</h4>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultMediaBarMdblistEnabled">Media Bar MDBList Ratings</label>
+                                <select id="DefaultMediaBarMdblistEnabled" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                                <div class="fieldDescription">Enable MDBList ratings on the media bar by default (requires server-wide or user API key). Only the Moonfin, MakD, Gallery and Banner styles show ratings.</div>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused">Media Bar Rating Sources &amp; Order</label>
+                                <div class="fieldDescription">Check which ratings to display and drag or use the arrows to set their order.</div>
+                                <div id="DefaultMediaBarMdblistRatingSourcesList" style="max-height:220px;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px;margin-top:6px;"></div>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultMediaBarMdblistShowRatingNames">Media Bar Rating Labels</label>
+                                <select id="DefaultMediaBarMdblistShowRatingNames" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultMediaBarMdblistShowRatingBadges">Media Bar Rating Badges</label>
+                                <select id="DefaultMediaBarMdblistShowRatingBadges" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                            </div>
                             <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Looks</h4>
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultHomeRowsStyle">Row Type</label>
@@ -2641,6 +2747,46 @@
                                     <span id="DefaultPreviewVolume_Val" style="font-weight: 600; min-width: 40px; color: #00a4dc; text-align: right; font-size: 0.95em;">--</span>
                                 </div>
                                 <div class="fieldDescription">How loud media previews on cards play</div>
+                            </div>
+                            <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Home Row Ratings</h4>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultHomeRowsMdblistEnabled">Home Row MDBList Ratings</label>
+                                <select id="DefaultHomeRowsMdblistEnabled" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                                <div class="fieldDescription">Enable MDBList ratings in the home row info area by default (requires server-wide or user API key).</div>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused">Home Row Rating Sources &amp; Order</label>
+                                <div class="fieldDescription">Check which ratings to display and drag or use the arrows to set their order.</div>
+                                <div id="DefaultHomeRowsMdblistRatingSourcesList" style="max-height:220px;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px;margin-top:6px;"></div>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultHomeRowsTmdbEpisodeRatingsEnabled">Home Row TMDB Episode Ratings</label>
+                                <select id="DefaultHomeRowsTmdbEpisodeRatingsEnabled" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                                <div class="fieldDescription">Enable TMDB episode ratings in the home row info area by default (requires server-wide or user API key).</div>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultHomeRowsMdblistShowRatingNames">Home Row Rating Labels</label>
+                                <select id="DefaultHomeRowsMdblistShowRatingNames" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultHomeRowsMdblistShowRatingBadges">Home Row Rating Badges</label>
+                                <select id="DefaultHomeRowsMdblistShowRatingBadges" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
                             </div>
                             <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">External Sources</h4>
                             <div class="fieldDescription" style="margin-bottom:0.75em;">Chart rows the home sections page can offer. IMDb rows need IMDb Charts enabled above, TMDB rows need a TMDB API key.</div>
@@ -3000,6 +3146,14 @@
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultShowMediaDetailsOnLibraryPage">Show Media Details</label>
                                 <select id="DefaultShowMediaDetailsOnLibraryPage" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultLibraryCardTitles">Titles Under Posters</label>
+                                <select id="DefaultLibraryCardTitles" is="emby-select">
                                     <option value="">Not set (user decides)</option>
                                     <option value="true">Yes</option>
                                     <option value="false">No</option>
@@ -4107,6 +4261,7 @@
 
         #MoonfinConfigPage .homeLayoutTabs {
             display: flex;
+            flex-wrap: wrap;
             align-items: flex-end;
             gap: 0;
             margin-bottom: 8px;
@@ -4115,6 +4270,7 @@
 
         #MoonfinConfigPage .homeLayoutTabButton {
             margin: 0 2px -1px 0;
+            white-space: nowrap;
             padding: 6px 10px;
             border-bottom-left-radius: 0;
             border-bottom-right-radius: 0;
@@ -4143,6 +4299,85 @@
             padding: 12px 8px;
             color: rgba(255, 255, 255, 0.54);
             font-size: 0.88em;
+        }
+
+        #MoonfinConfigPage .homeLayoutRow.has-edit {
+            grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+        }
+
+        #MoonfinConfigPage .homeLayoutBadge-custom {
+            border-color: rgba(236, 72, 153, 0.42);
+            background: rgba(236, 72, 153, 0.15);
+            color: rgba(252, 231, 243, 0.96);
+        }
+
+        #MoonfinConfigPage .homeCustomListForm {
+            padding-right: 4px;
+        }
+
+        #MoonfinConfigPage .homeCustomListIntro {
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.82em;
+            line-height: 1.35;
+        }
+
+        #MoonfinConfigPage .homeCustomListLabel {
+            display: block;
+            margin: 8px 0 3px;
+            color: rgba(255, 255, 255, 0.62);
+            font-size: 0.78em;
+        }
+
+        #MoonfinConfigPage .homeCustomListInput {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.2);
+            color: inherit;
+            font: inherit;
+            font-size: 0.88em;
+        }
+
+        #MoonfinConfigPage select.homeCustomListInput option {
+            background: #1c1c1c;
+        }
+
+        #MoonfinConfigPage .homeCustomListCheckbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+
+        #MoonfinConfigPage .homeCustomListWarning {
+            margin-top: 8px;
+            color: #fbbf24;
+            font-size: 0.78em;
+            line-height: 1.35;
+        }
+
+        #MoonfinConfigPage .homeCustomListResult {
+            margin-top: 10px;
+            font-size: 0.82em;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        #MoonfinConfigPage .homeCustomListResult.is-error {
+            color: #f87171;
+        }
+
+        #MoonfinConfigPage .homeCustomListActions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            margin: 12px 0 4px;
         }
         </script>
         <script type="text/javascript">
@@ -4327,7 +4562,7 @@
                 { parent: 'DefaultNavbarPosition', off: ['top', 'left'], fields: ['DefaultBottomNavbarStyle', 'DefaultBottomNavbarTab1'] },
                 { parent: 'DefaultNavbarPosition', off: ['bottom'], fields: ['DefaultNavbarAlwaysExpanded'] },
                 { parent: 'DefaultShowShuffleButton', fields: ['DefaultShuffleContentType'] },
-                { parent: 'DefaultSeasonalSurprise', off: ['none'], fields: ['DefaultSeasonalDensity'] },
+                { parent: 'DefaultSeasonalSurprise', off: ['none'], fields: ['DefaultSeasonalDensity', 'DefaultSeasonalFollower'] },
                 { parent: 'DefaultLoadingAnimationImage', off: ['none'], fields: ['DefaultLoadingAnimationPosition', 'DefaultLoadingAnimationSize', 'DefaultLoadingAnimationSpeed', 'DefaultShowLoadingAnimationText'] },
                 { parent: 'DefaultScreensaverComponent', off: ['none'], fields: ['DefaultScreensaverMovement', 'DefaultScreensaverSize'] },
                 { parent: 'DefaultScreensaverMovement', off: ['slow', 'moderate', 'fast', 'ultra'], fields: ['DefaultScreensaverPosition'] },
@@ -4342,6 +4577,7 @@
                 { parent: 'DefaultSinceYouWatchedSource', off: ['online'], fields: ['DefaultSinceYouWatchedIncludeWatched'] },
                 { parent: 'DefaultDisplayStudiosRows', fields: ['DefaultStudiosRowSortBy', 'DefaultStudiosRowSortOrder'] },
                 { parent: 'DefaultMediaBarMode', off: ['off'], fields: ['DefaultMediaBarContentType', 'DefaultMediaBarItemCount', 'DefaultMediaBarSourceType', 'DefaultCollectionPickerSection', 'DefaultLibraryPickerSection', 'DefaultGenrePicker', 'DefaultMediaBarAutoAdvance', 'DefaultMediaBarOpacity', 'DefaultMediaBarOverlayColor', 'DefaultMediaBarRowPeek', 'DefaultMediaBarTrailerPreview'] },
+                { parent: 'DefaultMediaBarMode', off: ['off', 'bookshelf', 'aya'], fields: ['DefaultMediaBarRatingsHeading', 'DefaultMediaBarMdblistEnabled', 'DefaultMediaBarMdblistRatingSourcesList', 'DefaultMediaBarMdblistShowRatingNames', 'DefaultMediaBarMdblistShowRatingBadges'] },
                 { parent: 'DefaultMediaBarAutoAdvance', fields: ['DefaultMediaBarIntervalMs'] },
                 { parent: 'DefaultMediaBarTrailerPreview', fields: ['DefaultMediaBarTrailerAudio', 'DefaultTrailerVolume', 'DefaultMediaBarTrailerCaptions'] },
                 { parent: 'DefaultHomeRowsStyle', off: ['v1'], fields: ['DefaultModernCardsOnMyMediaRow', 'DefaultModernHomeRowsPadding'] },
@@ -4453,7 +4689,8 @@
             function homeBackdropStyleOf(defaults) {
                 if (defaults.homeBackdropEnabled === false) return 'off';
                 if (defaults.homeBackdropEnabled !== true) return '';
-                return defaults.homeBackdropStyle === 'corner' ? 'corner' : 'fullScreen';
+                var style = defaults.homeBackdropStyle;
+                return style === 'corner' || style === 'top' ? style : 'fullScreen';
             }
 
             function setSelectValue(selector, value, dynamicLabelPrefix) {
@@ -5142,8 +5379,8 @@
                     });
             }
 
-            function loadRatingSourcesPicker(selectedIds) {
-                var container = document.querySelector('#DefaultMdblistRatingSourcesList');
+            function loadRatingSourcesPicker(selectedIds, listSelector) {
+                var container = document.querySelector(listSelector || '#DefaultMdblistRatingSourcesList');
                 if (!container) return;
                 var selectedSet = {};
                 var ordered = [];
@@ -5186,8 +5423,8 @@
                 }
             }
 
-            function getRatingSourcesValue() {
-                var items = document.querySelectorAll('#DefaultMdblistRatingSourcesList .mdblistRatingItem');
+            function getRatingSourcesValue(listSelector) {
+                var items = document.querySelectorAll((listSelector || '#DefaultMdblistRatingSourcesList') + ' .mdblistRatingItem');
                 var result = [];
                 items.forEach(function(item) {
                     var cb = item.querySelector('input[type=checkbox]');
@@ -5749,7 +5986,8 @@
                 { id: 'playlists', label: 'Playlists' },
                 { id: 'genres', label: 'Genres' },
                 { id: 'seerr', label: 'Seerr' },
-                { id: 'external', label: 'External Lists' }
+                { id: 'external', label: 'External Lists' },
+                { id: 'custom', label: 'Custom Lists' }
             ];
 
             var HOME_LAYOUT_SEERR_TYPES = {
@@ -5844,6 +6082,7 @@
                 if (section.pluginSource === 'collections') return 'Collection';
                 if (section.pluginSource === 'playlists') return 'Playlist';
                 if (section.pluginSource === 'genres') return 'Genre';
+                if (section.pluginSource === 'custom') return 'Custom List';
                 return 'Dynamic';
             }
 
@@ -5856,6 +6095,7 @@
                 if (section.pluginSource === 'collections') return 'homeLayoutBadge-collections';
                 if (section.pluginSource === 'playlists') return 'homeLayoutBadge-playlists';
                 if (section.pluginSource === 'genres') return 'homeLayoutBadge-genres';
+                if (section.pluginSource === 'custom') return 'homeLayoutBadge-custom';
                 return 'homeLayoutBadge-dynamic';
             }
 
@@ -6024,6 +6264,9 @@
 
             function removeHomeLayoutSection(index) {
                 if (index < 0 || index >= HOME_LAYOUT_STATE.sections.length) return;
+                if (HOME_LAYOUT_STATE.sections[index] === CUSTOM_LIST_FORM.editingSection) {
+                    resetCustomListForm();
+                }
                 HOME_LAYOUT_STATE.sections.splice(index, 1);
                 if (HOME_LAYOUT_STATE.sections.length === 0) {
                     HOME_LAYOUT_STATE.selectedIndex = null;
@@ -6072,14 +6315,18 @@
                 }
 
                 HOME_LAYOUT_STATE.sections.forEach(function(section, index) {
+                    var editable = isCustomListSection(section);
                     var row = document.createElement('div');
-                    row.className = 'homeLayoutRow' + (HOME_LAYOUT_STATE.selectedIndex === index ? ' is-selected' : '');
+                    row.className = 'homeLayoutRow'
+                        + (editable ? ' has-edit' : '')
+                        + (HOME_LAYOUT_STATE.selectedIndex === index ? ' is-selected' : '');
                     row.dataset.index = String(index);
                     row.innerHTML =
                         '<div class="homeLayoutRowText">'
                         + '<div class="homeLayoutRowTitle">' + esc(homeSectionLabel(section)) + '</div>'
                         + '<span class="homeLayoutBadge ' + homeSectionBadgeClass(section) + '">' + esc(homeSectionMeta(section)) + '</span>'
                         + '</div>'
+                        + (editable ? '<button type="button" class="homeLayoutIconButton" data-action="edit" title="Edit">&#x270E;</button>' : '')
                         + '<button type="button" class="homeLayoutIconButton" data-action="up" title="Move up"' + (index === 0 ? ' disabled' : '') + '>&#x2191;</button>'
                         + '<button type="button" class="homeLayoutIconButton" data-action="down" title="Move down"' + (index === HOME_LAYOUT_STATE.sections.length - 1 ? ' disabled' : '') + '>&#x2193;</button>'
                         + '<button type="button" class="homeLayoutIconButton" data-action="remove" title="Remove">&#x2715;</button>';
@@ -6091,6 +6338,19 @@
                 var container = document.querySelector('#DefaultHomeAvailableRows');
                 if (!container) return;
                 var tab = HOME_LAYOUT_STATE.activeTab;
+
+                // Custom lists are made with a form rather than picked from a catalog.
+                var isCustomTab = tab === 'custom';
+                var customForm = document.querySelector('#DefaultHomeCustomListForm');
+                var searchInput = document.querySelector('#DefaultHomeAvailableSearch');
+                container.style.display = isCustomTab ? 'none' : '';
+                if (searchInput) searchInput.style.display = isCustomTab ? 'none' : '';
+                if (customForm) customForm.style.display = isCustomTab ? '' : 'none';
+                if (isCustomTab) {
+                    refreshCustomListForm();
+                    return;
+                }
+
                 var search = (HOME_LAYOUT_STATE.search || '').toLowerCase();
                 var keys = currentHomeLayoutKeys();
                 var candidates = (HOME_LAYOUT_STATE.available[tab] || []).filter(function(candidate) {
@@ -6158,6 +6418,8 @@
                 HOME_LAYOUT_STATE.selectedIndex = HOME_LAYOUT_STATE.sections.length > 0 ? HOME_LAYOUT_STATE.sections.length - 1 : null;
                 renumberHomeLayoutSections();
                 bindHomeLayoutEditorEvents();
+                bindCustomListForm();
+                resetCustomListForm();
                 renderHomeSectionsEditor();
                 loadHomeLayoutDynamicRows();
             }
@@ -6181,6 +6443,7 @@
                             return;
                         }
                         var action = actionButton.dataset.action;
+                        if (action === 'edit') editCustomListSection(index);
                         if (action === 'up') moveHomeLayoutSection(index, -1);
                         if (action === 'down') moveHomeLayoutSection(index, 1);
                         if (action === 'remove') removeHomeLayoutSection(index);
@@ -6316,6 +6579,343 @@
                                 setHomeLayoutAvailable('genres', []);
                             });
                     });
+            }
+
+            // The form mirrors Add Custom Home Row in the apps, and writes the same row they do,
+            // so a list an admin adds here loads in every app the way a user's own would.
+            var CUSTOM_LIST_TYPES = {
+                tmdb: [['user_list', 'List from TMDB List ID or URL'], ['movie_collection', 'Collection from TMDB Collection ID or URL']],
+                letterboxd: [['user_diary', 'Diary']],
+                mdblist: [['list_url', 'List from URL'], ['user_list', 'List from User ID']]
+            };
+
+            var CUSTOM_LIST_SORT_ORDERS = {
+                title: [['asc', 'A to Z'], ['desc', 'Z to A']],
+                year: [['desc', 'Newest First'], ['asc', 'Earliest First']],
+                popularity: [['desc', 'Most Popular First'], ['asc', 'Least Popular First']],
+                rating: [['desc', 'Highest First'], ['asc', 'Lowest First']]
+            };
+
+            var CUSTOM_LIST_FORM = {
+                sortOrder: 'desc',
+                editingSection: null,
+                busy: false
+            };
+
+            function customListEl(id) {
+                return document.querySelector('#' + id);
+            }
+
+            function showCustomListEl(id, shown) {
+                var el = customListEl(id);
+                if (el) el.style.display = shown ? '' : 'none';
+            }
+
+            function isCustomListSection(section) {
+                return !!section && section.kind === 'pluginDynamic' && section.pluginSource === 'custom';
+            }
+
+            function setCustomListOptions(select, options, value) {
+                select.innerHTML = options.map(function(option) {
+                    return '<option value="' + esc(option[0]) + '">' + esc(option[1]) + '</option>';
+                }).join('');
+                var known = options.some(function(option) { return option[0] === value; });
+                select.value = known ? value : options[0][0];
+            }
+
+            function refreshCustomListForm(preferredType) {
+                var sourceSelect = customListEl('DefaultCustomListSource');
+                var typeSelect = customListEl('DefaultCustomListType');
+                if (!sourceSelect || !typeSelect) return;
+
+                var source = sourceSelect.value;
+                var types = CUSTOM_LIST_TYPES[source];
+                setCustomListOptions(typeSelect, types, preferredType || typeSelect.value);
+                var type = typeSelect.value;
+                showCustomListEl('DefaultCustomListTypeField', types.length > 1);
+
+                showCustomListEl('DefaultCustomListLetterboxdField', source === 'letterboxd');
+                showCustomListEl('DefaultCustomListTmdbField', source === 'tmdb');
+                showCustomListEl('DefaultCustomListMdblistUrlField', source === 'mdblist' && type === 'list_url');
+                showCustomListEl('DefaultCustomListMdblistUserField', source === 'mdblist' && type !== 'list_url');
+                var isCollection = type === 'movie_collection';
+                customListEl('DefaultCustomListTmdbIdLabel').textContent = isCollection ? 'TMDB Collection ID or URL' : 'TMDB List ID or URL';
+                customListEl('DefaultCustomListTmdbId').placeholder = isCollection
+                    ? '12345 OR https://www.themoviedb.org/collection/12345'
+                    : '12345 OR https://www.themoviedb.org/list/12345';
+
+                var sortOrders = CUSTOM_LIST_SORT_ORDERS[customListEl('DefaultCustomListSortBy').value];
+                showCustomListEl('DefaultCustomListSortOrderField', !!sortOrders);
+                if (sortOrders) {
+                    setCustomListOptions(customListEl('DefaultCustomListSortOrder'), sortOrders, CUSTOM_LIST_FORM.sortOrder);
+                }
+
+                showCustomListEl('DefaultCustomListUserRatingsField', source === 'letterboxd');
+
+                // The server's keys cover users who haven't set their own.
+                var tmdbKey = ((customListEl('TmdbApiKey') || {}).value || '').trim();
+                var mdblistKey = ((customListEl('MdblistApiKey') || {}).value || '').trim();
+                var warning = '';
+                if (source === 'letterboxd' && !tmdbKey) {
+                    warning = 'Letterboxd lists need a TMDB API key to resolve their titles. Set one on the Integrations tab, or users need their own.';
+                } else if (source === 'tmdb' && !tmdbKey) {
+                    warning = 'TMDB lists need a TMDB API key. Set one on the Integrations tab, or users need their own.';
+                } else if (source === 'mdblist' && !mdblistKey) {
+                    warning = 'MDBList lists need an MDBList API key. Set one on the Integrations tab, or users need their own.';
+                }
+                var warningEl = customListEl('DefaultCustomListKeyWarning');
+                warningEl.textContent = warning;
+                warningEl.style.display = warning ? '' : 'none';
+            }
+
+            function showCustomListResult(message, isError) {
+                var result = customListEl('DefaultCustomListResult');
+                if (!result) return;
+                result.textContent = message || '';
+                result.classList.toggle('is-error', !!isError);
+                result.style.display = message ? '' : 'none';
+            }
+
+            function setCustomListBusy(busy) {
+                CUSTOM_LIST_FORM.busy = busy;
+                customListEl('DefaultCustomListSave').disabled = busy;
+                customListEl('DefaultCustomListCancel').disabled = busy;
+            }
+
+            function updateCustomListButtons() {
+                var editing = !!CUSTOM_LIST_FORM.editingSection;
+                customListEl('DefaultCustomListSave').textContent = editing ? 'Save Changes' : 'Add to Layout';
+                showCustomListEl('DefaultCustomListCancel', editing);
+            }
+
+            function clearCustomListFields() {
+                ['DefaultCustomListLetterboxdUser', 'DefaultCustomListTmdbId', 'DefaultCustomListMdblistUrl',
+                    'DefaultCustomListMdblistUser', 'DefaultCustomListMdblistList', 'DefaultCustomListName'].forEach(function(id) {
+                    customListEl(id).value = '';
+                });
+            }
+
+            function resetCustomListForm() {
+                if (!customListEl('DefaultCustomListSource')) return;
+                CUSTOM_LIST_FORM.editingSection = null;
+                CUSTOM_LIST_FORM.sortOrder = 'desc';
+                clearCustomListFields();
+                customListEl('DefaultCustomListSource').value = 'tmdb';
+                customListEl('DefaultCustomListSortBy').value = 'none';
+                customListEl('DefaultCustomListUserRatings').checked = false;
+                showCustomListResult('', false);
+                updateCustomListButtons();
+                refreshCustomListForm('user_list');
+            }
+
+            function fillCustomListForm(section) {
+                var rowConfig = {};
+                try {
+                    rowConfig = JSON.parse(section.pluginAdditionalData || '{}') || {};
+                } catch (e) {
+                    rowConfig = {};
+                }
+
+                var source = rowConfig.source || 'tmdb';
+                var type = rowConfig.type || 'user_list';
+                // The apps no longer offer IMDb here and open an old IMDb row as a TMDB list.
+                if (source === 'imdb') {
+                    source = 'tmdb';
+                    type = 'user_list';
+                }
+                if (!CUSTOM_LIST_TYPES[source]) source = 'tmdb';
+                var params = rowConfig.params || {};
+
+                clearCustomListFields();
+                customListEl('DefaultCustomListSource').value = source;
+                if (source === 'letterboxd') {
+                    customListEl('DefaultCustomListLetterboxdUser').value = params.user || '';
+                } else if (source === 'tmdb') {
+                    customListEl('DefaultCustomListTmdbId').value = params.id || '';
+                } else if (source === 'mdblist') {
+                    customListEl('DefaultCustomListMdblistUser').value = params.username || '';
+                    if (type === 'list_url') {
+                        customListEl('DefaultCustomListMdblistUrl').value = params.username && params.listname
+                            ? 'https://mdblist.com/lists/' + params.username + '/' + params.listname
+                            : '';
+                    } else {
+                        customListEl('DefaultCustomListMdblistList').value = params.listname || '';
+                    }
+                }
+
+                var sortBy = rowConfig.sort_by || 'none';
+                var sortBySelect = customListEl('DefaultCustomListSortBy');
+                sortBySelect.value = sortBy;
+                if (sortBySelect.value !== sortBy) sortBySelect.value = 'none';
+                CUSTOM_LIST_FORM.sortOrder = rowConfig.sort_order === 'asc' ? 'asc' : 'desc';
+                customListEl('DefaultCustomListUserRatings').checked = rowConfig.show_user_ratings === true;
+                customListEl('DefaultCustomListName').value = section.pluginDisplayText || '';
+                showCustomListResult('', false);
+                refreshCustomListForm(type);
+            }
+
+            function customListParams(source, type) {
+                var params = {};
+                if (source === 'letterboxd') {
+                    params.user = customListEl('DefaultCustomListLetterboxdUser').value.trim().toLowerCase();
+                } else if (source === 'tmdb') {
+                    var rawId = customListEl('DefaultCustomListTmdbId').value.trim();
+                    if (rawId.indexOf('/') !== -1 || rawId.indexOf('http') === 0) {
+                        if (rawId.charAt(rawId.length - 1) === '/') rawId = rawId.slice(0, -1);
+                        var idParts = rawId.split('/');
+                        rawId = idParts[idParts.length - 1];
+                    }
+                    params.id = rawId;
+                } else if (source === 'mdblist') {
+                    if (type === 'list_url') {
+                        // Takes https://mdblist.com/lists/{username}/{listname} with an optional trailing
+                        // slash, query or fragment. Anchoring on /lists/ keeps extra path segments out.
+                        var rawUrl = customListEl('DefaultCustomListMdblistUrl').value.trim();
+                        var queryStart = rawUrl.search(/[?#]/);
+                        if (queryStart >= 0) rawUrl = rawUrl.slice(0, queryStart);
+                        while (rawUrl.charAt(rawUrl.length - 1) === '/') rawUrl = rawUrl.slice(0, -1);
+                        var urlParts = rawUrl.split('/').filter(function(part) { return part.length > 0; });
+                        var parsedUser = '';
+                        var parsedList = '';
+                        var listsIndex = urlParts.lastIndexOf('lists');
+                        if (listsIndex >= 0 && urlParts.length >= listsIndex + 3) {
+                            parsedUser = urlParts[listsIndex + 1];
+                            parsedList = urlParts[listsIndex + 2];
+                        } else if (urlParts.length >= 2) {
+                            parsedList = urlParts[urlParts.length - 1];
+                            parsedUser = urlParts[urlParts.length - 2];
+                        }
+                        params.username = parsedUser;
+                        params.listname = parsedList;
+                    } else {
+                        params.username = customListEl('DefaultCustomListMdblistUser').value.trim();
+                        params.listname = customListEl('DefaultCustomListMdblistList').value.trim();
+                    }
+                }
+                return params;
+            }
+
+            function customListSourceUrl(source, type, params) {
+                if (source === 'tmdb') {
+                    return 'https://www.themoviedb.org/' + (type === 'movie_collection' ? 'collection/' : 'list/') + params.id;
+                }
+                if (source === 'letterboxd') return 'https://letterboxd.com/' + params.user + '/';
+                return 'https://mdblist.com/lists/' + params.username + '/' + params.listname + '/';
+            }
+
+            function saveCustomListRow() {
+                if (CUSTOM_LIST_FORM.busy) return;
+                var name = customListEl('DefaultCustomListName').value.trim();
+                if (!name) {
+                    showCustomListResult('Give the row a name first.', true);
+                    return;
+                }
+
+                var source = customListEl('DefaultCustomListSource').value;
+                var type = customListEl('DefaultCustomListType').value;
+                var params = customListParams(source, type);
+                var additionalData = JSON.stringify({
+                    source: source,
+                    type: type,
+                    params: params,
+                    sort_by: customListEl('DefaultCustomListSortBy').value,
+                    sort_order: CUSTOM_LIST_FORM.sortOrder,
+                    show_user_ratings: customListEl('DefaultCustomListUserRatings').checked
+                });
+
+                // Checked the way the apps check it before saving, so a list that can't load never
+                // reaches anyone's home screen.
+                var serverAddress = ApiClient.serverAddress ? ApiClient.serverAddress() : '';
+                var query = '?source=' + encodeURIComponent(source)
+                    + '&type=' + encodeURIComponent(type)
+                    + '&params=' + encodeURIComponent(JSON.stringify(params));
+                setCustomListBusy(true);
+                showCustomListResult('Checking the list...', false);
+                fetch(serverAddress + '/Moonfin/CustomRows/Items' + query, { method: 'GET', headers: getMoonfinAuthHeaders() })
+                    .then(parseJsonResponse)
+                    .then(function(payload) {
+                        if (payload.success === false) throw new Error(payload.error || 'The list could not be fetched.');
+                        if (!payload.items || payload.items.length === 0) throw new Error('No results returned.');
+                        setCustomListBusy(false);
+                        commitCustomListRow(name, additionalData);
+                    })
+                    .catch(function(error) {
+                        setCustomListBusy(false);
+                        showCustomListResult('Couldn\'t fetch items from ' + customListSourceUrl(source, type, params)
+                            + '. ' + ((error && error.message) || error), true);
+                    });
+            }
+
+            function commitCustomListRow(name, additionalData) {
+                var editing = CUSTOM_LIST_FORM.editingSection;
+                var editingIndex = editing ? HOME_LAYOUT_STATE.sections.indexOf(editing) : -1;
+                var section = {
+                    kind: 'pluginDynamic',
+                    type: 'none',
+                    enabled: true,
+                    order: 0,
+                    serverId: 'custom',
+                    pluginSource: 'custom',
+                    pluginSection: editingIndex >= 0 && editing.pluginSection ? editing.pluginSection : 'custom_row_' + Date.now(),
+                    pluginAdditionalData: additionalData,
+                    pluginDisplayText: name
+                };
+
+                if (editingIndex >= 0) {
+                    HOME_LAYOUT_STATE.sections[editingIndex] = section;
+                    HOME_LAYOUT_STATE.selectedIndex = editingIndex;
+                } else {
+                    var insertIndex = getHomeLayoutInsertIndex();
+                    HOME_LAYOUT_STATE.sections.splice(insertIndex, 0, section);
+                    HOME_LAYOUT_STATE.selectedIndex = insertIndex;
+                }
+
+                renumberHomeLayoutSections();
+                resetCustomListForm();
+                showCustomListResult((editingIndex >= 0 ? 'Updated ' : 'Added ') + name + '. Save to keep it.', false);
+                renderHomeSectionsEditor();
+                scrollSelectedHomeLayoutRowIntoView();
+            }
+
+            function editCustomListSection(index) {
+                var section = HOME_LAYOUT_STATE.sections[index];
+                if (!isCustomListSection(section)) return;
+                CUSTOM_LIST_FORM.editingSection = section;
+                fillCustomListForm(section);
+                updateCustomListButtons();
+                HOME_LAYOUT_STATE.selectedIndex = index;
+                HOME_LAYOUT_STATE.activeTab = 'custom';
+                renderHomeSectionsEditor();
+            }
+
+            function bindCustomListForm() {
+                var form = customListEl('DefaultHomeCustomListForm');
+                if (!form || form.dataset.bound) return;
+                form.dataset.bound = 'true';
+
+                customListEl('DefaultCustomListSource').addEventListener('change', function(event) {
+                    refreshCustomListForm(CUSTOM_LIST_TYPES[event.target.value][0][0]);
+                });
+                customListEl('DefaultCustomListType').addEventListener('change', function() {
+                    refreshCustomListForm();
+                });
+                customListEl('DefaultCustomListSortBy').addEventListener('change', function(event) {
+                    CUSTOM_LIST_FORM.sortOrder = event.target.value === 'title' ? 'asc' : 'desc';
+                    refreshCustomListForm();
+                });
+                customListEl('DefaultCustomListSortOrder').addEventListener('change', function(event) {
+                    CUSTOM_LIST_FORM.sortOrder = event.target.value;
+                });
+                customListEl('DefaultCustomListSave').addEventListener('click', saveCustomListRow);
+                customListEl('DefaultCustomListCancel').addEventListener('click', function() {
+                    resetCustomListForm();
+                });
+                // Enter would otherwise submit the whole settings form.
+                form.addEventListener('keydown', function(event) {
+                    if (event.key !== 'Enter' || event.target.tagName !== 'INPUT') return;
+                    event.preventDefault();
+                    saveCustomListRow();
+                });
             }
 
             function getHomeSectionsValue() {
@@ -7597,6 +8197,7 @@
                     setNullableRangeInput('#DefaultPreviewVolume', defaults.previewVolume, '%');
                     setSelectValue('#DefaultSeasonalSurprise', defaults.seasonalSurprise, 'Configured surprise');
                     setSelectValue('#DefaultSeasonalDensity', defaults.seasonalDensity, 'Configured density');
+                    setNullableBoolSelect('#DefaultSeasonalFollower', defaults.seasonalFollower);
                     setNullableBoolSelect('#DefaultSeasonalRowEnabled', defaults.seasonalRowEnabled);
                     setSelectValue('#DefaultSeasonalRowCountry', defaults.seasonalRowCountry, 'Configured country');
                     renderSeasonalHolidayChecks(defaults.seasonalRowHiddenHolidays);
@@ -7640,6 +8241,7 @@
                     setSelectValue('#DefaultRecentlyReleasedSeriesType', defaults.recentlyReleasedSeriesType, 'Configured sort');
                     setNullableBoolSelect('#DefaultGroupItemsIntoCollections', defaults.groupItemsIntoCollections);
                     setNullableBoolSelect('#DefaultShowMediaDetailsOnLibraryPage', defaults.showMediaDetailsOnLibraryPage);
+                    setNullableBoolSelect('#DefaultLibraryCardTitles', defaults.libraryCardTitles);
                     setNullableBoolSelect('#DefaultUseDetailedSubHeadings', defaults.useDetailedSubHeadings);
                     setNullableBoolSelect('#DefaultHideBackdropsInLibraries', defaults.hideBackdropsInLibraries);
 
@@ -7649,6 +8251,7 @@
                     setNullableBoolSelect('#DefaultShowSyncPlayButton', defaults.showSyncPlayButton);
                     setNullableBoolSelect('#DefaultSyncPlayEnabled', defaults.syncPlayEnabled);
                     setNullableBoolSelect('#DefaultShowLibrariesInToolbar', defaults.showLibrariesInToolbar);
+                    setNullableBoolSelect('#DefaultShowLibrariesIndividually', defaults.showLibrariesIndividually);
 
                     setSelectValue('#DefaultResumeSubtractDuration', defaults.resumeSubtractDuration != null ? String(defaults.resumeSubtractDuration) : '', 'Configured rewind');
                     setSelectValue('#DefaultUnpauseRewindDuration', defaults.unpauseRewindDuration != null ? String(defaults.unpauseRewindDuration) : '', 'Configured rewind');
@@ -7687,6 +8290,15 @@
                     setNullableBoolSelect('#DefaultMdblistShowRatingBadges', defaults.mdblistShowRatingBadges);
                     setNullableBoolSelect('#DefaultMdblistShowRatingNames', defaults.mdblistShowRatingNames);
                     loadRatingSourcesPicker(defaults.mdblistRatingSources || null);
+                    setNullableBoolSelect('#DefaultHomeRowsMdblistEnabled', defaults.homeRowsMdblistEnabled);
+                    loadRatingSourcesPicker(defaults.homeRowsMdblistRatingSources || null, '#DefaultHomeRowsMdblistRatingSourcesList');
+                    setNullableBoolSelect('#DefaultHomeRowsTmdbEpisodeRatingsEnabled', defaults.homeRowsTmdbEpisodeRatingsEnabled);
+                    setNullableBoolSelect('#DefaultHomeRowsMdblistShowRatingNames', defaults.homeRowsMdblistShowRatingNames);
+                    setNullableBoolSelect('#DefaultHomeRowsMdblistShowRatingBadges', defaults.homeRowsMdblistShowRatingBadges);
+                    setNullableBoolSelect('#DefaultMediaBarMdblistEnabled', defaults.mediaBarMdblistEnabled);
+                    loadRatingSourcesPicker(defaults.mediaBarMdblistRatingSources || null, '#DefaultMediaBarMdblistRatingSourcesList');
+                    setNullableBoolSelect('#DefaultMediaBarMdblistShowRatingNames', defaults.mediaBarMdblistShowRatingNames);
+                    setNullableBoolSelect('#DefaultMediaBarMdblistShowRatingBadges', defaults.mediaBarMdblistShowRatingBadges);
                     setNullableBoolSelect('#DefaultSeerrBlockNsfw', defaults.seerrBlockNsfw);
                     setNullableBoolSelect('#DefaultSeerrShowMissingCollectionItems', defaults.seerrShowMissingCollectionItems);
                     setNullableBoolSelect('#DefaultShowSeerrAvailabilityBadges', defaults.showSeerrAvailabilityBadges);
@@ -8522,6 +9134,7 @@
                         config.DefaultUserSettings.previewVolume = getNullableRangeInput('#DefaultPreviewVolume');
                         config.DefaultUserSettings.seasonalSurprise = document.querySelector('#DefaultSeasonalSurprise').value || null;
                         config.DefaultUserSettings.seasonalDensity = document.querySelector('#DefaultSeasonalDensity').value || null;
+                        config.DefaultUserSettings.seasonalFollower = getNullableBoolSelect('#DefaultSeasonalFollower');
                         config.DefaultUserSettings.seasonalRowEnabled = getNullableBoolSelect('#DefaultSeasonalRowEnabled');
                         config.DefaultUserSettings.seasonalRowCountry = document.querySelector('#DefaultSeasonalRowCountry').value || null;
                         config.DefaultUserSettings.seasonalRowHiddenHolidays = readSeasonalHiddenHolidays();
@@ -8618,6 +9231,7 @@
                         config.DefaultUserSettings.recentlyReleasedSeriesType = document.querySelector('#DefaultRecentlyReleasedSeriesType').value || null;
                         config.DefaultUserSettings.groupItemsIntoCollections = getNullableBoolSelect('#DefaultGroupItemsIntoCollections');
                         config.DefaultUserSettings.showMediaDetailsOnLibraryPage = getNullableBoolSelect('#DefaultShowMediaDetailsOnLibraryPage');
+                        config.DefaultUserSettings.libraryCardTitles = getNullableBoolSelect('#DefaultLibraryCardTitles');
                         config.DefaultUserSettings.useDetailedSubHeadings = getNullableBoolSelect('#DefaultUseDetailedSubHeadings');
                         config.DefaultUserSettings.hideBackdropsInLibraries = getNullableBoolSelect('#DefaultHideBackdropsInLibraries');
 
@@ -8627,11 +9241,21 @@
                         config.DefaultUserSettings.showSyncPlayButton = getNullableBoolSelect('#DefaultShowSyncPlayButton');
                         config.DefaultUserSettings.syncPlayEnabled = getNullableBoolSelect('#DefaultSyncPlayEnabled');
                         config.DefaultUserSettings.showLibrariesInToolbar = getNullableBoolSelect('#DefaultShowLibrariesInToolbar');
+                        config.DefaultUserSettings.showLibrariesIndividually = getNullableBoolSelect('#DefaultShowLibrariesIndividually');
                         config.DefaultUserSettings.mdblistEnabled = getNullableBoolSelect('#DefaultMdblistEnabled');
                         config.DefaultUserSettings.tmdbEpisodeRatingsEnabled = getNullableBoolSelect('#DefaultTmdbEpisodeRatingsEnabled');
                         config.DefaultUserSettings.mdblistShowRatingBadges = getNullableBoolSelect('#DefaultMdblistShowRatingBadges');
                         config.DefaultUserSettings.mdblistShowRatingNames = getNullableBoolSelect('#DefaultMdblistShowRatingNames');
                         config.DefaultUserSettings.mdblistRatingSources = getRatingSourcesValue();
+                        config.DefaultUserSettings.homeRowsMdblistEnabled = getNullableBoolSelect('#DefaultHomeRowsMdblistEnabled');
+                        config.DefaultUserSettings.homeRowsMdblistRatingSources = getRatingSourcesValue('#DefaultHomeRowsMdblistRatingSourcesList');
+                        config.DefaultUserSettings.homeRowsTmdbEpisodeRatingsEnabled = getNullableBoolSelect('#DefaultHomeRowsTmdbEpisodeRatingsEnabled');
+                        config.DefaultUserSettings.homeRowsMdblistShowRatingNames = getNullableBoolSelect('#DefaultHomeRowsMdblistShowRatingNames');
+                        config.DefaultUserSettings.homeRowsMdblistShowRatingBadges = getNullableBoolSelect('#DefaultHomeRowsMdblistShowRatingBadges');
+                        config.DefaultUserSettings.mediaBarMdblistEnabled = getNullableBoolSelect('#DefaultMediaBarMdblistEnabled');
+                        config.DefaultUserSettings.mediaBarMdblistRatingSources = getRatingSourcesValue('#DefaultMediaBarMdblistRatingSourcesList');
+                        config.DefaultUserSettings.mediaBarMdblistShowRatingNames = getNullableBoolSelect('#DefaultMediaBarMdblistShowRatingNames');
+                        config.DefaultUserSettings.mediaBarMdblistShowRatingBadges = getNullableBoolSelect('#DefaultMediaBarMdblistShowRatingBadges');
                         config.DefaultUserSettings.seerrBlockNsfw = getNullableBoolSelect('#DefaultSeerrBlockNsfw');
                         config.DefaultUserSettings.seerrShowMissingCollectionItems = getNullableBoolSelect('#DefaultSeerrShowMissingCollectionItems');
                         config.DefaultUserSettings.showSeerrAvailabilityBadges = getNullableBoolSelect('#DefaultShowSeerrAvailabilityBadges');

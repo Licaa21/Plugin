@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -613,7 +614,7 @@ namespace Emby.Plugins.Moonfin.Services
                 {
                     return CalendarError(404, "No " + service + " server is configured in Seerr");
                 }
-                server = doc.RootElement[0].Clone();
+                server = SelectArrServer(doc.RootElement).Clone();
             }
             catch (JsonException)
             {
@@ -626,14 +627,7 @@ namespace Emby.Plugins.Moonfin.Services
                 return CalendarError(404, "No " + service + " host is configured in Seerr");
             }
 
-            var port = server.TryGetProperty("port", out var p) && p.TryGetInt32(out var portValue)
-                ? portValue
-                : (isSonarr ? 8989 : 7878);
-            var useSsl = server.TryGetProperty("useSsl", out var ssl) && ssl.ValueKind == JsonValueKind.True;
-            var baseUrl = (server.TryGetProperty("baseUrl", out var b) ? b.GetString() : null)?.TrimEnd('/') ?? string.Empty;
             var apiKey = server.TryGetProperty("apiKey", out var k) ? k.GetString() ?? string.Empty : string.Empty;
-
-            var protocol = useSsl ? "https" : "http";
             var startDate = string.IsNullOrWhiteSpace(start) ? DateTime.UtcNow.ToString("yyyy-MM-dd") : start;
             var endDate = string.IsNullOrWhiteSpace(end) ? DateTime.UtcNow.AddDays(90).ToString("yyyy-MM-dd") : end;
             var query = "start=" + Uri.EscapeDataString(startDate) + "&end=" + Uri.EscapeDataString(endDate);
@@ -641,27 +635,150 @@ namespace Emby.Plugins.Moonfin.Services
             {
                 query += "&includeSeries=true";
             }
-            var url = protocol + "://" + hostname + ":" + port + baseUrl + "/api/v3/calendar?" + query;
+
+            return await FetchArrCalendarAsync(
+                () => new HttpClient(), _logger, service, ArrCalendarBases(server, isSonarr), apiKey, query).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// The server the calendar is read from. Seerr marks a default server for regular and for 4K
+        /// requests, and the regular default holds the library users mean by upcoming.
+        /// </summary>
+        internal static JsonElement SelectArrServer(JsonElement servers)
+        {
+            JsonElement? firstRegular = null;
+            foreach (var candidate in servers.EnumerateArray())
+            {
+                if (IsTrue(candidate, "is4k")) continue;
+                if (IsTrue(candidate, "isDefault")) return candidate;
+                firstRegular ??= candidate;
+            }
+
+            return firstRegular ?? servers[0];
+        }
+
+        private static bool IsTrue(JsonElement element, string property) =>
+            element.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.True;
+
+        /// <summary>
+        /// Where the server can be reached: the address Seerr itself uses, then the External URL set
+        /// for it in Seerr, which is often the only one that resolves outside Seerr's own network.
+        /// </summary>
+        internal static List<string> ArrCalendarBases(JsonElement server, bool isSonarr)
+        {
+            var hostname = server.TryGetProperty("hostname", out var h) ? h.GetString() ?? string.Empty : string.Empty;
+            var port = server.TryGetProperty("port", out var p) && p.TryGetInt32(out var portValue)
+                ? portValue
+                : (isSonarr ? 8989 : 7878);
+            var protocol = IsTrue(server, "useSsl") ? "https" : "http";
+            var baseUrl = (server.TryGetProperty("baseUrl", out var b) ? b.GetString() : null)?.TrimEnd('/') ?? string.Empty;
+            var bases = new List<string> { protocol + "://" + hostname + ":" + port + baseUrl };
+
+            var externalUrl = (server.TryGetProperty("externalUrl", out var e) && e.ValueKind == JsonValueKind.String
+                ? e.GetString()
+                : null)?.Trim().TrimEnd('/');
+            if (Uri.TryCreate(externalUrl, UriKind.Absolute, out var external)
+                && (external.Scheme == Uri.UriSchemeHttp || external.Scheme == Uri.UriSchemeHttps)
+                && !string.Equals(externalUrl, bases[0], StringComparison.OrdinalIgnoreCase))
+            {
+                bases.Add(externalUrl!);
+            }
+
+            return bases;
+        }
+
+        /// <summary>
+        /// Asks each address in turn and returns the first answer. Only a server that can't be reached
+        /// moves on to the next address, so an error the server itself sends back is passed on as is.
+        /// </summary>
+        internal static async Task<SeerrProxyResponse> FetchArrCalendarAsync(
+            Func<HttpClient> createClient,
+            ILogger logger,
+            string service,
+            IReadOnlyList<string> bases,
+            string apiKey,
+            string query,
+            Func<string, Task<IPAddress[]>>? resolveHost = null)
+        {
+            Exception? lastError = null;
+            for (var i = 0; i < bases.Count; i++)
+            {
+                var baseUrl = bases[i];
+                // The External URL can point anywhere, so the API key only goes to it encrypted or on the
+                // local network.
+                if (i > 0 && !await CanSendApiKeyAsync(baseUrl, resolveHost ?? Dns.GetHostAddressesAsync).ConfigureAwait(false))
+                {
+                    logger.Error("Skipped the " + service + " External URL " + baseUrl +
+                        " because it uses plain http and isn't on the local network, so the API key would travel unencrypted");
+                    continue;
+                }
+
+                try
+                {
+                    using var client = createClient();
+                    client.Timeout = TimeSpan.FromSeconds(15);
+                    using var request = new HttpRequestMessage(HttpMethod.Get, baseUrl + "/api/v3/calendar?" + query);
+                    request.Headers.Add("X-Api-Key", apiKey);
+                    using var arrResponse = await client.SendAsync(request).ConfigureAwait(false);
+                    var arrBody = await arrResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+                    return new SeerrProxyResponse
+                    {
+                        StatusCode = (int)arrResponse.StatusCode,
+                        Body = arrBody,
+                        ContentType = arrResponse.Content.Headers.ContentType?.ToString() ?? "application/json"
+                    };
+                }
+                catch (Exception ex)
+                {
+                    logger.Debug("Could not reach " + service + " at " + baseUrl + ": " + ex.Message);
+                    lastError = ex;
+                }
+            }
+
+            logger.Error("Failed to fetch " + service + " calendar: " + lastError?.Message);
+            return CalendarError(502, "Could not reach the " + service + " server");
+        }
+
+        /// <summary>
+        /// True for https, and for plain http only when every address the host resolves to is on the
+        /// local network. A host that doesn't resolve counts as not local.
+        /// </summary>
+        internal static async Task<bool> CanSendApiKeyAsync(string baseUrl, Func<string, Task<IPAddress[]>> resolveHost)
+        {
+            var uri = new Uri(baseUrl);
+            if (uri.Scheme == Uri.UriSchemeHttps) return true;
 
             try
             {
-                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-                using var request = new HttpRequestMessage(HttpMethod.Get, url);
-                request.Headers.Add("X-Api-Key", apiKey);
-                using var arrResponse = await client.SendAsync(request).ConfigureAwait(false);
-                var arrBody = await arrResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
-                return new SeerrProxyResponse
-                {
-                    StatusCode = (int)arrResponse.StatusCode,
-                    Body = arrBody,
-                    ContentType = arrResponse.Content.Headers.ContentType?.ToString() ?? "application/json"
-                };
+                var addresses = await resolveHost(uri.IdnHost).ConfigureAwait(false);
+                return addresses.Length > 0 && addresses.All(IsLocalNetworkAddress);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _logger.Error("Failed to fetch " + service + " calendar: " + ex.Message);
-                return CalendarError(502, "Could not reach the " + service + " server");
+                return false;
             }
+        }
+
+        /// <summary>
+        /// Loopback, link-local, the private IPv4 ranges, IPv6 unique local, and 100.64.0.0/10, which
+        /// Tailscale and carrier-grade NAT use and which never routes over the open internet.
+        /// </summary>
+        internal static bool IsLocalNetworkAddress(IPAddress address)
+        {
+            if (address.IsIPv4MappedToIPv6) address = address.MapToIPv4();
+            if (IPAddress.IsLoopback(address)) return true;
+
+            var bytes = address.GetAddressBytes();
+            if (address.AddressFamily == AddressFamily.InterNetworkV6)
+            {
+                return address.IsIPv6LinkLocal || (bytes[0] & 0xFE) == 0xFC;
+            }
+
+            return bytes[0] == 10
+                || (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31)
+                || (bytes[0] == 192 && bytes[1] == 168)
+                || (bytes[0] == 169 && bytes[1] == 254)
+                || (bytes[0] == 100 && bytes[1] >= 64 && bytes[1] <= 127);
         }
 
         private static SeerrProxyResponse CalendarError(int statusCode, string message) => new SeerrProxyResponse

@@ -14,6 +14,8 @@ public class RdbService
             ["nes"] = "Nintendo - Nintendo Entertainment System",
             ["snes"] = "Nintendo - Super Nintendo Entertainment System",
             ["gb"] = "Nintendo - Game Boy",
+            // Not a core of its own, see GameSystemCoreResolver.ArtworkCore.
+            ["gbc"] = "Nintendo - Game Boy Color",
             ["gba"] = "Nintendo - Game Boy Advance",
             ["n64"] = "Nintendo - Nintendo 64",
             ["nds"] = "Nintendo - Nintendo DS",
@@ -39,6 +41,7 @@ public class RdbService
             ["Sega - Master System - Mark III"] = new[] { "Sega - SG-1000", "Sega - Game Gear" },
             ["Sega - SG-1000"] = new[] { "Sega - Master System - Mark III" },
             ["Nintendo - Game Boy"] = new[] { "Nintendo - Game Boy Color" },
+            ["Nintendo - Game Boy Color"] = new[] { "Nintendo - Game Boy" },
             ["Atari - 7800"] = new[] { "Atari - 2600" },
         };
 

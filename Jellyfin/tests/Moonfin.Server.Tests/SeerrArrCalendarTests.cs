@@ -1,0 +1,279 @@
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Text.Json;
+using Moonfin.Server.Services;
+using Xunit;
+
+namespace Moonfin.Server.Tests;
+
+/// <summary>
+/// The Upcoming rows read the Radarr and Sonarr calendars through Seerr's arr settings. These pin
+/// which server is used and when the External URL set in Seerr is tried.
+/// </summary>
+public class SeerrArrCalendarTests
+{
+    private const string Query = "start=2026-10-01&end=2026-12-30";
+
+    private static JsonElement Json(string json) => JsonDocument.Parse(json).RootElement.Clone();
+
+    private static string ServerName(JsonElement server) => server.GetProperty("name").GetString()!;
+
+    [Fact]
+    public void ASingleServerIsUsedWhateverItsFlags()
+    {
+        var servers = Json("""[{ "name": "only", "is4k": true, "isDefault": false }]""");
+
+        Assert.Equal("only", ServerName(SeerrSessionService.SelectArrServer(servers)));
+    }
+
+    [Fact]
+    public void TheRegularDefaultWinsOverA4kServerListedFirst()
+    {
+        var servers = Json("""
+            [
+              { "name": "4k", "is4k": true, "isDefault": true },
+              { "name": "regular", "is4k": false, "isDefault": true }
+            ]
+            """);
+
+        Assert.Equal("regular", ServerName(SeerrSessionService.SelectArrServer(servers)));
+    }
+
+    [Fact]
+    public void TheRegularDefaultWinsOverAnotherRegularServerListedFirst()
+    {
+        var servers = Json("""
+            [
+              { "name": "spare", "is4k": false, "isDefault": false },
+              { "name": "main", "is4k": false, "isDefault": true }
+            ]
+            """);
+
+        Assert.Equal("main", ServerName(SeerrSessionService.SelectArrServer(servers)));
+    }
+
+    [Fact]
+    public void WithoutADefaultTheFirstRegularServerIsUsed()
+    {
+        var servers = Json("""
+            [
+              { "name": "4k", "is4k": true, "isDefault": true },
+              { "name": "regular", "is4k": false, "isDefault": false }
+            ]
+            """);
+
+        Assert.Equal("regular", ServerName(SeerrSessionService.SelectArrServer(servers)));
+    }
+
+    [Fact]
+    public void OnlyThe4kServersMeansTheFirstOne()
+    {
+        var servers = Json("""
+            [
+              { "name": "4k-a", "is4k": true, "isDefault": false },
+              { "name": "4k-b", "is4k": true, "isDefault": true }
+            ]
+            """);
+
+        Assert.Equal("4k-a", ServerName(SeerrSessionService.SelectArrServer(servers)));
+    }
+
+    [Fact]
+    public void WithoutAnExternalUrlOnlyTheInternalAddressIsTried()
+    {
+        var server = Json("""{ "hostname": "radarr", "port": 7878, "useSsl": false, "baseUrl": "", "externalUrl": "" }""");
+
+        Assert.Equal(["http://radarr:7878"], SeerrSessionService.ArrCalendarBases(server, isSonarr: false));
+    }
+
+    [Fact]
+    public void TheExternalUrlComesSecondWithItsOwnPathKept()
+    {
+        var server = Json("""{ "hostname": "sonarr.lan", "port": 8443, "useSsl": true, "baseUrl": "/sonarr/", "externalUrl": " https://media.example.com/sonarr/ " }""");
+
+        Assert.Equal(
+            ["https://sonarr.lan:8443/sonarr", "https://media.example.com/sonarr"],
+            SeerrSessionService.ArrCalendarBases(server, isSonarr: true));
+    }
+
+    [Fact]
+    public void MissingFieldsFallBackToTheDefaultPort()
+    {
+        var server = Json("""{ "hostname": "sonarr" }""");
+
+        Assert.Equal(["http://sonarr:8989"], SeerrSessionService.ArrCalendarBases(server, isSonarr: true));
+    }
+
+    [Theory]
+    [InlineData("radarr.example.com")]
+    [InlineData("ftp://radarr.example.com")]
+    [InlineData("http://radarr:7878/")]
+    public void AnExternalUrlThatIsNotAWebAddressOrRepeatsTheInternalOneIsSkipped(string externalUrl)
+    {
+        var server = Json(JsonSerializer.Serialize(new { hostname = "radarr", port = 7878, externalUrl }));
+
+        Assert.Equal(["http://radarr:7878"], SeerrSessionService.ArrCalendarBases(server, isSonarr: false));
+    }
+
+    [Fact]
+    public async Task AReachableInternalAddressIsTheOnlyRequest()
+    {
+        var handler = new ArrHandler();
+        handler.Answer("radarr.lan", HttpStatusCode.OK, "[{\"title\":\"internal\"}]");
+
+        var result = await Fetch(handler, ["http://radarr.lan:7878", "https://radarr.example.com"]);
+
+        Assert.Equal(200, result.StatusCode);
+        Assert.Equal("[{\"title\":\"internal\"}]", Encoding.UTF8.GetString(result.Body!));
+        Assert.Equal(["http://radarr.lan:7878/api/v3/calendar?" + Query], handler.Requested);
+        Assert.Equal(["secret"], handler.ApiKeys);
+    }
+
+    [Fact]
+    public async Task AnErrorFromTheInternalAddressIsPassedOnWithoutTryingTheExternalUrl()
+    {
+        var handler = new ArrHandler();
+        handler.Answer("radarr.lan", HttpStatusCode.Unauthorized, "{\"message\":\"Unauthorized\"}");
+
+        var result = await Fetch(handler, ["http://radarr.lan:7878", "https://radarr.example.com"]);
+
+        Assert.Equal(401, result.StatusCode);
+        Assert.Single(handler.Requested);
+    }
+
+    [Fact]
+    public async Task AnUnreachableInternalAddressFallsBackToTheExternalUrl()
+    {
+        var handler = new ArrHandler();
+        handler.Answer("radarr.example.com", HttpStatusCode.OK, "[{\"title\":\"external\"}]");
+
+        var result = await Fetch(handler, ["http://radarr.lan:7878", "https://radarr.example.com/radarr"]);
+
+        Assert.Equal(200, result.StatusCode);
+        Assert.Equal("[{\"title\":\"external\"}]", Encoding.UTF8.GetString(result.Body!));
+        Assert.Equal(
+            ["http://radarr.lan:7878/api/v3/calendar?" + Query, "https://radarr.example.com/radarr/api/v3/calendar?" + Query],
+            handler.Requested);
+        Assert.Equal(["secret", "secret"], handler.ApiKeys);
+    }
+
+    [Fact]
+    public async Task NoReachableAddressIsTheSame502AsBefore()
+    {
+        var handler = new ArrHandler();
+
+        var result = await Fetch(handler, ["http://radarr.lan:7878"]);
+
+        Assert.Equal(502, result.StatusCode);
+        Assert.Contains("Could not reach the radarr server", Encoding.UTF8.GetString(result.Body!), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("10.0.0.5", true)]
+    [InlineData("172.16.0.1", true)]
+    [InlineData("172.31.255.255", true)]
+    [InlineData("192.168.1.20", true)]
+    [InlineData("127.0.0.1", true)]
+    [InlineData("169.254.1.1", true)]
+    [InlineData("100.64.0.1", true)]
+    [InlineData("100.127.255.255", true)]
+    [InlineData("::1", true)]
+    [InlineData("fe80::1", true)]
+    [InlineData("fd00::1", true)]
+    [InlineData("::ffff:192.168.1.1", true)]
+    [InlineData("8.8.8.8", false)]
+    [InlineData("172.15.0.1", false)]
+    [InlineData("172.32.0.1", false)]
+    [InlineData("100.63.255.255", false)]
+    [InlineData("100.128.0.1", false)]
+    [InlineData("198.51.100.10", false)]
+    [InlineData("2001:4860:4860::8888", false)]
+    [InlineData("::ffff:8.8.8.8", false)]
+    public void OnlyLocalNetworkAddressesCount(string address, bool local)
+    {
+        Assert.Equal(local, SeerrSessionService.IsLocalNetworkAddress(IPAddress.Parse(address)));
+    }
+
+    [Fact]
+    public async Task APlainHttpExternalUrlOnTheInternetNeverGetsTheApiKey()
+    {
+        var handler = new ArrHandler();
+        handler.Answer("radarr.example.com", HttpStatusCode.OK, "[]");
+
+        var result = await Fetch(handler, ["http://radarr.lan:7878", "http://radarr.example.com"], Resolves("198.51.100.10"));
+
+        Assert.Equal(502, result.StatusCode);
+        Assert.Equal(["http://radarr.lan:7878/api/v3/calendar?" + Query], handler.Requested);
+    }
+
+    [Fact]
+    public async Task APlainHttpExternalUrlOnTheLocalNetworkIsUsed()
+    {
+        var handler = new ArrHandler();
+        handler.Answer("radarr.home", HttpStatusCode.OK, "[]");
+
+        var result = await Fetch(handler, ["http://radarr.lan:7878", "http://radarr.home:7878"], Resolves("192.168.1.20"));
+
+        Assert.Equal(200, result.StatusCode);
+        Assert.Equal(2, handler.Requested.Count);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("192.168.1.20,203.0.113.7")]
+    public async Task APlainHttpExternalUrlThatCantBeConfirmedLocalIsSkipped(string? addresses)
+    {
+        var handler = new ArrHandler();
+        handler.Answer("radarr.home", HttpStatusCode.OK, "[]");
+
+        var result = await Fetch(handler, ["http://radarr.lan:7878", "http://radarr.home:7878"], Resolves(addresses));
+
+        Assert.Equal(502, result.StatusCode);
+        Assert.Single(handler.Requested);
+    }
+
+    // Unless a test passes one, a lookup fails the test, since https and the internal address never need one.
+    private static Task<SeerrProxyResponse> Fetch(ArrHandler handler, string[] bases, Func<string, Task<IPAddress[]>>? resolveHost = null) =>
+        SeerrSessionService.FetchArrCalendarAsync(
+            new FakeHttpClientFactory(handler),
+            new NoOpLogger<SeerrSessionService>(),
+            "radarr",
+            bases,
+            "secret",
+            Query,
+            resolveHost ?? (host => throw new InvalidOperationException("Unexpected lookup of " + host)));
+
+    // A null list stands for a host that doesn't resolve.
+    private static Func<string, Task<IPAddress[]>> Resolves(string? addresses) => _ =>
+        addresses == null
+            ? throw new SocketException((int)SocketError.HostNotFound)
+            : Task.FromResult(addresses.Split(',').Select(IPAddress.Parse).ToArray());
+
+    /// <summary>Answers for the hosts it's told about and can't be reached on any other.</summary>
+    private sealed class ArrHandler : HttpMessageHandler
+    {
+        private readonly Dictionary<string, (HttpStatusCode Status, string Body)> _answers = new(StringComparer.OrdinalIgnoreCase);
+
+        public List<string> Requested { get; } = new();
+
+        public List<string> ApiKeys { get; } = new();
+
+        public void Answer(string host, HttpStatusCode status, string body) => _answers[host] = (status, body);
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Requested.Add(request.RequestUri!.ToString());
+            ApiKeys.Add(request.Headers.GetValues("X-Api-Key").Single());
+            if (!_answers.TryGetValue(request.RequestUri.Host, out var answer))
+            {
+                throw new HttpRequestException("Name or service not known");
+            }
+
+            return Task.FromResult(new HttpResponseMessage(answer.Status)
+            {
+                Content = new StringContent(answer.Body, Encoding.UTF8, "application/json"),
+            });
+        }
+    }
+}

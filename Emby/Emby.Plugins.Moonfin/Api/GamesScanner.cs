@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Emby.Plugins.Moonfin.Models;
 using MediaBrowser.Controller.Library;
+using Moonfin.Games;
 using Moonfin.Romm;
 using SharpCompress.Archives;
 
@@ -47,7 +48,8 @@ namespace Emby.Plugins.Moonfin.Api
                 [".pce"] = "pce",
                 // Single-file disc images. Extension is ambiguous across disc systems
                 // (.pbp/.iso are used by both PSX and PSP), so the system folder name is the real
-                // resolver. These are fallbacks. Multi-file .cue/.bin and .m3u are not handled.
+                // resolver. These are fallbacks. A PlayStation .cue is handled apart from these,
+                // since it's sent together with its tracks. .m3u isn't handled.
                 [".chd"] = "psx", [".pbp"] = "psx",
                 [".cso"] = "psp", [".iso"] = "psp",
             };
@@ -78,8 +80,8 @@ namespace Emby.Plugins.Moonfin.Api
             new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".bin", ".bios", ".rom", ".img", ".sys", ".bs" };
 
         // Compressed single-ROM archives. The core is resolved from the system folder name, and the
-        // Rom endpoint extracts the inner ROM in memory. Multi-file disc sets in an archive are not
-        // supported.
+        // Rom endpoint extracts the inner ROM in memory, except for PlayStation discs, which go out
+        // whole.
         private static readonly HashSet<string> ArchiveExtensions =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".zip", ".7z" };
 
@@ -92,12 +94,31 @@ namespace Emby.Plugins.Moonfin.Api
         /// <summary>True when the path is a supported archive (.zip/.7z) rather than a raw ROM.</summary>
         public static bool IsArchive(string path) => ArchiveExtensions.Contains(Path.GetExtension(path));
 
+        // PlayStation discs are often several files (a .cue and its .bin tracks), so the core gets
+        // the whole archive rather than one file pulled out of it.
+        private static bool IsDiscSetCore(string core) => core == "psx";
+
+        public static bool IsCueSheet(string path) =>
+            ".cue".Equals(Path.GetExtension(path), StringComparison.OrdinalIgnoreCase);
+
+        public static bool ShouldPreserveArchiveForCore(string core, string path) =>
+            IsDiscSetCore(core) && ".zip".Equals(Path.GetExtension(path), StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>A PlayStation .7z goes out as a zip of everything in it, since the clients only unpack zips.</summary>
+        public static bool ShouldRepackArchiveForCore(string core, string path) =>
+            IsDiscSetCore(core) && ".7z".Equals(Path.GetExtension(path), StringComparison.OrdinalIgnoreCase);
+
+        // A PlayStation .cue counts as a game in a folder library. RomM keeps a multi-file game's
+        // files apart, so its rules leave the .cue out.
+        private static bool IsLibraryGameFile(string core, string path) =>
+            IsRomFile(path) || (IsDiscSetCore(core) && IsCueSheet(path));
+
         // This port has no arcade sets, so RomM arcade platforms find nothing playable and stay hidden.
         internal static readonly RommFileRules RommRules = new RommFileRules(
             (core, name) => IsRomFile(name) && core != "arcade" && core != "mame",
             IsArchive,
             name => ExtensionToCore.ContainsKey(Path.GetExtension(name)),
-            (core, name) => false);
+            ShouldPreserveArchiveForCore);
 
         /// <summary>
         /// Extracts the playable ROM from a .zip/.7z into memory so every client receives raw ROM bytes
@@ -404,7 +425,17 @@ namespace Emby.Plugins.Moonfin.Api
             // plain ROM bytes under a .zip name and then failing to unpack them.
             var servedName = archiveName;
             var servedSize = SafeFileLength(romPath);
-            if (IsArchive(romPath))
+            if (IsCueSheet(romPath) || ShouldRepackArchiveForCore(core, romPath))
+            {
+                // The ROM endpoint sends a loose disc or a PlayStation .7z as one zip.
+                var discSet = IsCueSheet(romPath) ? DiscSet.ForCueSheet(romPath) : DiscSet.ForSevenZip(romPath);
+                if (discSet != null)
+                {
+                    servedName = Path.ChangeExtension(archiveName, ".zip");
+                    servedSize = discSet.Length;
+                }
+            }
+            else if (IsArchive(romPath) && !ShouldPreserveArchiveForCore(core, romPath))
             {
                 var extracted = GetExtractedRomInfo(romPath);
                 if (extracted != null)
@@ -466,7 +497,18 @@ namespace Emby.Plugins.Moonfin.Api
             var systemDir = FindSystemDir(library, romPath);
             var systemName = systemDir == null ? string.Empty : Path.GetFileName(systemDir);
             var core = ResolveSystemCore(systemName, new List<string> { romPath });
-            return (core, Path.GetFileName(romPath), null, null);
+            return (ArtworkCore(core, systemName), Path.GetFileName(romPath), null, null);
+        }
+
+        /// <summary>
+        /// The core whose libretro set a system's art comes from. The gb core plays Game Boy Color
+        /// too, but GBC games are cataloged in a set of their own, so a GBC folder looks there.
+        /// </summary>
+        internal static string ArtworkCore(string core, string systemName)
+        {
+            if (!string.Equals(core, "gb", StringComparison.Ordinal)) return core;
+            var normalized = NormalizeAlphanumericLower(systemName);
+            return normalized == "gbc" || normalized.Contains("gameboycolor", StringComparison.Ordinal) ? "gbc" : core;
         }
 
         public string? ResolveFilePath(string libraryId, string token, bool allowBios)
@@ -477,10 +519,21 @@ namespace Emby.Plugins.Moonfin.Api
             var path = DecodeToken(token);
             if (path == null || !IsWithinLibrary(library, path) || !File.Exists(path)) return null;
 
-            var isRom = IsRomFile(path) || BiosExtensions.Contains(Path.GetExtension(path));
+            var isRom = IsRomFile(path) || BiosExtensions.Contains(Path.GetExtension(path)) || IsCueSheet(path);
             if (!isRom && !allowBios) return null;
 
             return path;
+        }
+
+        /// <summary>The core a library file plays with, from its system folder.</summary>
+        public string? SystemCoreFor(string libraryId, string path)
+        {
+            var library = GetGameLibraries().FirstOrDefault(l => SameId(l.Id, libraryId));
+            if (library == null) return null;
+
+            var systemDir = FindSystemDir(library, path);
+            var systemName = systemDir == null ? string.Empty : Path.GetFileName(systemDir);
+            return ResolveSystemCore(systemName, new List<string> { path });
         }
 
         private IReadOnlyList<GameSystem> GetRommSystems()
@@ -574,24 +627,30 @@ namespace Emby.Plugins.Moonfin.Api
 
         private static List<string> GetGamesInSystem(string systemDir)
         {
+            var core = ResolveSystemCore(Path.GetFileName(systemDir), Array.Empty<string>());
             var roms = new List<string>();
             foreach (var gameDir in SafeEnumerateDirectories(systemDir))
             {
-                var rom = SafeEnumerateFiles(gameDir).FirstOrDefault(IsRomFile);
+                var rom = SafeEnumerateFiles(gameDir).FirstOrDefault(file => IsLibraryGameFile(core, file));
                 if (rom != null) roms.Add(rom);
             }
             foreach (var file in SafeEnumerateFiles(systemDir))
-                if (IsRomFile(file)) roms.Add(file);
+                if (IsLibraryGameFile(core, file)) roms.Add(file);
             return roms;
         }
 
         private static List<GameBios> GetBiosFiles(string systemDir)
         {
+            // A loose disc's .bin tracks share the BIOS extension, so the ones a .cue lists are left out.
+            var files = SafeEnumerateFiles(systemDir).ToList();
+            var tracks = new HashSet<string>(
+                files.Where(IsCueSheet).SelectMany(cue => DiscSet.CueSetFiles(cue) ?? Array.Empty<string>()),
+                StringComparer.Ordinal);
             var bios = new List<GameBios>();
-            foreach (var file in SafeEnumerateFiles(systemDir))
+            foreach (var file in files)
             {
                 var ext = Path.GetExtension(file);
-                if (IsRomFile(file)) continue;
+                if (IsRomFile(file) || tracks.Contains(Path.GetFullPath(file))) continue;
                 if (BiosExtensions.Contains(ext))
                 {
                     bios.Add(new GameBios

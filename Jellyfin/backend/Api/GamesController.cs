@@ -3,7 +3,9 @@ using System.Net.Mime;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Moonfin.Games;
 using Moonfin.Romm;
 using Moonfin.Server.Models;
 using Moonfin.Server.Services;
@@ -619,15 +621,29 @@ public class GamesController : ControllerBase
             return await ServeRommRomAsync(token, cancellationToken).ConfigureAwait(false);
         }
 
-        // The optional filename gives filename-sensitive emulators (MAME) the original archive
-        // name in the URL. It is deliberately never used for path resolution or authorization.
+        // The optional filename gives filename-sensitive emulators (MAME, and the PlayStation core
+        // for a .pbp) the original file name in the URL. It's deliberately never used for path
+        // resolution or authorization.
         _ = fileName;
         var path = _gamesService.ResolveFilePath(libraryId, token, allowBios: false);
+        if (!string.IsNullOrEmpty(path) && GameSystemCoreResolver.IsCueSheet(path))
+        {
+            var discSet = DiscSet.ForCueSheet(path);
+            return discSet == null ? NotFound() : await StreamDiscSetAsync(discSet).ConfigureAwait(false);
+        }
+
         if (!string.IsNullOrEmpty(path) && GamesService.IsArchive(path))
         {
-            if (_gamesService.ShouldPreserveArchive(libraryId, path))
+            var core = _gamesService.SystemCoreFor(libraryId, path) ?? string.Empty;
+            if (GameSystemCoreResolver.ShouldPreserveArchiveForCore(core, path))
             {
                 return StreamFile(path);
+            }
+
+            if (GameSystemCoreResolver.ShouldRepackArchiveForCore(core, path))
+            {
+                var discSet = DiscSet.ForSevenZip(path);
+                return discSet == null ? NotFound() : await StreamDiscSetAsync(discSet).ConfigureAwait(false);
             }
 
             return HttpMethods.IsHead(Request.Method)
@@ -930,6 +946,42 @@ public class GamesController : ControllerBase
 
         // enableRangeProcessing lets EmulatorJS resume / seek large ROM downloads.
         return PhysicalFile(path, "application/octet-stream", enableRangeProcessing: true);
+    }
+
+    // Sends a PlayStation disc set as an uncompressed zip written as it goes out, so there's no
+    // size limit and every track arrives.
+    private async Task<IActionResult> StreamDiscSetAsync(DiscSet discSet)
+    {
+        Response.ContentType = "application/zip";
+        Response.ContentLength = discSet.Length;
+        if (HttpMethods.IsHead(Request.Method))
+        {
+            return new EmptyResult();
+        }
+
+        // Kestrel refuses synchronous writes unless they're allowed, and the zip is written that way.
+        var bodyControl = HttpContext.Features.Get<IHttpBodyControlFeature>();
+        if (bodyControl != null)
+        {
+            bodyControl.AllowSynchronousIO = true;
+        }
+
+        try
+        {
+            await Task.Run(() => discSet.WriteTo(Response.Body), HttpContext.RequestAborted).ConfigureAwait(false);
+        }
+        catch (Exception) when (!Response.HasStarted)
+        {
+            Response.ContentType = null;
+            Response.ContentLength = null;
+            return NotFound();
+        }
+        catch (Exception) when (HttpContext.RequestAborted.IsCancellationRequested)
+        {
+            // The client went away partway through.
+        }
+
+        return new EmptyResult();
     }
 
     // Unpacks a single-ROM .zip/.7z in memory so the client gets raw ROM bytes, exactly like an

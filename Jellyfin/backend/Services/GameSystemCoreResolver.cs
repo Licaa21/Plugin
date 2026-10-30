@@ -139,6 +139,21 @@ internal static class GameSystemCoreResolver
         return DefaultCore;
     }
 
+    /// <summary>
+    /// The core whose libretro set a system's art and RDB records come from. The gb core plays Game
+    /// Boy Color too, but GBC games are cataloged in a set of their own, so a GBC folder looks there.
+    /// </summary>
+    internal static string ArtworkCore(string core, string systemName)
+    {
+        if (!string.Equals(core, "gb", StringComparison.Ordinal))
+        {
+            return core;
+        }
+
+        var normalized = NormalizeSystemName(systemName);
+        return normalized == "gbc" || normalized.Contains("gameboycolor", StringComparison.Ordinal) ? "gbc" : core;
+    }
+
     internal static IReadOnlyList<string> FuzzySuggestCores(string systemName, int maxSuggestions)
     {
         if (maxSuggestions <= 0)
@@ -169,13 +184,34 @@ internal static class GameSystemCoreResolver
         string.Equals(core, "mame", StringComparison.Ordinal) ||
         string.Equals(core, "arcade", StringComparison.Ordinal);
 
+    /// <summary>
+    /// PlayStation discs are often several files (a .cue and its .bin tracks), so the core gets
+    /// the whole archive rather than one file pulled out of it.
+    /// </summary>
+    internal static bool IsDiscSetCore(string core) => string.Equals(core, "psx", StringComparison.Ordinal);
+
+    internal static bool IsCueSheet(string path) =>
+        string.Equals(Path.GetExtension(path), ".cue", StringComparison.OrdinalIgnoreCase);
+
     internal static bool ShouldPreserveArchiveForCore(string core, string romPath) =>
-        IsArcadeFamilyCore(core) &&
+        (IsArcadeFamilyCore(core) || IsDiscSetCore(core)) &&
         string.Equals(Path.GetExtension(romPath), ".zip", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>A PlayStation .7z goes out as a zip of everything in it, since the clients only unpack zips.</summary>
+    internal static bool ShouldRepackArchiveForCore(string core, string romPath) =>
+        IsDiscSetCore(core) &&
+        string.Equals(Path.GetExtension(romPath), ".7z", StringComparison.OrdinalIgnoreCase);
 
     internal static bool IsPlayableFileForCore(string core, string romPath) =>
         IsRomFile(romPath) && (!IsArcadeFamilyCore(core) ||
             string.Equals(Path.GetExtension(romPath), ".zip", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// A game file in a folder library. A PlayStation .cue counts too, and is sent with its tracks.
+    /// RomM keeps a multi-file game's files apart, so its rules leave the .cue out.
+    /// </summary>
+    internal static bool IsLibraryGameFile(string core, string romPath) =>
+        IsPlayableFileForCore(core, romPath) || (IsDiscSetCore(core) && IsCueSheet(romPath));
 
     /// <summary>The same file rules, handed to the RomM reader so both library kinds agree.</summary>
     internal static readonly RommFileRules RommRules = new(

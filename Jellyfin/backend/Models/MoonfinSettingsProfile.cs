@@ -54,6 +54,33 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("tmdbEpisodeRatingsEnabled")]
     public bool? TmdbEpisodeRatingsEnabled { get; set; }
 
+    [JsonPropertyName("homeRowsMdblistEnabled")]
+    public bool? HomeRowsMdblistEnabled { get; set; }
+
+    [JsonPropertyName("homeRowsMdblistRatingSources")]
+    public List<string>? HomeRowsMdblistRatingSources { get; set; }
+
+    [JsonPropertyName("homeRowsTmdbEpisodeRatingsEnabled")]
+    public bool? HomeRowsTmdbEpisodeRatingsEnabled { get; set; }
+
+    [JsonPropertyName("homeRowsMdblistShowRatingNames")]
+    public bool? HomeRowsMdblistShowRatingNames { get; set; }
+
+    [JsonPropertyName("homeRowsMdblistShowRatingBadges")]
+    public bool? HomeRowsMdblistShowRatingBadges { get; set; }
+
+    [JsonPropertyName("mediaBarMdblistEnabled")]
+    public bool? MediaBarMdblistEnabled { get; set; }
+
+    [JsonPropertyName("mediaBarMdblistRatingSources")]
+    public List<string>? MediaBarMdblistRatingSources { get; set; }
+
+    [JsonPropertyName("mediaBarMdblistShowRatingNames")]
+    public bool? MediaBarMdblistShowRatingNames { get; set; }
+
+    [JsonPropertyName("mediaBarMdblistShowRatingBadges")]
+    public bool? MediaBarMdblistShowRatingBadges { get; set; }
+
     [JsonPropertyName("detailsBackdropOpacity")]
     public int? DetailsBackdropOpacity { get; set; }
 
@@ -132,6 +159,9 @@ public class MoonfinSettingsProfile
 
     [JsonPropertyName("showLibrariesInToolbar")]
     public bool? ShowLibrariesInToolbar { get; set; }
+
+    [JsonPropertyName("showLibrariesIndividually")]
+    public bool? ShowLibrariesIndividually { get; set; }
 
     [JsonPropertyName("shuffleContentType")]
     public string? ShuffleContentType { get; set; }
@@ -227,6 +257,9 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("seasonalDensity")]
     public string? SeasonalDensity { get; set; }
 
+    [JsonPropertyName("seasonalFollower")]
+    public bool? SeasonalFollower { get; set; }
+
     [JsonPropertyName("seasonalRowEnabled")]
     public bool? SeasonalRowEnabled { get; set; }
 
@@ -243,8 +276,8 @@ public class MoonfinSettingsProfile
 
     /// <summary>
     /// How TV and desktop apps draw the home backdrop when HomeBackdropEnabled is on: fullScreen
-    /// behind everything, or corner faded out from the top right. Off is written along with the
-    /// switch turned off.
+    /// behind everything, corner faded out from the top right, or top showing only its top half
+    /// faded out toward the middle. Off is written along with the switch turned off.
     /// </summary>
     [JsonPropertyName("homeBackdropStyle")]
     public string? HomeBackdropStyle { get; set; }
@@ -890,6 +923,9 @@ public class MoonfinSettingsProfile
 
     [JsonPropertyName("showMediaDetailsOnLibraryPage")]
     public bool? ShowMediaDetailsOnLibraryPage { get; set; }
+
+    [JsonPropertyName("libraryCardTitles")]
+    public bool? LibraryCardTitles { get; set; }
 
     [JsonPropertyName("hideBackdropsInLibraries")]
     public bool? HideBackdropsInLibraries { get; set; }

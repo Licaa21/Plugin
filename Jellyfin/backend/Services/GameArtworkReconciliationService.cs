@@ -20,7 +20,8 @@ public sealed class GameArtworkReconciliationService : IHostedService
 
     // v3 repairs false terminal misses caused by RDB and thumbnail alternate-title separators;
     // v4 reopens misses recorded while a stale RDB lookup cache withheld candidate names.
-    private const string ProviderVersion = "libretro-thumbnails-v4";
+    // v5 reopens Game Boy Color misses that were only looked up in the Game Boy set.
+    private const string ProviderVersion = "libretro-thumbnails-v5";
     private static readonly GameThumbService.ThumbKind[] ArtworkKinds =
     [
         GameThumbService.ThumbKind.Boxart,

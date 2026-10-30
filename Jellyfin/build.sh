@@ -224,7 +224,7 @@ cat > "$RELEASE_DIR/meta.json" <<EOF
   "version": "${VERSION}",
   "status": "Active",
   "autoUpdate": true,
-  "assemblies": ["Moonfin.Server.dll"]
+  "assemblies": ["Moonfin.Server.dll", "SharpCompress.dll"]
 }
 EOF
 

@@ -12,11 +12,12 @@ internal sealed class GameArtworkStore
 {
     private const int MaxMissEntries = 6096;
     private const int MaxFuzzyDirectorySuggestions = 3;
-    // Nine probes for the original candidates: the primary plus up to MaxSiblingArtworkNamesPerRequest
-    // siblings (7 asserted names) and both fallbacks, so nothing is ever truncated. Anything added to
-    // that list needs a matching rise here, or it starves the fallbacks and turns artwork that does
-    // exist into a terminal Missing. A listing alias is probed after every original, outside those nine.
-    private const int MaxTotalProbesPerRequest = RdbService.MaxSiblingArtworkNamesPerRequest + 3;
+    // Ten probes for the original candidates: the primary plus up to MaxSiblingArtworkNamesPerRequest
+    // siblings (7 asserted names), both fallbacks and the Game Boy filename in the other Game Boy set,
+    // so nothing is ever truncated. Anything added to that list needs a matching rise here, or it
+    // starves the fallbacks and turns artwork that does exist into a terminal Missing. A listing alias
+    // is probed after every original, outside those ten.
+    private const int MaxTotalProbesPerRequest = RdbService.MaxSiblingArtworkNamesPerRequest + 4;
     private static readonly TimeSpan MissTtl = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(6);
 
@@ -127,7 +128,7 @@ internal sealed class GameArtworkStore
     /// <summary>The RDB platforms a lookup for one core tries; shared so update checks cover exactly those.</summary>
     internal static IReadOnlyList<string> CandidatePlatformsFor(string core, bool coreWasDefaulted, string systemName) =>
         RdbService.GetCandidatePlatforms(
-            core,
+            GameSystemCoreResolver.ArtworkCore(core, systemName),
             coreWasDefaulted,
             GamesService.FuzzySuggestCores(systemName, MaxFuzzyDirectorySuggestions));
 
@@ -161,13 +162,13 @@ internal sealed class GameArtworkStore
             }
         }
 
-        RdbService.TryGetPlatform(core, out var primaryPlatform);
+        RdbService.TryGetPlatform(GameSystemCoreResolver.ArtworkCore(core, systemName), out var primaryPlatform);
         var candidatePlatforms = CandidatePlatformsFor(core, coreWasDefaulted, systemName);
 
         var romFileName = Path.GetFileNameWithoutExtension(romPath);
 
-        // Every RDB name (primary + siblings), plus the filename and title fallbacks.
-        var candidates = new List<(string Name, string Platform)>(RdbService.MaxSiblingArtworkNamesPerRequest + 1 + 2);
+        // Every RDB name (primary + siblings), plus the fallbacks.
+        var candidates = new List<(string Name, string Platform)>(RdbService.MaxSiblingArtworkNamesPerRequest + 1 + 3);
         var nameLookup = await _rdbService
             .LookupArtworkNameAsync(candidatePlatforms, romPath, title, cancellationToken)
             .ConfigureAwait(false);
@@ -210,6 +211,19 @@ internal sealed class GameArtworkStore
                 {
                     candidates.Add((titleCandidate, primaryPlatform));
                 }
+            }
+
+            // Game Boy and Game Boy Color carts often share a folder, so the filename also gets a
+            // try in the set the folder didn't pick.
+            var otherGameBoySet = primaryPlatform switch
+            {
+                "Nintendo - Game Boy" => "Nintendo - Game Boy Color",
+                "Nintendo - Game Boy Color" => "Nintendo - Game Boy",
+                _ => null,
+            };
+            if (otherGameBoySet != null && fileNameCandidate.Length > 0)
+            {
+                candidates.Add((fileNameCandidate, otherGameBoySet));
             }
         }
 

@@ -14,6 +14,7 @@ using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Net;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Services;
+using Moonfin.Games;
 using Moonfin.Romm;
 
 namespace Emby.Plugins.Moonfin.Api
@@ -130,8 +131,22 @@ namespace Emby.Plugins.Moonfin.Api
             if (romm?.Owns(request.LibraryId) == true) return await ServeRommRomAsync(romm, request.Token).ConfigureAwait(false);
             var path = scanner.ResolveFilePath(request.LibraryId, request.Token, allowBios: false);
             if (string.IsNullOrEmpty(path) || !File.Exists(path)) return NotFound();
+            if (GamesScanner.IsCueSheet(path))
+            {
+                var discSet = DiscSet.ForCueSheet(path);
+                return discSet == null ? NotFound() : new DiscSetZipResult(discSet);
+            }
             if (GamesScanner.IsArchive(path))
             {
+                var core = scanner.SystemCoreFor(request.LibraryId, path) ?? string.Empty;
+                if (GamesScanner.ShouldPreserveArchiveForCore(core, path))
+                    return await ResultFactory.GetStaticFileResult(Request, path).ConfigureAwait(false);
+                if (GamesScanner.ShouldRepackArchiveForCore(core, path))
+                {
+                    var discSet = DiscSet.ForSevenZip(path);
+                    return discSet == null ? NotFound() : new DiscSetZipResult(discSet);
+                }
+
                 byte[]? rom;
                 try { rom = GamesScanner.ExtractRomFromArchive(path); }
                 catch { return NotFound(); }
@@ -194,9 +209,17 @@ namespace Emby.Plugins.Moonfin.Api
             var path = scanner.ResolveFilePath(libraryId, token, allowBios);
             if (string.IsNullOrEmpty(path) || !File.Exists(path)) return NotFound();
 
-            var length = !allowBios && GamesScanner.IsArchive(path)
-                ? GamesScanner.GetExtractedRomInfo(path)?.Length
-                : new FileInfo(path).Length;
+            long? length = new FileInfo(path).Length;
+            if (!allowBios && GamesScanner.IsCueSheet(path))
+                length = DiscSet.ForCueSheet(path)?.Length;
+            else if (!allowBios && GamesScanner.IsArchive(path))
+            {
+                var core = scanner.SystemCoreFor(libraryId, path) ?? string.Empty;
+                if (GamesScanner.ShouldRepackArchiveForCore(core, path))
+                    length = DiscSet.ForSevenZip(path)?.Length;
+                else if (!GamesScanner.ShouldPreserveArchiveForCore(core, path))
+                    length = GamesScanner.GetExtractedRomInfo(path)?.Length;
+            }
             if (length == null) return NotFound();
 
             return HeadResult(length.Value);

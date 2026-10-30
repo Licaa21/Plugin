@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Emby.Plugins.Moonfin.Models;
 using Emby.Plugins.Moonfin.Services;
 using Moonfin.Tmdb;
 using MediaBrowser.Common;
@@ -126,7 +127,7 @@ namespace Emby.Plugins.Moonfin.Api
                 }
             }
 
-            var filtered = FilterAndOrderRatings(allRatings, resolved?.MdblistRatingSources);
+            var filtered = FilterAndOrderRatings(allRatings, RequestedRatingSources(resolved));
             return Json(new { success = true, ratings = filtered });
         }
 
@@ -212,6 +213,25 @@ namespace Emby.Plugins.Moonfin.Api
             var cache = Plugin.Instance?.MdbListCache;
             var removed = cache != null ? await cache.ClearAsync().ConfigureAwait(false) : 0;
             return Json(new { success = true, removed });
+        }
+
+        // Home rows and the media bar pick their own sources and every client filters by them,
+        // so the answer also carries the sources only those lists ask for.
+        internal static List<string> RequestedRatingSources(MoonfinSettingsProfile? resolved)
+        {
+            var picked = resolved?.MdblistRatingSources;
+            var sources = new List<string>(picked != null && picked.Count > 0 ? picked : DefaultRatingSources);
+            foreach (var list in new[] { resolved?.HomeRowsMdblistRatingSources, resolved?.MediaBarMdblistRatingSources })
+            {
+                if (list == null) continue;
+                foreach (var source in list)
+                {
+                    if (!string.IsNullOrEmpty(source) && !sources.Exists(s => string.Equals(s, source, StringComparison.OrdinalIgnoreCase)))
+                        sources.Add(source);
+                }
+            }
+
+            return sources;
         }
 
         private static List<MdbListRating> FilterAndOrderRatings(List<MdbListRating> allRatings, List<string>? selectedSources)

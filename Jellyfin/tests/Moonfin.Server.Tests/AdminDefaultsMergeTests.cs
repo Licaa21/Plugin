@@ -148,6 +148,83 @@ public sealed class AdminDefaultsMergeTests : IDisposable
     }
 
     [Fact]
+    public async Task MergingDefaultsReachesTheDeviceProfilesAUserHas()
+    {
+        var alice = Guid.NewGuid();
+        await _service.SaveProfileAsync(
+            alice,
+            "desktop",
+            new MoonfinSettingsProfile { CinemaModeEnabled = false },
+            "test-seed",
+            notifySettingsChanged: false);
+
+        await _service.MergeDefaultsToAllUsersAsync(new MoonfinSettingsProfile { CinemaModeEnabled = true });
+
+        var settings = Read(alice);
+        Assert.True(settings.Desktop?.CinemaModeEnabled);
+        Assert.True(settings.Global?.CinemaModeEnabled);
+        Assert.Null(settings.Mobile);
+        Assert.Null(settings.Tv);
+        Assert.True(_service.ResolveProfile(settings, "desktop").CinemaModeEnabled);
+    }
+
+    [Fact]
+    public async Task MergingDefaultsToASingleUserReachesTheirDeviceProfiles()
+    {
+        var alice = Guid.NewGuid();
+        await _service.SaveProfileAsync(
+            alice,
+            "tv",
+            new MoonfinSettingsProfile { CinemaModeEnabled = false },
+            "test-seed",
+            notifySettingsChanged: false);
+
+        await _service.MergeDefaultsToUserAsync(alice, new MoonfinSettingsProfile { CinemaModeEnabled = true });
+
+        Assert.True(Read(alice).Tv?.CinemaModeEnabled);
+    }
+
+    [Fact]
+    public async Task MergingDefaultsTreatsAnEmptyListAsNotSet()
+    {
+        var alice = Guid.NewGuid();
+        await _service.SaveProfileAsync(
+            alice,
+            "desktop",
+            new MoonfinSettingsProfile { MediaBarLibraryIds = ["lib-a"], HomeRowOrder = ["resume"] },
+            "test-seed",
+            notifySettingsChanged: false);
+
+        // What XmlSerializer hands back for lists the admin never set.
+        var defaults = new MoonfinSettingsProfile
+        {
+            CinemaModeEnabled = true,
+            MediaBarLibraryIds = [],
+            HomeRowOrder = [],
+            HomeSections = [],
+        };
+
+        await _service.MergeDefaultsToAllUsersAsync(defaults);
+
+        var desktop = Read(alice).Desktop!;
+        Assert.True(desktop.CinemaModeEnabled);
+        Assert.Equal(["lib-a"], desktop.MediaBarLibraryIds!);
+        Assert.Equal(["resume"], desktop.HomeRowOrder!);
+        Assert.NotNull(defaults.MediaBarLibraryIds);
+    }
+
+    [Fact]
+    public async Task MergingDefaultsThatOnlyHoldEmptyListsChangesNothing()
+    {
+        await SeedUserAsync(new MoonfinSettingsProfile());
+
+        var updated = await _service.MergeDefaultsToAllUsersAsync(
+            new MoonfinSettingsProfile { MediaBarLibraryIds = [], BlockedRatings = [] });
+
+        Assert.Equal(0, updated);
+    }
+
+    [Fact]
     public async Task SuccessiveDeviceProfileSavesPreserveGlobalHiddenItems()
     {
         var userId = Guid.NewGuid();
