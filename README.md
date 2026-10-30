@@ -10,7 +10,7 @@ This is Licaa21's fork of the [Moonfin server plugin](https://github.com/Moonfin
 
 - The server holds the TMDB key and serves the TMDB titles, descriptions, season episodes, recommendations and air dates that a client would otherwise need its own key for (`/Moonfin/Tmdb/Details`, `Season`, `Recommendations`).
 - The Moonbase User defaults tab holds a default for every setting of the Moonfin Smart TV app (subtitle styling and the second subtitle track, audio codec order, accent colors, skip overlay and more). Each sits in the category of the app's own screen, next to the settings every Moonfin app shares, and can be applied to users like the other defaults.
-- The download carries the Moonfin web app (the Moonfin button in Jellyfin web, served at `/Moonfin/Web/`), taken unchanged from upstream's 2.4.0 release because upstream adds it to its zip by hand. Its source is [Moonfin-Core](https://github.com/Moonfin-Client/Moonfin-Core). That makes the download about 66 MB.
+- The download carries the Moonfin web app (the Moonfin button in Jellyfin web, served at `/Moonfin/Web/`), taken unchanged from upstream's 2.5.0 release because upstream adds it to its zip by hand. Its source is [Moonfin-Core](https://github.com/Moonfin-Client/Moonfin-Core). That makes the download about 66 MB.
 
 **What does not work in the fork**
 
