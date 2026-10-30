@@ -9,6 +9,17 @@
         "imageUrl":  "https://raw.githubusercontent.com/Moonfin-Client/Plugin/master/Jellyfin/backend/assets/logo.png",
         "versions":  [
                          {
+                             "version":  "2.5.0.1",
+                             "changelog":  "Takes upstream\u0027s Moonbase 2.5.0. New: Titles Under Posters and Show Libraries Individually, Top as a Home Screen Backdrop default, MDBList rating settings for the home rows and the media bar, the Focus Follower seasonal setting, a Custom Lists tab in the admin home layout builder, and Apply Defaults now also writes into each user\u0027s existing device profiles. Fixed: PlayStation cue/bin, zip and .7z games, Game Boy Color box art, and the Upcoming rows using the wrong Radarr or Sonarr server. The web app is now upstream\u0027s 2.5.0 build. Cue/bin tracks keep their real file names on case-insensitive disks.",
+                             "targetAbi":  "10.10.0.0",
+                             "sourceUrl":  "https://github.com/Licaa21/Plugin/releases/download/fork-v2.5.0.1/Moonfin.Server-2.5.0.1.zip",
+                             "checksum":  "D47B6AE089618E96B2DBEFA9213016E6",
+                             "timestamp":  "2026-10-30T13:26:29",
+                             "dependencies":  [
+
+                                              ]
+                         },
+                         {
                              "version":  "2.4.0.8",
                              "changelog":  "Takes upstream\u0027s newest changes: the Home Screen Backdrop setting is now a style (Off, Corner or Full Screen) with a new Details Backdrop Size setting for phones, IMDb, TMDB chart, MDBList and Letterboxd rows get descriptions, genres and runtimes from TMDB, and the seasonal effect picker adds Valentine\u0027s Day, Easter, Pride, Lunar New Year and Diwali.",
                              "targetAbi":  "10.10.0.0",
