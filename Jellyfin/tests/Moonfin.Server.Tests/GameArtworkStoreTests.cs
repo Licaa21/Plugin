@@ -207,25 +207,88 @@ public class GameArtworkStoreTests : IDisposable
         Assert.Equal(1, handler.RequestCount);
     }
 
+    // ---- Game Boy Color: one gb core plays both, but their art sits in separate libretro sets --
+
+    [Theory]
+    [InlineData("GBC", "Nintendo - Game Boy Color")]
+    [InlineData("Nintendo - Game Boy Color", "Nintendo - Game Boy Color")]
+    [InlineData("Game Boy", "Nintendo - Game Boy")]
+    public void CandidatePlatforms_FollowTheSystemFolderForGameBoyColor(string systemName, string expectedPrimary)
+    {
+        var candidates = GameArtworkStore.CandidatePlatformsFor("gb", coreWasDefaulted: false, systemName);
+
+        Assert.Equal(expectedPrimary, candidates[0]);
+        Assert.Contains("Nintendo - Game Boy", candidates);
+        Assert.Contains("Nintendo - Game Boy Color", candidates);
+    }
+
+    [Fact]
+    public async Task Lookup_GbcFolder_ProbesTheGameBoyColorSetForTheFilename()
+    {
+        const string gbcPlatform = "Nintendo - Game Boy Color";
+        const string romFileName = "Road Champs - BXS Stunt Biking (USA, Europe).gbc";
+        var handler = new FakeHttpMessageHandler();
+        // The handler throws on any unregistered URL, so probing the Game Boy set fails here.
+        handler.SetResponse(
+            ThumbUrl(gbcPlatform, Path.GetFileNameWithoutExtension(romFileName)),
+            HttpStatusCode.OK,
+            new ByteArrayContent(new byte[64]));
+        var store = CreateStore(handler);
+        File.WriteAllBytes(Path.Combine(_root, romFileName), [1, 2, 3, 4]);
+
+        var result = await store.LookupThumbAsync(
+            core: "gb",
+            coreWasDefaulted: false,
+            systemName: "GBC",
+            romPath: Path.Combine(_root, romFileName),
+            title: null,
+            kind: GameThumbService.ThumbKind.Boxart,
+            cancellationToken: CancellationToken.None);
+
+        Assert.Equal(GameArtworkLookupOutcome.Found, result.Outcome);
+        Assert.Equal(1, handler.RequestCount);
+    }
+
+    [Fact]
+    public async Task Lookup_GameBoyCartInAGbcFolder_StillFindsItsArtInTheGameBoySet()
+    {
+        const string romFileName = "Kirby's Dream Land (USA, Europe).gb";
+        var thumbName = Path.GetFileNameWithoutExtension(romFileName);
+        var handler = new FakeHttpMessageHandler();
+        handler.SetResponse(ThumbUrl("Nintendo - Game Boy Color", thumbName), HttpStatusCode.NotFound, new ByteArrayContent([]));
+        handler.SetResponse(ThumbUrl("Nintendo - Game Boy", thumbName), HttpStatusCode.OK, new ByteArrayContent(new byte[64]));
+        var store = CreateStore(handler);
+        File.WriteAllBytes(Path.Combine(_root, romFileName), [1, 2, 3, 4]);
+
+        var result = await store.LookupThumbAsync(
+            core: "gb",
+            coreWasDefaulted: false,
+            systemName: "GBC",
+            romPath: Path.Combine(_root, romFileName),
+            title: null,
+            kind: GameThumbService.ThumbKind.Boxart,
+            cancellationToken: CancellationToken.None);
+
+        Assert.Equal(GameArtworkLookupOutcome.Found, result.Outcome);
+        Assert.Equal(
+            new[] { ThumbUrl("Nintendo - Game Boy Color", thumbName), ThumbUrl("Nintendo - Game Boy", thumbName) },
+            handler.Requested);
+    }
+
     // ---- Candidate budget: the fallbacks must survive a maximum-sized RDB match ---------------
     //
     // MatchWithSiblings returns the primary plus up to MaxSiblingArtworkNamesPerRequest siblings,
-    // so a densely-catalogued title contributes 7 asserted names -- and with the 2 fallbacks that
-    // is exactly the 9-probe budget. This guards that equality: lowering the budget, or adding a
-    // candidate pass in front of the fallbacks (a `~` -> `-` spelling guess was tried and removed),
-    // starves the fallbacks and records a terminal Missing for artwork that exists.
+    // so a densely cataloged title gives 7 asserted names before the 2 fallbacks. A Game Boy game
+    // also tries its filename in the other Game Boy set, which makes 10, the whole budget. Lowering
+    // the budget or adding a candidate ahead of the fallbacks starves them and records a terminal
+    // Missing for artwork that exists.
     [Fact]
     public async Task Lookup_MaximumSiblingSet_StillProbesTheFilenameAndTitleFallbacks()
     {
         // The ROM is identified by CRC, so neither its file name nor its title collides with any
-        // RDB name: 7 asserted names + 2 distinct fallbacks is the full 9-candidate worst case.
+        // RDB name: 7 asserted names + 2 distinct fallbacks is 9 candidates.
         var romBytes = new byte[] { 4, 8, 15, 16, 23, 42 };
-        var records = new List<(string Name, uint Crc)> { ("Maze Craze (USA)", Crc32(romBytes)) };
-        var siblingRegions = new[] { "USA, Europe", "Europe", "Japan", "World", "Brazil", "Korea", "Italy", "Taiwan", "France", "Germany" };
-        for (var i = 0; i < siblingRegions.Length; i++)
-        {
-            records.Add(($"Maze Craze ({siblingRegions[i]})", (uint)(0x22222222u + i)));
-        }
+        var records = MaximumSiblingRecords(romBytes);
 
         var handler = new FakeHttpMessageHandler();
 
@@ -253,6 +316,51 @@ public class GameArtworkStoreTests : IDisposable
         // The title fallback is the 9th and last candidate: it must still be probed.
         Assert.Equal(9, handler.RequestCount);
         Assert.Equal(GameArtworkLookupOutcome.Found, result.Outcome);
+    }
+
+    [Fact]
+    public async Task Lookup_MaximumSiblingSetForGameBoy_StillProbesTheOtherGameBoySet()
+    {
+        const string gbPlatform = "Nintendo - Game Boy";
+        var romBytes = new byte[] { 4, 8, 15, 16, 23, 42 };
+        var records = MaximumSiblingRecords(romBytes);
+
+        var handler = new FakeHttpMessageHandler();
+        foreach (var (name, _) in records)
+        {
+            handler.SetResponse(ThumbUrl(gbPlatform, name), HttpStatusCode.NotFound, new ByteArrayContent([]));
+        }
+
+        handler.SetResponse(ThumbUrl(gbPlatform, "Unmatched Dump 01"), HttpStatusCode.NotFound, new ByteArrayContent([]));
+        handler.SetResponse(ThumbUrl(gbPlatform, "Unmatched Dump Title"), HttpStatusCode.NotFound, new ByteArrayContent([]));
+        handler.SetResponse(ThumbUrl("Nintendo - Game Boy Color", "Unmatched Dump 01"), HttpStatusCode.OK, new ByteArrayContent(new byte[64]));
+
+        var store = CreateRdbBackedStore(handler, records, romFileName: "Unmatched Dump 01.gb", romBytes: romBytes, platform: gbPlatform);
+
+        var result = await store.LookupThumbAsync(
+            core: "gb",
+            coreWasDefaulted: false,
+            systemName: "Game Boy",
+            romPath: Path.Combine(_root, "Unmatched Dump 01.gb"),
+            title: "Unmatched Dump Title",
+            kind: GameThumbService.ThumbKind.Boxart,
+            cancellationToken: CancellationToken.None);
+
+        Assert.Equal(10, handler.RequestCount);
+        Assert.Equal(GameArtworkLookupOutcome.Found, result.Outcome);
+    }
+
+    // The CRC-matched primary plus ten same-title siblings, more than the lookup keeps.
+    private static List<(string Name, uint Crc)> MaximumSiblingRecords(byte[] romBytes)
+    {
+        var records = new List<(string Name, uint Crc)> { ("Maze Craze (USA)", Crc32(romBytes)) };
+        var siblingRegions = new[] { "USA, Europe", "Europe", "Japan", "World", "Brazil", "Korea", "Italy", "Taiwan", "France", "Germany" };
+        for (var i = 0; i < siblingRegions.Length; i++)
+        {
+            records.Add(($"Maze Craze ({siblingRegions[i]})", (uint)(0x22222222u + i)));
+        }
+
+        return records;
     }
 
     // ---- Provider listing: spelling discovery for checksum-identified games -------------------
@@ -1019,11 +1127,12 @@ public class GameArtworkStoreTests : IDisposable
         IReadOnlyList<(string Name, uint Crc)> records,
         string romFileName,
         byte[]? romBytes = null,
-        Action<RdbService>? configureRdb = null)
+        Action<RdbService>? configureRdb = null,
+        string platform = Platform)
     {
         Directory.CreateDirectory(_root);
         File.WriteAllBytes(Path.Combine(_root, romFileName), romBytes ?? [9, 9, 9, 9]);
-        WriteMinimalRdb(Path.Combine(_root, "gamemeta", Platform + ".rdb"), records);
+        WriteMinimalRdb(Path.Combine(_root, "gamemeta", platform + ".rdb"), records);
 
         var rdb = new RdbService(new ThrowingHttpClientFactory(), new NoOpLogger<RdbService>(), _root)
         {

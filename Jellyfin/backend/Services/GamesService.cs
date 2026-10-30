@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using MediaBrowser.Controller.Library;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moonfin.Games;
 using Moonfin.Romm;
 using Moonfin.Server.Models;
 using SharpCompress.Archives;
@@ -667,12 +668,25 @@ public class GamesService
 
         // The ROM endpoint unpacks a single-ROM archive and sends the raw ROM, so the detail has
         // to name what the client will actually receive. Naming the archive left a client saving
-        // plain ROM bytes under a .zip name and then failing to unpack them. Arcade sets are
-        // streamed intact and keep the archive's name, and the system core decides that because
-        // the endpoint resolves it the same way.
+        // plain ROM bytes under a .zip name and then failing to unpack them. Arcade sets and
+        // PlayStation zips are streamed intact and keep the archive's name, and the system core
+        // decides that because the endpoint resolves it the same way.
         var servedName = archiveName;
         var servedSize = SafeFileLength(resolution.RomPath);
-        if (IsArchive(resolution.RomPath) &&
+        var isCueSheet = GameSystemCoreResolver.IsCueSheet(resolution.RomPath);
+        if (isCueSheet || GameSystemCoreResolver.ShouldRepackArchiveForCore(resolution.SystemCore, resolution.RomPath))
+        {
+            // The ROM endpoint sends a loose disc or a PlayStation .7z as one zip.
+            var discSet = isCueSheet
+                ? DiscSet.ForCueSheet(resolution.RomPath)
+                : DiscSet.ForSevenZip(resolution.RomPath);
+            if (discSet != null)
+            {
+                servedName = Path.ChangeExtension(archiveName, ".zip");
+                servedSize = discSet.Length;
+            }
+        }
+        else if (IsArchive(resolution.RomPath) &&
             !ShouldPreserveArchiveForCore(resolution.SystemCore, resolution.RomPath))
         {
             var extracted = GetExtractedRomInfo(resolution.RomPath);
@@ -1024,26 +1038,15 @@ public class GamesService
     }
 
     /// <summary>
-    /// Returns true when an archive must be delivered intact instead of extracting a single ROM.
-    /// MAME ZIPs contain the complete multi-chip arcade set and the emulator identifies the set by
-    /// its archive filename.
+    /// The core a library file plays with, which decides whether an archive is sent intact (MAME
+    /// sets and PlayStation discs), repacked (a PlayStation .7z) or cut down to a single ROM.
     /// </summary>
-    public bool ShouldPreserveArchive(string libraryId, string romPath)
+    public string? SystemCoreFor(string libraryId, string romPath)
     {
-        if (!IsArchive(romPath))
-        {
-            return false;
-        }
-
         var resolved = _paths.ResolveAbsoluteGameFile(libraryId, romPath, requireExisting: false);
-        if (resolved == null)
-        {
-            return false;
-        }
-
-        return ShouldPreserveArchiveForCore(
-            ResolveSystemCore(resolved.SystemName, new List<string> { romPath }),
-            romPath);
+        return resolved == null
+            ? null
+            : ResolveSystemCore(resolved.SystemName, new List<string> { romPath });
     }
 
     // -- internal helpers ---------------------------------------------------
@@ -1059,7 +1062,7 @@ public class GamesService
         foreach (var gameDir in SafeEnumerateDirectories(systemDir))
         {
             var rom = SafeEnumerateFiles(gameDir)
-                .FirstOrDefault(path => IsPlayableFileForCore(core, path));
+                .FirstOrDefault(path => GameSystemCoreResolver.IsLibraryGameFile(core, path));
             if (rom != null)
             {
                 roms.Add(rom);
@@ -1069,7 +1072,7 @@ public class GamesService
         // Also accept loose ROMs sitting directly in the system folder.
         foreach (var file in SafeEnumerateFiles(systemDir))
         {
-            if (IsPlayableFileForCore(core, file))
+            if (GameSystemCoreResolver.IsLibraryGameFile(core, file))
             {
                 roms.Add(file);
             }
@@ -1080,11 +1083,17 @@ public class GamesService
 
     private static List<GameBios> GetBiosFiles(string systemDir)
     {
-        // BIOS files are loose files at the top of the system folder that are NOT ROMs.
+        // BIOS files are loose files at the top of the system folder that are NOT ROMs. A loose
+        // disc's .bin tracks share the BIOS extension, so the ones a .cue lists are left out.
+        var files = SafeEnumerateFiles(systemDir).ToList();
+        var tracks = files
+            .Where(GameSystemCoreResolver.IsCueSheet)
+            .SelectMany(cue => DiscSet.CueSetFiles(cue) ?? Array.Empty<string>())
+            .ToHashSet(StringComparer.Ordinal);
         var bios = new List<GameBios>();
-        foreach (var file in SafeEnumerateFiles(systemDir))
+        foreach (var file in files)
         {
-            if (IsRomFile(file))
+            if (IsRomFile(file) || tracks.Contains(Path.GetFullPath(file)))
             {
                 continue;
             }

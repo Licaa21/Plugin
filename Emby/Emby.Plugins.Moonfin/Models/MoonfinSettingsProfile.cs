@@ -20,6 +20,15 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("mdblistShowRatingBadges")] public bool? MdblistShowRatingBadges { get; set; }
         [JsonPropertyName("tmdbApiKey")] public string? TmdbApiKey { get; set; }
         [JsonPropertyName("tmdbEpisodeRatingsEnabled")] public bool? TmdbEpisodeRatingsEnabled { get; set; }
+        [JsonPropertyName("homeRowsMdblistEnabled")] public bool? HomeRowsMdblistEnabled { get; set; }
+        [JsonPropertyName("homeRowsMdblistRatingSources")] public List<string>? HomeRowsMdblistRatingSources { get; set; }
+        [JsonPropertyName("homeRowsTmdbEpisodeRatingsEnabled")] public bool? HomeRowsTmdbEpisodeRatingsEnabled { get; set; }
+        [JsonPropertyName("homeRowsMdblistShowRatingNames")] public bool? HomeRowsMdblistShowRatingNames { get; set; }
+        [JsonPropertyName("homeRowsMdblistShowRatingBadges")] public bool? HomeRowsMdblistShowRatingBadges { get; set; }
+        [JsonPropertyName("mediaBarMdblistEnabled")] public bool? MediaBarMdblistEnabled { get; set; }
+        [JsonPropertyName("mediaBarMdblistRatingSources")] public List<string>? MediaBarMdblistRatingSources { get; set; }
+        [JsonPropertyName("mediaBarMdblistShowRatingNames")] public bool? MediaBarMdblistShowRatingNames { get; set; }
+        [JsonPropertyName("mediaBarMdblistShowRatingBadges")] public bool? MediaBarMdblistShowRatingBadges { get; set; }
         [JsonPropertyName("detailsBackdropOpacity")] public int? DetailsBackdropOpacity { get; set; }
         [JsonPropertyName("detailsBackdropBlur")] public int? DetailsBackdropBlur { get; set; }
         [JsonPropertyName("navbarPosition")] public string? NavbarPosition { get; set; }
@@ -37,6 +46,7 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("showCastButton")] public bool? ShowCastButton { get; set; }
         [JsonPropertyName("showSyncPlayButton")] public bool? ShowSyncPlayButton { get; set; }
         [JsonPropertyName("showLibrariesInToolbar")] public bool? ShowLibrariesInToolbar { get; set; }
+        [JsonPropertyName("showLibrariesIndividually")] public bool? ShowLibrariesIndividually { get; set; }
         [JsonPropertyName("shuffleContentType")] public string? ShuffleContentType { get; set; }
         [JsonPropertyName("mergeContinueWatchingNextUp")] public bool? MergeContinueWatchingNextUp { get; set; }
         [JsonPropertyName("continueWatchingDefaultAction")] public string? ContinueWatchingDefaultAction { get; set; }
@@ -66,6 +76,7 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("mediaBarExternalLists")] public List<string>? MediaBarExternalLists { get; set; }
         [JsonPropertyName("seasonalSurprise")] public string? SeasonalSurprise { get; set; }
         [JsonPropertyName("seasonalDensity")] public string? SeasonalDensity { get; set; }
+        [JsonPropertyName("seasonalFollower")] public bool? SeasonalFollower { get; set; }
         [JsonPropertyName("seasonalRowEnabled")] public bool? SeasonalRowEnabled { get; set; }
         /// <summary>"auto", an ISO alpha-2 code, or "other".</summary>
         [JsonPropertyName("seasonalRowCountry")] public string? SeasonalRowCountry { get; set; }
@@ -310,6 +321,7 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("allGenresImageType")] public string? AllGenresImageType { get; set; }
         [JsonPropertyName("groupItemsIntoCollections")] public bool? GroupItemsIntoCollections { get; set; }
         [JsonPropertyName("showMediaDetailsOnLibraryPage")] public bool? ShowMediaDetailsOnLibraryPage { get; set; }
+        [JsonPropertyName("libraryCardTitles")] public bool? LibraryCardTitles { get; set; }
         [JsonPropertyName("hideBackdropsInLibraries")] public bool? HideBackdropsInLibraries { get; set; }
         [JsonPropertyName("playlistsRowSortBy")] public string? PlaylistsRowSortBy { get; set; }
         [JsonPropertyName("playlistsRowSortOrder")] public string? PlaylistsRowSortOrder { get; set; }

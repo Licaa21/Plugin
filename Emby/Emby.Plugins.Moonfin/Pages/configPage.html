@@ -498,6 +498,7 @@
 
         #MoonfinConfigPage .homeLayoutTabs {
             display: flex;
+            flex-wrap: wrap;
             align-items: flex-end;
             gap: 0;
             margin-bottom: 8px;
@@ -506,6 +507,7 @@
 
         #MoonfinConfigPage .homeLayoutTabButton {
             margin: 0 2px -1px 0;
+            white-space: nowrap;
             padding: 6px 10px;
             border-bottom-left-radius: 0;
             border-bottom-right-radius: 0;
@@ -577,6 +579,80 @@
             padding: 12px 8px;
             color: rgba(128, 128, 128, 0.8);
             font-size: 0.88em;
+        }
+
+        #MoonfinConfigPage .homeLayoutRow.has-edit {
+            grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+        }
+
+        #MoonfinConfigPage .homeLayoutBadge-custom {
+            border-color: rgba(236, 72, 153, 0.44);
+            background: rgba(236, 72, 153, 0.15);
+            color: #ec4899;
+        }
+
+        #MoonfinConfigPage .homeCustomListForm {
+            padding-right: 4px;
+        }
+
+        #MoonfinConfigPage .homeCustomListIntro {
+            margin-bottom: 8px;
+            opacity: 0.7;
+            font-size: 0.82em;
+            line-height: 1.35;
+        }
+
+        #MoonfinConfigPage .homeCustomListLabel {
+            display: block;
+            margin: 8px 0 3px;
+            opacity: 0.72;
+            font-size: 0.78em;
+        }
+
+        #MoonfinConfigPage .homeCustomListInput {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid rgba(128, 128, 128, 0.28);
+            border-radius: 4px;
+            background: rgba(128, 128, 128, 0.08);
+            color: inherit;
+            font: inherit;
+            font-size: 0.88em;
+        }
+
+        #MoonfinConfigPage .homeCustomListCheckbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+
+        #MoonfinConfigPage .homeCustomListWarning {
+            margin-top: 8px;
+            color: #f59e0b;
+            font-size: 0.78em;
+            line-height: 1.35;
+        }
+
+        #MoonfinConfigPage .homeCustomListResult {
+            margin-top: 10px;
+            font-size: 0.82em;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+
+        #MoonfinConfigPage .homeCustomListResult.is-error {
+            color: #ef4444;
+        }
+
+        #MoonfinConfigPage .homeCustomListActions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            margin: 12px 0 4px;
         }
 
         #MoonfinConfigPage .moonfinTabPanel .emby-input,
@@ -1707,6 +1783,15 @@
                                 </select>
                             </div>
                             <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultShowLibrariesIndividually">Show Libraries Individually</label>
+                                <select id="DefaultShowLibrariesIndividually" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                                <div class="fieldDescription">Show each library as its own button in the navigation bar instead of in the Libraries menu.</div>
+                            </div>
+                            <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultShowSyncPlayButton">Show SyncPlay Button</label>
                                 <select id="DefaultShowSyncPlayButton" is="emby-select">
                                     <option value="">Not set (user decides)</option>
@@ -1821,8 +1906,9 @@
                                     <option value="off">Off</option>
                                     <option value="fullScreen">Full Screen</option>
                                     <option value="corner">Corner</option>
+                                    <option value="top">Top</option>
                                 </select>
-                                <div class="fieldDescription">Corner fades the backdrop out from the top right on TV and desktop. Phones show it full screen.</div>
+                                <div class="fieldDescription">On TV and desktop, Corner fades the backdrop out from the top right and Top shows only its top half, fading out toward the middle. Phones show it full screen.</div>
                             </div>
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultDetailsBackdropEnabled">Details Screen Backdrop</label>
@@ -1891,6 +1977,15 @@
                                     <option value="normal">Normal</option>
                                     <option value="heavy">Heavy</option>
                                 </select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultSeasonalFollower">Focus Follower</label>
+                                <select id="DefaultSeasonalFollower" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                                <div class="fieldDescription">A holiday piece, like Halloween's planchette, follows what is selected on Home. In the desktop layout it replaces the mouse pointer.</div>
                             </div>
 
                             <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Loading Animation</h4>
@@ -2059,6 +2154,62 @@
                                     <div id="DefaultHomeAvailableTabs" class="homeLayoutTabs"></div>
                                     <input id="DefaultHomeAvailableSearch" class="homeLayoutSearch" type="search" placeholder="Search rows" />
                                     <div id="DefaultHomeAvailableRows" class="homeLayoutList"></div>
+                                    <div id="DefaultHomeCustomListForm" class="homeLayoutList homeCustomListForm" style="display:none;">
+                                        <div class="homeCustomListIntro">A row from a TMDB, Letterboxd or MDBList list, the same as Add Custom Home Row in the apps.</div>
+                                        <label class="homeCustomListLabel" for="DefaultCustomListSource">Source</label>
+                                        <select id="DefaultCustomListSource" class="homeCustomListInput">
+                                            <option value="tmdb">TMDB</option>
+                                            <option value="letterboxd">Letterboxd</option>
+                                            <option value="mdblist">MDBList</option>
+                                        </select>
+                                        <div id="DefaultCustomListTypeField">
+                                            <label class="homeCustomListLabel" for="DefaultCustomListType">Type</label>
+                                            <select id="DefaultCustomListType" class="homeCustomListInput"></select>
+                                        </div>
+                                        <div id="DefaultCustomListLetterboxdField">
+                                            <label class="homeCustomListLabel" for="DefaultCustomListLetterboxdUser">Letterboxd Username</label>
+                                            <input id="DefaultCustomListLetterboxdUser" class="homeCustomListInput" type="text" placeholder="Username" autocomplete="off" />
+                                        </div>
+                                        <div id="DefaultCustomListTmdbField">
+                                            <label class="homeCustomListLabel" id="DefaultCustomListTmdbIdLabel" for="DefaultCustomListTmdbId">TMDB List ID or URL</label>
+                                            <input id="DefaultCustomListTmdbId" class="homeCustomListInput" type="text" autocomplete="off" />
+                                        </div>
+                                        <div id="DefaultCustomListMdblistUrlField">
+                                            <label class="homeCustomListLabel" for="DefaultCustomListMdblistUrl">MDBList URL</label>
+                                            <input id="DefaultCustomListMdblistUrl" class="homeCustomListInput" type="text" placeholder="e.g. https://mdblist.com/lists/username/list-slug" autocomplete="off" />
+                                        </div>
+                                        <div id="DefaultCustomListMdblistUserField">
+                                            <label class="homeCustomListLabel" for="DefaultCustomListMdblistUser">MDBList Username</label>
+                                            <input id="DefaultCustomListMdblistUser" class="homeCustomListInput" type="text" placeholder="Username" autocomplete="off" />
+                                            <label class="homeCustomListLabel" for="DefaultCustomListMdblistList">List Name (slug)</label>
+                                            <input id="DefaultCustomListMdblistList" class="homeCustomListInput" type="text" placeholder="list-name-slug" autocomplete="off" />
+                                        </div>
+                                        <div id="DefaultCustomListKeyWarning" class="homeCustomListWarning" style="display:none;"></div>
+                                        <label class="homeCustomListLabel" for="DefaultCustomListSortBy">Sort By</label>
+                                        <select id="DefaultCustomListSortBy" class="homeCustomListInput">
+                                            <option value="none">Default (When Added)</option>
+                                            <option value="title">Film Name</option>
+                                            <option value="popularity">Film Popularity</option>
+                                            <option value="year">Release Date</option>
+                                            <option value="rating">Average Rating</option>
+                                            <option value="shuffle">Shuffle</option>
+                                        </select>
+                                        <div id="DefaultCustomListSortOrderField">
+                                            <label class="homeCustomListLabel" for="DefaultCustomListSortOrder">Sort Order</label>
+                                            <select id="DefaultCustomListSortOrder" class="homeCustomListInput"></select>
+                                        </div>
+                                        <label id="DefaultCustomListUserRatingsField" class="homeCustomListCheckbox">
+                                            <input id="DefaultCustomListUserRatings" type="checkbox" />
+                                            <span>Show User Ratings</span>
+                                        </label>
+                                        <label class="homeCustomListLabel" for="DefaultCustomListName">Home Row Custom Name</label>
+                                        <input id="DefaultCustomListName" class="homeCustomListInput" type="text" placeholder="Enter row name..." autocomplete="off" />
+                                        <div id="DefaultCustomListResult" class="homeCustomListResult" style="display:none;"></div>
+                                        <div class="homeCustomListActions">
+                                            <button type="button" id="DefaultCustomListCancel" class="homeLayoutAddButton" style="display:none;">Cancel</button>
+                                            <button type="button" id="DefaultCustomListSave" class="homeLayoutAddButton">Add to Layout</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Row Options</h4>
@@ -2546,6 +2697,37 @@
                                 </select>
                                 <div class="fieldDescription">Show closed captions on YouTube trailers when available.</div>
                             </div>
+                            <h4 id="DefaultMediaBarRatingsHeading" style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Media Bar Ratings</h4>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultMediaBarMdblistEnabled">Media Bar MDBList Ratings</label>
+                                <select id="DefaultMediaBarMdblistEnabled" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                                <div class="fieldDescription">Enable MDBList ratings on the media bar by default (requires server-wide or user API key). Only the Moonfin, MakD, Gallery and Banner styles show ratings.</div>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused">Media Bar Rating Sources &amp; Order</label>
+                                <div class="fieldDescription">Check which ratings to display and drag or use the arrows to set their order.</div>
+                                <div id="DefaultMediaBarMdblistRatingSourcesList" style="max-height:220px;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px;margin-top:6px;"></div>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultMediaBarMdblistShowRatingNames">Media Bar Rating Labels</label>
+                                <select id="DefaultMediaBarMdblistShowRatingNames" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultMediaBarMdblistShowRatingBadges">Media Bar Rating Badges</label>
+                                <select id="DefaultMediaBarMdblistShowRatingBadges" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                            </div>
                             <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Looks</h4>
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultHomeRowsStyle">Row Type</label>
@@ -2690,6 +2872,46 @@
                                     <span id="DefaultPreviewVolume_Val" style="font-weight: 600; min-width: 40px; color: #00a4dc; text-align: right; font-size: 0.95em;">--</span>
                                 </div>
                                 <div class="fieldDescription">How loud media previews on cards play</div>
+                            </div>
+                            <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Home Row Ratings</h4>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultHomeRowsMdblistEnabled">Home Row MDBList Ratings</label>
+                                <select id="DefaultHomeRowsMdblistEnabled" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                                <div class="fieldDescription">Enable MDBList ratings in the home row info area by default (requires server-wide or user API key).</div>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused">Home Row Rating Sources &amp; Order</label>
+                                <div class="fieldDescription">Check which ratings to display and drag or use the arrows to set their order.</div>
+                                <div id="DefaultHomeRowsMdblistRatingSourcesList" style="max-height:220px;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px;margin-top:6px;"></div>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultHomeRowsTmdbEpisodeRatingsEnabled">Home Row TMDB Episode Ratings</label>
+                                <select id="DefaultHomeRowsTmdbEpisodeRatingsEnabled" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                                <div class="fieldDescription">Enable TMDB episode ratings in the home row info area by default (requires server-wide or user API key).</div>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultHomeRowsMdblistShowRatingNames">Home Row Rating Labels</label>
+                                <select id="DefaultHomeRowsMdblistShowRatingNames" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultHomeRowsMdblistShowRatingBadges">Home Row Rating Badges</label>
+                                <select id="DefaultHomeRowsMdblistShowRatingBadges" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
                             </div>
                             <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">External Sources</h4>
                             <div class="fieldDescription" style="margin-bottom:0.75em;">Chart rows the home sections page can offer. IMDb rows need IMDb Charts enabled above, TMDB rows need a TMDB API key.</div>
@@ -3049,6 +3271,14 @@
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultShowMediaDetailsOnLibraryPage">Show Media Details</label>
                                 <select id="DefaultShowMediaDetailsOnLibraryPage" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultLibraryCardTitles">Titles Under Posters</label>
+                                <select id="DefaultLibraryCardTitles" is="emby-select">
                                     <option value="">Not set (user decides)</option>
                                     <option value="true">Yes</option>
                                     <option value="false">No</option>
@@ -3886,12 +4116,11 @@
                         <h3 class="sectionTitle">Push Defaults To Existing Users</h3>
                         <div class="fieldDescription" style="margin-bottom: 0.8em;">
                             Apply the configured defaults above to every existing user now.
-                            Only fields that are set (not "Not set") will be merged into user global settings.
+                            Only fields that are set (not "Not set") will be merged into each user's global and device settings.
                             Save your default settings first if you made changes.
                         </div>
                         <div style="background-color: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 10px; padding: 0.8em 1.2em; margin-bottom: 1em; font-size: 0.9em;">
                             <strong>Warning:</strong> This action updates existing user profiles immediately for all set fields.
-                            Device-specific profile overrides are not touched.
                         </div>
                         <button is="emby-button" type="button" id="PushDefaultsBtn" class="raised">
                             <span>Apply Defaults To All Users Now</span>

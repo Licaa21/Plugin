@@ -220,7 +220,7 @@ $Meta = [ordered]@{
     version = $Version
     status = "Active"
     autoUpdate = $true
-    assemblies = @("Moonfin.Server.dll")
+    assemblies = @("Moonfin.Server.dll", "SharpCompress.dll")
 }
 $MetaJson = ConvertTo-Json -InputObject $Meta -Depth 10
 $MetaPath = Join-Path $ReleaseDir "meta.json"

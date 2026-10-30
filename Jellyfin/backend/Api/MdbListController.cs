@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Moonfin.Server.Models;
 using Moonfin.Server.Services;
 
 namespace Moonfin.Server.Api;
@@ -144,7 +145,7 @@ public class MdbListController : ControllerBase
             }
         }
 
-        var filteredRatings = FilterAndOrderRatings(allRatings, resolved?.MdblistRatingSources);
+        var filteredRatings = FilterAndOrderRatings(allRatings, RequestedRatingSources(resolved));
 
         return Ok(new MdbListResponse
         {
@@ -330,6 +331,27 @@ public class MdbListController : ControllerBase
     {
         var name = profile?.Trim().ToLowerInvariant();
         return name is "desktop" or "mobile" or "tv" ? name : "global";
+    }
+
+    // Home rows and the media bar pick their own sources and every client filters by them,
+    // so the answer also carries the sources only those lists ask for.
+    internal static List<string> RequestedRatingSources(MoonfinSettingsProfile? resolved)
+    {
+        var picked = resolved?.MdblistRatingSources;
+        var sources = new List<string>(picked is { Count: > 0 } ? picked : DefaultRatingSources);
+        foreach (var list in new[] { resolved?.HomeRowsMdblistRatingSources, resolved?.MediaBarMdblistRatingSources })
+        {
+            if (list == null) continue;
+            foreach (var source in list)
+            {
+                if (!string.IsNullOrEmpty(source) && !sources.Exists(s => string.Equals(s, source, StringComparison.OrdinalIgnoreCase)))
+                {
+                    sources.Add(source);
+                }
+            }
+        }
+
+        return sources;
     }
 
     private static List<MdbListRating> FilterAndOrderRatings(List<MdbListRating> allRatings, List<string>? selectedSources)

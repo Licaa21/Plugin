@@ -725,6 +725,30 @@ public partial class RdbServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ResolveArtworkNameAsync_GbcFolderNameMatch_PrefersTheGameBoyColorSet()
+    {
+        // Road Rash is in both sets, so a dump whose checksum neither knows matches by name, and a
+        // GBC folder has to land on the GBC entry.
+        var romPath = Path.Combine(_root, "Road Rash (USA, Europe).gbc");
+        Directory.CreateDirectory(_root);
+        File.WriteAllBytes(romPath, new byte[] { 3, 1, 4, 1, 5, 9 });
+
+        const string name = "Road Rash (USA, Europe)";
+        WriteMinimalRdb(RdbPath("Nintendo - Game Boy"), new[] { (name, 0x11111111u) });
+        WriteMinimalRdb(RdbPath("Nintendo - Game Boy Color"), new[] { (name, 0x22222222u) });
+
+        var service = new RdbService(new ThrowingHttpClientFactory(), new NoOpLogger<RdbService>(), _root);
+        var candidates = GameArtworkStore.CandidatePlatformsFor("gb", coreWasDefaulted: false, "GBC");
+
+        var result = await InvokeResolveArtworkNameCoreAsync(service, candidates, romPath, "Road Rash");
+
+        Assert.NotNull(result);
+        var (names, platform) = (ArtworkNameResolution)result!;
+        Assert.Equal(name, names[0]);
+        Assert.Equal("Nintendo - Game Boy Color", platform);
+    }
+
+    [Fact]
     public async Task ResolveArtworkNameAsync_PrimaryPlatformHit_NeverLoadsSecondaryCandidateIndexes()
     {
         // Regression guard for the "no extra cost in the common case" requirement: when the

@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using MediaBrowser.Model.Entities;
+using Moonfin.Games;
 using Moonfin.Server.Models;
 using Moonfin.Server.Services;
 using Xunit;
@@ -208,7 +209,9 @@ public class GamesServiceTests : IDisposable
     [InlineData("arcade", "atetris.zip", true)]
     [InlineData("arcade", "atetris.7z", false)]
     [InlineData("nes", "game.zip", false)]
-    public void ShouldPreserveArchiveForCore_OnlyPreservesArcadeZip(
+    [InlineData("psx", "Crash Bandicoot (USA).zip", true)]
+    [InlineData("psx", "Crash Bandicoot (USA).7z", false)]
+    public void ShouldPreserveArchiveForCore_PreservesArcadeAndPlayStationZips(
         string core,
         string fileName,
         bool expected)
@@ -235,6 +238,41 @@ public class GamesServiceTests : IDisposable
         Assert.Equal(
             expected,
             GamesService.IsPlayableFileForCore(core, fileName));
+    }
+
+    [Fact]
+    public async Task PlayStationCueSheets_AreGames_ServedAsAZip_AndTheirTracksAreNotBios()
+    {
+        var libraryRoot = Path.Combine(_root, "library");
+        var system = Path.Combine(libraryRoot, "PlayStation");
+        var gameFolder = Path.Combine(system, "Crash Bandicoot (USA)");
+        Directory.CreateDirectory(gameFolder);
+        File.WriteAllText(Path.Combine(gameFolder, "Crash Bandicoot (USA).cue"), "FILE \"Crash Bandicoot (USA).bin\" BINARY\n");
+        File.WriteAllBytes(Path.Combine(gameFolder, "Crash Bandicoot (USA).bin"), new byte[2352]);
+        var looseCue = Path.Combine(system, "Loose Game.cue");
+        File.WriteAllText(looseCue, "FILE \"Loose Game.bin\" BINARY\n");
+        File.WriteAllBytes(Path.Combine(system, "Loose Game.bin"), new byte[2352]);
+        File.WriteAllBytes(Path.Combine(system, "scph5501.bin"), new byte[512]);
+        Directory.CreateDirectory(Path.Combine(libraryRoot, "SNES"));
+        File.WriteAllText(Path.Combine(libraryRoot, "SNES", "Other.cue"), "FILE \"Other.bin\" BINARY\n");
+        File.WriteAllBytes(Path.Combine(libraryRoot, "SNES", "Other.bin"), new byte[16]);
+
+        var libraryId = Guid.NewGuid().ToString();
+        var service = new GamesService(new FakeLibraryManager(new List<VirtualFolderInfo>
+        {
+            new() { Name = "Games", ItemId = libraryId, Locations = new[] { libraryRoot } },
+        }));
+
+        var games = service.GetGames(libraryId, "PlayStation");
+        Assert.Equal(new[] { "Crash Bandicoot (USA)", "Loose Game" }, games.Select(g => g.Title));
+        Assert.Empty(service.GetGames(libraryId, "SNES"));
+
+        var detail = await service.GetGameAsync(libraryId, games[1].Id, null, CancellationToken.None);
+        Assert.NotNull(detail);
+        Assert.Equal("Loose Game.zip", detail!.FileName);
+        Assert.Equal(DiscSet.ForCueSheet(looseCue)!.Length, detail.SizeBytes);
+        Assert.Equal(new[] { "scph5501.bin" }, detail.Bios.Select(b => b.FileName));
+        Assert.Equal(looseCue, service.ResolveFilePath(libraryId, games[1].Id, allowBios: false));
     }
 
     [Fact]

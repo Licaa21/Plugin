@@ -451,8 +451,8 @@ public class MoonfinController : ControllerBase
 
     /// <summary>
     /// Applies the configured admin defaults to all users (admin only).
-    /// When <paramref name="overwrite"/> is false, defaults are merged into each existing
-    /// user's global profile, keeping their other values and device overrides. When true,
+    /// When <paramref name="overwrite"/> is false, the set defaults are merged into each existing
+    /// user's global and device profiles, keeping their values for the rest. When true,
     /// every server user is reset to a clean global-only profile equal to the defaults
     /// (including users with no file), and orphaned files for deleted users are removed.
     /// </summary>
@@ -505,8 +505,8 @@ public class MoonfinController : ControllerBase
 
     /// <summary>
     /// Applies the configured admin defaults to a single user (admin only).
-    /// When <paramref name="overwrite"/> is false, defaults are merged into the user's
-    /// global profile, keeping their other values and device overrides. When true, the
+    /// When <paramref name="overwrite"/> is false, the set defaults are merged into the user's
+    /// global and device profiles, keeping their values for the rest. When true, the
     /// user is reset to a clean global-only profile equal to the defaults.
     /// </summary>
     [HttpPost("Admin/PushDefaults/{userId}")]

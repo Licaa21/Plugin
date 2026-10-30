@@ -42,7 +42,8 @@ internal sealed class GamePathResolver
         // Preserve the existing controller contract: known ROM and BIOS extensions are always
         // accepted, while allowBios permits the BIOS endpoint to stream other in-library files.
         var isKnownGameFile = GameSystemCoreResolver.IsRomFile(resolved.RomPath) ||
-            GameSystemCoreResolver.IsBiosFile(resolved.RomPath);
+            GameSystemCoreResolver.IsBiosFile(resolved.RomPath) ||
+            GameSystemCoreResolver.IsCueSheet(resolved.RomPath);
         return !isKnownGameFile && !allowBios ? null : resolved.RomPath;
     }
 

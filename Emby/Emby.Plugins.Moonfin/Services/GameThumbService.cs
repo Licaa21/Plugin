@@ -36,6 +36,8 @@ namespace Emby.Plugins.Moonfin.Services
                 ["nes"] = "Nintendo - Nintendo Entertainment System",
                 ["snes"] = "Nintendo - Super Nintendo Entertainment System",
                 ["gb"] = "Nintendo - Game Boy",
+                // Not a core of its own, see GamesScanner.ArtworkCore.
+                ["gbc"] = "Nintendo - Game Boy Color",
                 ["gba"] = "Nintendo - Game Boy Advance",
                 ["n64"] = "Nintendo - Nintendo 64",
                 ["nds"] = "Nintendo - Nintendo DS",
@@ -51,6 +53,15 @@ namespace Emby.Plugins.Moonfin.Services
                 ["pce"] = "NEC - PC Engine - TurboGrafx 16",
                 ["psx"] = "Sony - PlayStation",
                 ["psp"] = "Sony - PlayStation Portable",
+            };
+
+        // Game Boy and Game Boy Color carts often share a folder, and their art is split between
+        // the two sets, so a miss in one tries the other.
+        private static readonly Dictionary<string, string> SiblingCore =
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["gb"] = "gbc",
+                ["gbc"] = "gb",
             };
 
         private readonly ILogger _logger;
@@ -99,18 +110,40 @@ namespace Emby.Plugins.Moonfin.Services
                 }
             }
 
-            if (string.IsNullOrEmpty(core) || !CoreToPlatform.TryGetValue(core, out var platform))
-            {
-                return null;
-            }
-
             var name = LibretroThumbName(romFileName);
             if (name.Length == 0)
             {
                 return null;
             }
 
-            return await GetCachedAsync(BuildUrl(platform, kind, name), CacheKey(platform, kind, name), kind, name).ConfigureAwait(false);
+            foreach (var platform in PlatformsFor(core))
+            {
+                var path = await GetCachedAsync(BuildUrl(platform, kind, name), CacheKey(platform, kind, name), kind, name).ConfigureAwait(false);
+                if (path != null)
+                {
+                    return path;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>The libretro platforms tried for a core's art, in order.</summary>
+        internal static List<string> PlatformsFor(string core)
+        {
+            var platforms = new List<string>();
+            if (string.IsNullOrEmpty(core) || !CoreToPlatform.TryGetValue(core, out var platform))
+            {
+                return platforms;
+            }
+
+            platforms.Add(platform);
+            if (SiblingCore.TryGetValue(core, out var sibling))
+            {
+                platforms.Add(CoreToPlatform[sibling]);
+            }
+
+            return platforms;
         }
 
         private async Task<string?> GetCachedAsync(string url, string cacheKey, ThumbKind kind, string name)

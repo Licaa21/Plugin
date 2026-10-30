@@ -179,7 +179,7 @@ jobs:
             "version": "${VERSION}",
             "status": "Active",
             "autoUpdate": true,
-            "assemblies": ["Moonfin.Server.dll"]
+            "assemblies": ["Moonfin.Server.dll", "SharpCompress.dll"]
           }
           EOF
 

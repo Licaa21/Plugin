@@ -124,17 +124,20 @@ On Emby, the web app is served the same way at `/Moonfin/Web/`, but there's no h
 - **Media bar and home screen data** resolved on the server and shared across clients.
 - **Recommendations scored on the server** (Jellyfin), matching similar titles on genres, tags, people, studios, franchise, release year and rating, and only showing what each user is allowed to see. On Jellyfin 12 the same scoring reaches every client, including the stock web interface.
 - **Extra rating sources** through MDBList and TMDB, with the API keys kept on the server.
+- **TMDB extras for the apps**: user reviews, a person's IMDb page and social accounts, and the overview, logo and trailer for titles outside your library, fetched with the server's TMDB key or the user's own.
 - **Next air dates** for series, taken from the Sonarr your Seerr is connected to, or from TMDB through the server when there's no Sonarr.
-- **Anime filler and recap markers** (Jellyfin) that badge episodes as Filler, Mixed, Recap or canon using AnimeFillerList and MyAnimeList, plus Subbed and Dubbed pills read from the audio tracks in your own files. Shows match even when your library titles aren't in English. No account or API key needed.
+- **Anime filler and recap markers** that badge episodes as Filler, Mixed, Recap or canon using AnimeFillerList and MyAnimeList, plus Subbed and Dubbed pills read from the audio tracks in your own files, or the shorter Sub and Dub. Shows match even when your library titles aren't in English. No account or API key needed.
 - **A seasonal home row** of holiday movies your users own, plus Seerr suggestions, around New Year's, Valentine's Day, Easter, Pride, Halloween, Thanksgiving, Christmas, Lunar New Year and Diwali, following each user's parental limit.
-- **Seerr integration** with a built-in proxy, single sign-on, and optional request and issue notifications. The step-by-step guide is [Seerr Setup](https://github.com/Moonfin-Client/Plugin/wiki/Seerr-Setup).
+- **Seerr integration** with a built-in proxy that keeps each user to their parental limit, single sign-on, and optional request and issue notifications. The step-by-step guide is [Seerr Setup](https://github.com/Moonfin-Client/Plugin/wiki/Seerr-Setup).
 - **Push notifications** that reach Moonfin apps even when they are closed, covering Seerr activity, new media added to your library, and admin broadcasts. See [Seerr Notifications](https://github.com/Moonfin-Client/Plugin/wiki/Seerr-Notifications).
-- **Admin tools** for setting server-wide defaults across every client setting, pushing them to existing users, and broadcasting a message to everyone at once.
+- **Admin tools** for setting server-wide defaults across every client setting, hiding libraries and adding custom list rows for new users, pushing defaults to existing users, and broadcasting a message to everyone at once.
+- **Sign-in PINs kept on the server**, so a user's PIN follows them to every device. Wrong guesses are slowed down, and admins can set or reset anyone's PIN.
+- **Live TV recording checks** that mark recordings which missed part of their airing as Incomplete, and can record the next full showing for you.
 - **Settings backup and restore** (Jellyfin): Moonbase keeps a spare copy of your server-wide settings and offers to put it back if they ever come back reset.
 - **App reports on Emby**, so the apps' Send report to server button works there too. Jellyfin has this built in.
 - **Server messages**: an admin can write a note (title, Markdown body, color, audience, start and end dates, an optional link button) that shows up in people's apps, even if they were offline when it was sent.
 - **Custom themes** with a built-in editor, plus server-side upload and validation.
-- **Retro games** support for browsing and playing game libraries, from folders or a RomM server, with saves synced per user. On Jellyfin, an optional switch lets PSP games start in the web app. See [Retro Games](https://github.com/Moonfin-Client/Plugin/wiki/Retro-Games).
+- **Retro games** support for browsing and playing game libraries, from folders or a RomM server, with saves synced per user. Each user can link their own RomM account so their saves sync with RomM too. On Jellyfin, an optional switch lets PSP games start in the web app. See [Retro Games](https://github.com/Moonfin-Client/Plugin/wiki/Retro-Games).
 - **Custom rows** built from Letterboxd, TMDB, MDBList and IMDb lists, cached on the server and filtered by each user's parental limit.
 - **An active downloads dashboard** with live transcode metrics in the admin panel, plus a per-client view so a transcoded download can show its own progress and ETA.
 - **Personal ratings served back to clients**, so a library can be sorted by your own rating and filtered by liked or disliked, which neither server can do on its own.
@@ -147,7 +150,9 @@ Open your server dashboard, go to Plugins, and select **Moonbase**. The [Admin G
 - Your Seerr URL and whether Seerr is enabled
 - Shared MDBList and TMDB API keys, so individual users don't need their own. The TMDB key also feeds the seasonal row and the rating checks on custom rows
 - Whether Moonbase Sync is on (required for the Seerr and ratings integrations)
-- On Jellyfin, anime markers and whether Moonfin Recommends handles similar items
+- Anime markers, and on Jellyfin whether Moonfin Recommends handles similar items
+- Incomplete recording detection and re-recording on the Live TV tab
+- Users' sign-in PINs on the Accounts tab
 - Default user settings that new users inherit, with a button to push them to existing users
 - Server messages and the quick broadcast
 - Web startup options and custom theme uploads
@@ -155,9 +160,9 @@ Open your server dashboard, go to Plugins, and select **Moonbase**. The [Admin G
 Users change their own preferences from the in-app settings page in any Moonfin client. Settings are stored per user and shared across clients, with an optional per-device override for desktop, mobile, and TV.
 
 <details>
-<summary><b>Advanced:</b> the Defaults tab</summary>
+<summary><b>Advanced:</b> the User defaults tab</summary>
 
-The Defaults tab covers every client setting in its own subtab, from General Style and Details Screen through Playback and Integrations. Each control mirrors what the clients actually offer, so a default set here is one a client can honor. A setting left on Not set (user decides) passes the user's own choice through.
+The User defaults tab covers every client setting, in the same sections the apps use: Account, General, Appearance, Home Screen, Libraries, Details Page, Playback and Integrations. Each control mirrors what the clients actually offer, so a default set here is one a client can honor. A setting left on Not set (user decides) passes the user's own choice through.
 
 </details>
 
