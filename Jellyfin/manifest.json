@@ -9,6 +9,17 @@
         "imageUrl":  "https://raw.githubusercontent.com/Moonfin-Client/Plugin/master/Jellyfin/backend/assets/logo.png",
         "versions":  [
                          {
+                             "version":  "3.0.0.1",
+                             "changelog":  "Moonbase 3.0.0.1 is the fork on top of upstream\u0027s Moonbase 3.0.0 (2.5.0 renumbered) and its newest changes.\n\n- Smart Search from upstream: search the library in plain sentences (/Moonfin/SmartSearch). It is off until switched on in Moonbase, then downloads a small language model from huggingface.co and builds its index in a scheduled task.\n- The User defaults editor has Global, TV, Desktop and Mobile profiles, and Apply Defaults can pick users and settings. New Copy Settings action.\n- All the Moonfin Smart TV app settings added to the editor in earlier releases work in every profile, and show in Apply Defaults\u0027 settings list.\n- Upstream\u0027s new Home Screen toggles (hide watch progress and unwatched counts) and the Seerr badge style are now in the admin defaults.\n- Moonfin/Ping reports smartSearchEnabled, and takes an optional profile (tv, desktop or mobile) to return that device\u0027s defaults.\n- The web app is unchanged from upstream\u0027s 2.5.0 release (upstream\u0027s 3.0.0 is the same app).",
+                             "targetAbi":  "10.10.0.0",
+                             "sourceUrl":  "https://github.com/Licaa21/Plugin/releases/download/fork-v3.0.0.1/Moonfin.Server-3.0.0.1.zip",
+                             "checksum":  "1BC1C7EDFDFE69E6C996F63834BBDE98",
+                             "timestamp":  "2026-11-03T17:27:16",
+                             "dependencies":  [
+
+                                              ]
+                         },
+                         {
                              "version":  "2.5.0.1",
                              "changelog":  "Takes upstream\u0027s Moonbase 2.5.0. New: Titles Under Posters and Show Libraries Individually, Top as a Home Screen Backdrop default, MDBList rating settings for the home rows and the media bar, the Focus Follower seasonal setting, a Custom Lists tab in the admin home layout builder, and Apply Defaults now also writes into each user\u0027s existing device profiles. Fixed: PlayStation cue/bin, zip and .7z games, Game Boy Color box art, and the Upcoming rows using the wrong Radarr or Sonarr server. The web app is now upstream\u0027s 2.5.0 build. Cue/bin tracks keep their real file names on case-insensitive disks.",
                              "targetAbi":  "10.10.0.0",
