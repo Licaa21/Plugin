@@ -27,6 +27,9 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("showSeerrAvailabilityBadges")]
     public bool? ShowSeerrAvailabilityBadges { get; set; }
 
+    [JsonPropertyName("seerrBadgeStyle")]
+    public string? SeerrBadgeStyle { get; set; }
+
     [JsonPropertyName("showBookDiscoverTab")]
     public bool? ShowBookDiscoverTab { get; set; }
 
@@ -457,6 +460,12 @@ public class MoonfinSettingsProfile
 
     [JsonPropertyName("hideHomeMediaDescription")]
     public bool? HideHomeMediaDescription { get; set; }
+
+    [JsonPropertyName("hideHomeWatchProgress")]
+    public bool? HideHomeWatchProgress { get; set; }
+
+    [JsonPropertyName("hideHomeUnwatchedCount")]
+    public bool? HideHomeUnwatchedCount { get; set; }
 
     [JsonPropertyName("recommendationSystemSource")]
     public string? RecommendationSystemSource { get; set; }

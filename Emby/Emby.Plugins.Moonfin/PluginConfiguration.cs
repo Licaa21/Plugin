@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json.Serialization;
 using Emby.Plugins.Moonfin.Models;
 using MediaBrowser.Model.Plugins;
 
@@ -116,6 +117,19 @@ namespace Emby.Plugins.Moonfin
         /// <summary>How long a cached studio logo stays fresh before the sync refetches it.</summary>
         public int StudioLogosMaxAgeDays { get; set; } = 30;
 
+        /// <summary>
+        /// Plain sentence search for clients ("90s movie about a kid pulled into a board game"). Off
+        /// by default: turning it on downloads a small model and indexes the library and, with the
+        /// TMDB key above, the most popular TMDB titles for Seerr.
+        /// </summary>
+        public bool SmartSearchEnabled { get; set; }
+
+        /// <summary>
+        /// "english" for the small model, or "multilingual" for one that understands searches in about
+        /// 100 languages at the cost of a bigger download and a slower first build.
+        /// </summary>
+        public string SmartSearchModel { get; set; } = "english";
+
         /// <summary>Classifies anime episodes as canon, mixed or filler from animefillerlist.com, which needs no account or key.</summary>
         public bool AnimeMarkersEnabled { get; set; }
 
@@ -189,6 +203,21 @@ namespace Emby.Plugins.Moonfin
         /// <summary>Admin-configured default settings. Users who haven't customized a setting inherit this value.</summary>
         public MoonfinSettingsProfile? DefaultUserSettings { get; set; }
 
+        /// <summary>Admin defaults for desktop, mobile and TV devices. Each set value wins over DefaultUserSettings there.</summary>
+        public MoonfinDeviceDefaults? DefaultDeviceSettings { get; set; }
+
+        /// <summary>The admin defaults stored for one profile name, global or a device.</summary>
+        public MoonfinSettingsProfile? GetDefaultsFor(string? profileName)
+        {
+            switch (profileName?.ToLowerInvariant())
+            {
+                case "tv": return DefaultDeviceSettings?.Tv;
+                case "desktop": return DefaultDeviceSettings?.Desktop;
+                case "mobile": return DefaultDeviceSettings?.Mobile;
+                default: return DefaultUserSettings;
+            }
+        }
+
         /// <summary>
         /// Libraries added to each new user's My Media and Latest exclude lists, and to existing users'
         /// when the admin applies the defaults to them. Kept as Emby's numeric ids, which Moonfin
@@ -256,6 +285,17 @@ namespace Emby.Plugins.Moonfin
 
             return value;
         }
+    }
+
+    /// <summary>
+    /// The per-device admin defaults. A class rather than a dictionary, since the plugin configuration
+    /// is stored as XML, and its JSON matches DefaultDeviceSettings on Moonbase for Silo and Plex.
+    /// </summary>
+    public class MoonfinDeviceDefaults
+    {
+        [JsonPropertyName("desktop")] public MoonfinSettingsProfile? Desktop { get; set; }
+        [JsonPropertyName("mobile")] public MoonfinSettingsProfile? Mobile { get; set; }
+        [JsonPropertyName("tv")] public MoonfinSettingsProfile? Tv { get; set; }
     }
 
     public class UploadedThemeEntry
