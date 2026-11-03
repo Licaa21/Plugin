@@ -10,7 +10,8 @@ This is Licaa21's fork of the [Moonfin server plugin](https://github.com/Moonfin
 
 - The server holds the TMDB key and serves the TMDB titles, descriptions, season episodes, recommendations and air dates that a client would otherwise need its own key for (`/Moonfin/Tmdb/Details`, `Season`, `Recommendations`).
 - The Moonbase User defaults tab holds a default for every setting of the Moonfin Smart TV app (subtitle styling and the second subtitle track, audio codec order, accent colors, skip overlay and more). Each sits in the category of the app's own screen, next to the settings every Moonfin app shares, and can be applied to users like the other defaults.
-- The download carries the Moonfin web app (the Moonfin button in Jellyfin web, served at `/Moonfin/Web/`), taken unchanged from upstream's 2.5.0 release because upstream adds it to its zip by hand. Its source is [Moonfin-Core](https://github.com/Moonfin-Client/Moonfin-Core). That makes the download about 66 MB.
+- The download carries the Moonfin web app (the Moonfin button in Jellyfin web, served at `/Moonfin/Web/`), taken unchanged from upstream's 2.5.0 release (upstream's 3.0.0 is the same app, renumbered) because upstream adds it to its zip by hand. Its source is [Moonfin-Core](https://github.com/Moonfin-Client/Moonfin-Core). That makes the download about 66 MB.
+- Upstream's Smart Search (searching the library in plain sentences, `/Moonfin/SmartSearch`) is included as upstream made it. It is off until you switch it on in Moonbase. It then downloads a small language model from huggingface.co and builds its index in a scheduled task, so the first results come a while after switching it on. Its Seerr part needs the TMDB key.
 
 **What does not work in the fork**
 
@@ -21,7 +22,7 @@ This is Licaa21's fork of the [Moonfin server plugin](https://github.com/Moonfin
 1. In Jellyfin: Dashboard, Plugins, Repositories, add `https://raw.githubusercontent.com/Licaa21/Plugin/refs/heads/main/manifest.json`.
 2. Uninstall upstream's Moonbase first if it is installed, then install Moonbase from the new catalog entry and restart Jellyfin. The plugin keeps the same id, so what you had configured stays.
 
-Releases are kept and numbered as upstream's version plus a fork digit (2.4.0.1, 2.4.0.2 ...). Upstream's README follows unchanged.
+Releases are kept and numbered as upstream's version plus a fork digit (2.5.0.1, 3.0.0.1 ...). Upstream's README follows unchanged.
 
 ---
 
