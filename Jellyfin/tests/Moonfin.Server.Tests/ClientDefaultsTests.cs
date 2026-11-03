@@ -342,7 +342,7 @@ public sealed class ClientDefaultsTests : IDisposable
             SeekStep = 15,
             AudioCodecOrder = new List<string> { "eac3", "ac3" },
         };
-        await service.MergeDefaultsToUserAsync(user, defaults);
+        await service.MergeDefaultsAsync(new PluginConfiguration { DefaultUserSettings = defaults }, ["global"], null, [user]);
 
         var changed = (await service.GetResolvedProfileAsync(user, "global"))!;
         Assert.True(changed.PreferTranscode);

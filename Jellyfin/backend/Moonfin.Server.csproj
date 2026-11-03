@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <!-- One place to bump, so the three can't drift apart. The release scripts and the CI check
          read the version from here, and the scripts pass it back with -p: switches. -->
-    <MoonfinVersion>2.5.0</MoonfinVersion>
+    <MoonfinVersion>3.0.0</MoonfinVersion>
     <!-- The fork's own digit, the fourth number: 2.4.0.1, 2.4.0.2. Back to 1 when MoonfinVersion moves. -->
     <MoonfinForkRevision>1</MoonfinForkRevision>
     <AssemblyVersion>$(MoonfinVersion).$(MoonfinForkRevision)</AssemblyVersion>
@@ -62,6 +62,7 @@
     <Compile Include="../../shared/Anime/*.cs" Link="Anime/%(Filename)%(Extension)" />
     <Compile Include="../../shared/Romm/*.cs" Link="Romm/%(Filename)%(Extension)" />
     <Compile Include="../../shared/Games/*.cs" Link="Games/%(Filename)%(Extension)" />
+    <Compile Include="../../shared/SmartSearch/*.cs" Link="SmartSearch/%(Filename)%(Extension)" />
     <EmbeddedResource Include="../../shared/Seasonal/seasonal-holidays.json" LogicalName="Moonfin.Seasonal.holidays.json" />
   </ItemGroup>
 
