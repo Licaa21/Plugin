@@ -8759,6 +8759,8 @@
                 for (var i = 0; i < SETTING_FIELD_PATTERNS.length; i++) {
                     if (SETTING_FIELD_PATTERNS[i][0].test(key)) return SETTING_FIELD_PATTERNS[i][1];
                 }
+                // The fork's own settings have no Default field, their control is ClientDefault_ plus the key.
+                if (document.getElementById('ClientDefault_' + key)) return 'ClientDefault_' + key;
                 return 'Default' + key.charAt(0).toUpperCase() + key.slice(1);
             }
 

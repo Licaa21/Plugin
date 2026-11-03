@@ -370,4 +370,29 @@ public sealed class ClientDefaultsTests : IDisposable
         Assert.Equal(30, tv.SeekStep);
         Assert.True(tv.PreferTranscode);
     }
+
+    [Fact]
+    public async Task ADeviceDefaultForTheNewSettingsReachesTheUsersDeviceProfile()
+    {
+        var service = new MoonfinSettingsService(new NoOpLogger<MoonfinSettingsService>(), _dataPath);
+        var user = Guid.NewGuid();
+        await service.SaveProfileAsync(user, "global", new MoonfinSettingsProfile { SubtitleSize = "small" }, "test-seed", notifySettingsChanged: false);
+        var config = new PluginConfiguration
+        {
+            DefaultUserSettings = new MoonfinSettingsProfile { SeekStep = 10 },
+            DefaultDeviceSettings = new MoonfinDeviceDefaults { Tv = new MoonfinSettingsProfile { SeekStep = 30 } },
+        };
+
+        await service.MergeDefaultsAsync(config, ["global", "tv"], null, [user]);
+
+        Assert.Equal(10, (await service.GetResolvedProfileAsync(user, "global"))!.SeekStep);
+        Assert.Equal(30, (await service.GetResolvedProfileAsync(user, "tv"))!.SeekStep);
+    }
+
+    [Fact]
+    public void TheApplyDefaultsRowListFindsTheNewSettingsControls()
+    {
+        // Apply Defaults lists one row per control by looking its id up from the setting key.
+        Assert.Contains("document.getElementById('ClientDefault_' + key)", Page());
+    }
 }
