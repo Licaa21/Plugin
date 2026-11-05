@@ -24,7 +24,11 @@ func (s *Server) handlePing(w http.ResponseWriter, r *http.Request) {
 		"messagesSupported":        true,
 		"recommendationsSupported": false,
 		"clientLogSupported":       false,
-		"smartSearchEnabled":       false, // Smart search only runs in the Jellyfin and Emby plugins.
+		"smartSearchEnabled":       s.smartSearchOn(cfg),
+		"calendarAvailable":        s.calendarOn(cfg, callerOf(r)),
+		"calendarDaysBack":         cfg.CalendarDaysBack,
+		"calendarDaysAhead":        cfg.CalendarDaysAhead,
+		"calendarReminders":        false,
 		"defaultSettings":          pingDefaults(cfg, r.URL.Query().Get("profile")),
 	})
 }

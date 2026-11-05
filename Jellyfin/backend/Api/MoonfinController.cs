@@ -6,12 +6,14 @@ using MediaBrowser.Model.Configuration;
 using MediaBrowser.Controller.Dto;
 using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Moonfin.Calendar;
 using Moonfin.Server.Helpers;
 using Moonfin.Server.Models;
 using Moonfin.Server.Services;
@@ -145,6 +147,12 @@ public class MoonfinController : ControllerBase
             ExtendedCompleteShowingsSupported = config?.LiveTvDetectIncompleteRecordings ?? true,
             RecommendationsSupported = config?.RecommendationsProviderEnabled ?? true,
             SmartSearchEnabled = config?.SmartSearchEnabled ?? false,
+            CalendarAvailable = config?.SeerrEnabled == true
+                && !string.IsNullOrEmpty(config.GetEffectiveSeerrUrl())
+                && ArrCalendarWindow.Refusal(config.CalendarAdminsOnly, this.IsAdminFromClaims()) == null,
+            CalendarDaysBack = Math.Max(0, config?.CalendarDaysBack ?? 14),
+            CalendarDaysAhead = Math.Max(0, config?.CalendarDaysAhead ?? 90),
+            CalendarReminders = true,
             DefaultSettings = _settingsService.AdminDefaultsFor(profile)
         });
     }
@@ -1258,7 +1266,20 @@ public class MoonfinController : ControllerBase
         }
         else
         {
-            items = GetLibraryItems(isFallback ? null : settings.MediaBarLibraryIds, limit, queryUser, excludedGenres);
+            var libraryIds = isFallback ? null : settings.MediaBarLibraryIds;
+            items = sourceType switch
+            {
+                "recentlyAdded" => GetLibraryItems(libraryIds, limit, queryUser, excludedGenres, ItemSortBy.DateCreated),
+                "recentlyReleased" => GetLibraryItems(libraryIds, limit, queryUser, excludedGenres, ItemSortBy.PremiereDate),
+                "newReleases" => GetNewReleaseSeries(libraryIds, settings.MediaBarNewReleaseDays ?? 30, limit, queryUser, excludedGenres),
+                _ => GetLibraryItems(libraryIds, limit, queryUser, excludedGenres)
+            };
+
+            // When nothing that aired in the window has a backdrop, the bar shows random titles instead, the way the app does.
+            if (sourceType == "newReleases" && !items.Any(HasBackdropImage))
+            {
+                items = GetLibraryItems(libraryIds, limit, queryUser, excludedGenres);
+            }
         }
 
         var dtos = items
@@ -1399,21 +1420,24 @@ public class MoonfinController : ControllerBase
     }
 
     /// <summary>
-    /// Queries random Movie/Series items, optionally filtered to specific libraries
-    /// and with genre exclusions applied at the database level.
+    /// Queries Movie/Series items, shuffled or newest first by <paramref name="order"/>, optionally
+    /// filtered to specific libraries and with genre exclusions applied at the database level.
     /// </summary>
-    private List<BaseItem> GetLibraryItems(List<string>? libraryIds, int limit, object queryUser, List<string>? excludedGenreIds = null)
+    private List<BaseItem> GetLibraryItems(List<string>? libraryIds, int limit, object queryUser, List<string>? excludedGenreIds = null, ItemSortBy order = ItemSortBy.Random)
     {
         var includedGenreIds = GetIncludedGenreIds(excludedGenreIds, queryUser);
 
         if (includedGenreIds is { Length: 0 }) return [];
+
+        // Titles without a backdrop are left off the bar, so a newest-first list reads further ahead to still fill it.
+        var fetchLimit = order == ItemSortBy.Random ? limit : Math.Max(limit * 4, 50);
 
         if (libraryIds is not { Count: > 0 })
         {
             var query = new InternalItemsQuery
             {
                 IncludeItemTypes = [BaseItemKind.Movie, BaseItemKind.Series],
-                Limit = limit,
+                Limit = fetchLimit,
                 Recursive = true
             };
 
@@ -1421,29 +1445,20 @@ public class MoonfinController : ControllerBase
 
             if (!UserReflection.ApplyUser(query, queryUser)) return [];
 
-            SetRandomOrder(query);
+            SetMediaBarOrder(query, order);
             return _libraryManager.GetItemsResult(query).Items
-                .Where(item => UserReflection.IsVisibleTo(item, queryUser))
+                .Where(item => UserReflection.IsVisibleTo(item, queryUser) && HasBackdropImage(item))
+                .Take(limit)
                 .ToList();
         }
 
-        // Only allow libraries the user can see; silently drop any the caller
-        // doesn't have access to so settings carried over from a previous state
-        // (or forged by a client) cannot leak restricted content.
-        var allowedLibraryIds = new List<Guid>();
-        foreach (var libId in libraryIds)
-        {
-            if (!Guid.TryParse(libId, out var parentGuid)) continue;
-            var parent = _libraryManager.GetItemById(parentGuid);
-            if (parent == null || !UserReflection.IsVisibleTo(parent, queryUser)) continue;
-            allowedLibraryIds.Add(parentGuid);
-        }
-
+        var allowedLibraryIds = VisibleLibraryIds(libraryIds, queryUser);
         if (allowedLibraryIds.Count == 0) return [];
 
         var allItems = new List<BaseItem>();
         var seenIds = new HashSet<Guid>();
-        var perLibraryLimit = Math.Max(1, limit / allowedLibraryIds.Count + 1);
+        // Newest first has to compare every library's newest, so each gives the full count.
+        var perLibraryLimit = order == ItemSortBy.Random ? Math.Max(1, limit / allowedLibraryIds.Count + 1) : fetchLimit;
 
         foreach (var parentGuid in allowedLibraryIds)
         {
@@ -1459,7 +1474,7 @@ public class MoonfinController : ControllerBase
 
             if (!UserReflection.ApplyUser(query, queryUser)) return [];
 
-            SetRandomOrder(query);
+            SetMediaBarOrder(query, order);
 
             foreach (var item in _libraryManager.GetItemsResult(query).Items)
             {
@@ -1467,6 +1482,15 @@ public class MoonfinController : ControllerBase
                 if (!UserReflection.IsVisibleTo(item, queryUser)) continue;
                 allItems.Add(item);
             }
+        }
+
+        if (order != ItemSortBy.Random)
+        {
+            return allItems
+                .Where(HasBackdropImage)
+                .OrderByDescending(item => order == ItemSortBy.DateCreated ? item.DateCreated : item.PremiereDate ?? DateTime.MinValue)
+                .Take(limit)
+                .ToList();
         }
 
         for (var i = allItems.Count - 1; i > 0; i--)
@@ -1479,10 +1503,108 @@ public class MoonfinController : ControllerBase
     }
 
     /// <summary>
-    /// Sets OrderBy to Random on the query using reflection, avoiding direct
-    /// reference to SortOrder which moved between Jellyfin 10.10 and 10.11.
+    /// The libraries in <paramref name="libraryIds"/> the user can see. Any the caller has no access
+    /// to are dropped silently, so settings carried over from a previous state (or forged by a
+    /// client) can't leak restricted content.
     /// </summary>
-    private void SetRandomOrder(InternalItemsQuery query)
+    private List<Guid> VisibleLibraryIds(List<string> libraryIds, object queryUser)
+    {
+        var allowedLibraryIds = new List<Guid>();
+        foreach (var libId in libraryIds)
+        {
+            if (!Guid.TryParse(libId, out var parentGuid)) continue;
+            var parent = _libraryManager.GetItemById(parentGuid);
+            if (parent == null || !UserReflection.IsVisibleTo(parent, queryUser)) continue;
+            allowedLibraryIds.Add(parentGuid);
+        }
+
+        return allowedLibraryIds;
+    }
+
+    /// <summary>
+    /// Series with an episode on the server that aired within the last <paramref name="days"/> days,
+    /// newest first. A series' own premiere date is its first season's, so the episodes are queried
+    /// and brought back to their series.
+    /// </summary>
+    private List<BaseItem> GetNewReleaseSeries(List<string>? libraryIds, int days, int limit, object queryUser, List<string>? excludedGenreIds = null)
+    {
+        var excludedNames = ResolveExcludedGenreNames(excludedGenreIds);
+
+        // The window comes from synced settings, so keep it to the 7 to 90 days the apps offer.
+        days = Math.Clamp(days, 7, 90);
+        var now = DateTime.UtcNow;
+        var episodeQuery = new InternalItemsQuery
+        {
+            IncludeItemTypes = [BaseItemKind.Episode],
+            MinPremiereDate = now.AddDays(-days),
+            MaxPremiereDate = now,
+            IsVirtualItem = false,
+            Limit = 300,
+            Recursive = true
+        };
+
+        if (libraryIds is { Count: > 0 })
+        {
+            var allowedLibraryIds = VisibleLibraryIds(libraryIds, queryUser);
+            if (allowedLibraryIds.Count == 0) return [];
+            episodeQuery.AncestorIds = allowedLibraryIds.ToArray();
+        }
+
+        if (!UserReflection.ApplyUser(episodeQuery, queryUser)) return [];
+        SetOrder(episodeQuery, ItemSortBy.PremiereDate, descending: true);
+
+        var seen = new HashSet<Guid>();
+        var series = new List<BaseItem>();
+        // Hidden or excluded series, or ones without a backdrop, can use up a whole page of episodes, so a few more pages are read before giving up.
+        for (var page = 0; page < 3 && series.Count < limit; page++)
+        {
+            episodeQuery.StartIndex = page * 300;
+            var episodes = _libraryManager.GetItemsResult(episodeQuery).Items;
+            var seriesIds = episodes
+                .OfType<Episode>()
+                .Select(episode => episode.SeriesId)
+                .Where(id => id != Guid.Empty && seen.Add(id))
+                .ToArray();
+
+            if (seriesIds.Length > 0)
+            {
+                var seriesQuery = new InternalItemsQuery
+                {
+                    IncludeItemTypes = [BaseItemKind.Series],
+                    ItemIds = seriesIds,
+                    Recursive = true
+                };
+
+                if (!UserReflection.ApplyUser(seriesQuery, queryUser)) return [];
+
+                var rank = seriesIds.Select((id, index) => (id, index)).ToDictionary(pair => pair.id, pair => pair.index);
+                series.AddRange(_libraryManager.GetItemsResult(seriesQuery).Items
+                    .Where(item => UserReflection.IsVisibleTo(item, queryUser) && HasBackdropImage(item))
+                    .Where(item => excludedNames == null || !item.Genres.Any(g => excludedNames.Contains(g)))
+                    .OrderBy(item => rank[item.Id]));
+            }
+
+            if (episodes.Count < 300) break;
+        }
+
+        return series.Take(limit).ToList();
+    }
+
+    /// <summary>
+    /// Shuffles the library source, and lists the dated ones newest first. A release date still to
+    /// come isn't recently released.
+    /// </summary>
+    private void SetMediaBarOrder(InternalItemsQuery query, ItemSortBy order)
+    {
+        if (order == ItemSortBy.PremiereDate) query.MaxPremiereDate = DateTime.UtcNow;
+        SetOrder(query, order, descending: order != ItemSortBy.Random);
+    }
+
+    /// <summary>
+    /// Sets OrderBy on the query using reflection, avoiding a direct reference to SortOrder,
+    /// which moved between Jellyfin 10.10 and 10.11.
+    /// </summary>
+    private void SetOrder(InternalItemsQuery query, ItemSortBy sortBy, bool descending)
     {
         try
         {
@@ -1491,9 +1613,9 @@ public class MoonfinController : ControllerBase
 
             var elementType = orderByProp.PropertyType.GetGenericArguments()[0];
             var sortOrderType = elementType.GetGenericArguments()[1];
-            var ascending = Enum.ToObject(sortOrderType, 0);
+            var direction = Enum.ToObject(sortOrderType, descending ? 1 : 0);
 
-            var tuple = Activator.CreateInstance(elementType, ItemSortBy.Random, ascending);
+            var tuple = Activator.CreateInstance(elementType, sortBy, direction);
             var array = Array.CreateInstance(elementType, 1);
             array.SetValue(tuple, 0);
 
@@ -1501,7 +1623,7 @@ public class MoonfinController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to set random sort order via reflection; items will use default order");
+            _logger.LogWarning(ex, "Failed to set the sort order via reflection, so items will use the default order");
         }
     }
 
@@ -1718,6 +1840,24 @@ public class MoonfinPingResponse
     /// </summary>
     [JsonPropertyName("recommendationsSupported")]
     public bool? RecommendationsSupported { get; set; }
+
+    /// <summary>
+    /// True when Seerr is set up for the arr calendar and this user passes the admins-only setting.
+    /// </summary>
+    [JsonPropertyName("calendarAvailable")]
+    public bool? CalendarAvailable { get; set; }
+
+    [JsonPropertyName("calendarDaysBack")]
+    public int? CalendarDaysBack { get; set; }
+
+    [JsonPropertyName("calendarDaysAhead")]
+    public int? CalendarDaysAhead { get; set; }
+
+    /// <summary>
+    /// True when this plugin has the Calendar/Reminders endpoints.
+    /// </summary>
+    [JsonPropertyName("calendarReminders")]
+    public bool? CalendarReminders { get; set; }
 
     [JsonPropertyName("defaultSettings")]
     public MoonfinSettingsProfile? DefaultSettings { get; set; }
