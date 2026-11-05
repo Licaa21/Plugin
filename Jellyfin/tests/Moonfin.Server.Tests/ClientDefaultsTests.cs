@@ -202,7 +202,7 @@ public sealed class ClientDefaultsTests : IDisposable
     public void TheSeerrOnlySettingsFollowTheSeerrSwitch()
     {
         var html = Page();
-        var rule = html.Split('\n').Single(l => l.Contains("{ parent: 'SeerrEnabled', fields: ["));
+        var rule = html.Split('\n').Single(l => l.Contains("{ parent: 'SeerrEnabled', fields: [") && l.Contains("'ClientDefault_searchDefaultTab'"));
 
         foreach (var entry in Schema().Where(e => e.P == "integrations" && e.C == "Seerr"))
         {
