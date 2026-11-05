@@ -118,6 +118,7 @@ public sealed class DiscSet
         }
 
         var files = new List<string> { sheet.FullName };
+        List<string>? folder = null;
         foreach (var line in File.ReadLines(sheet.FullName))
         {
             var name = TrackFileName(line);
@@ -126,7 +127,7 @@ public sealed class DiscSet
                 continue;
             }
 
-            var track = FindInFolder(sheet.DirectoryName, name);
+            var track = FindInFolder(sheet.DirectoryName, name, ref folder);
             if (track == null)
             {
                 return null;
@@ -169,7 +170,7 @@ public sealed class DiscSet
 
     // A track has to be a bare name in the sheet's own folder. It's matched without case, since
     // sheets written on Windows often disagree with the disk about it.
-    private static string? FindInFolder(string folder, string name)
+    private static string? FindInFolder(string directory, string name, ref List<string>? folder)
     {
         if (name.Contains('\\') || Path.GetFileName(name) != name || name is "." or "..")
         {
@@ -177,10 +178,11 @@ public sealed class DiscSet
         }
 
         // Listed rather than probed with File.Exists, which on a case-insensitive disk says yes to
-        // the sheet's spelling and would put that spelling, not the file's own name, in the zip.
-        var files = Directory.EnumerateFiles(folder).ToList();
-        return files.FirstOrDefault(file => string.Equals(Path.GetFileName(file), name, StringComparison.Ordinal))
-            ?? files.FirstOrDefault(file => string.Equals(Path.GetFileName(file), name, StringComparison.OrdinalIgnoreCase));
+        // the sheet's spelling and would put that spelling, not the file's own name, in the zip. The
+        // folder is listed once per sheet, on the first track that passes the name check.
+        folder ??= Directory.EnumerateFiles(directory).ToList();
+        return folder.FirstOrDefault(file => string.Equals(Path.GetFileName(file), name, StringComparison.Ordinal))
+            ?? folder.FirstOrDefault(file => string.Equals(Path.GetFileName(file), name, StringComparison.OrdinalIgnoreCase));
     }
 
     // Writes an uncompressed zip in one pass. Each entry's CRC follows its data in a descriptor,
