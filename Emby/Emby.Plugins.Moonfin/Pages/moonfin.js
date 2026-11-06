@@ -459,12 +459,6 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
             });
         });
 
-        Array.prototype.slice.call(view.querySelectorAll('[data-open-tab]')).forEach(function (button) {
-            button.addEventListener('click', function () {
-                selectTab(button.getAttribute('data-open-tab'));
-            });
-        });
-
         var syncToggle = view.querySelector('#EnableSettingsSync');
         if (syncToggle) {
             syncToggle.addEventListener('change', function () { updateSyncStatus(view); });
@@ -473,7 +467,7 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
         var saved = null;
         try { saved = window.localStorage.getItem('moonfinAdminActiveTab'); } catch (e) {}
         var validSaved = saved && panels.some(function (p) { return p.getAttribute('data-tab') === saved; });
-        selectTab(validSaved ? saved : 'settingsSync');
+        selectTab(validSaved ? saved : 'defaults');
 
         initializeDefaultsCategories(view);
         initializeSettingsSearch(view);
@@ -2789,6 +2783,7 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
             view.querySelector('#LiveTvDeleteIncompleteCopies').checked = config.LiveTvDeleteIncompleteCopies === true;
 
             loadLibraryPicker(view, '#DefaultHiddenLibraryPicker', 'defaultHiddenLibraryCb', config.DefaultHiddenLibraryIds || []);
+            loadLibraryPicker(view, '#DefaultHiddenFromLatestLibraryPicker', 'defaultHiddenFromLatestLibraryCb', config.DefaultHiddenFromLatestLibraryIds || []);
 
             view.querySelector('#GamesEnabled').checked = config.GamesEnabled === true;
             loadGameLibraryPicker(view, config.GameLibraryIds || []);
@@ -3211,6 +3206,11 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
 
             if (view.querySelector('.defaultHiddenLibraryCb') != null) {
                 config.DefaultHiddenLibraryIds = Array.prototype.slice.call(view.querySelectorAll('.defaultHiddenLibraryCb:checked'))
+                    .map(function (cb) { return cb.getAttribute('data-id'); });
+            }
+
+            if (view.querySelector('.defaultHiddenFromLatestLibraryCb') != null) {
+                config.DefaultHiddenFromLatestLibraryIds = Array.prototype.slice.call(view.querySelectorAll('.defaultHiddenFromLatestLibraryCb:checked'))
                     .map(function (cb) { return cb.getAttribute('data-id'); });
             }
 
@@ -4115,6 +4115,22 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
             });
     }
 
+    function setAdminTabVisible(view, tabId, visible) {
+        var navItem = view.querySelector('.moonfinNavItem[data-tab="' + tabId + '"]');
+        navItem.hidden = !visible;
+        if (!visible && navItem.classList.contains('is-active')) {
+            view.querySelector('.moonfinNavItem[data-tab="defaults"]').click();
+        }
+    }
+
+    function updateDownloadsTabVisibility(view) {
+        ApiClient.getJSON(ApiClient.getUrl('Moonfin/Transcodes/Active')).then(function (jobs) {
+            setAdminTabVisible(view, 'syncs', !!(jobs && jobs.length));
+        }, function () {
+            setAdminTabVisible(view, 'syncs', true);
+        });
+    }
+
     function loadAdminPins(view) {
         var list = view.querySelector('#AdminPinList');
         if (!list) return;
@@ -4138,8 +4154,9 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
         fetch(serverUrl + '/Moonfin/Admin/Pins', { method: 'GET', headers: moonfinAuthHeaders() })
             .then(parseJsonResponse)
             .then(function (users) {
+                users = Array.isArray(users) ? users : [];
                 list.innerHTML = '';
-                (Array.isArray(users) ? users : []).forEach(function (user) {
+                users.forEach(function (user) {
                     var row = document.createElement('div');
                     row.style.margin = '0 0 1.2em';
 
@@ -4208,8 +4225,10 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
                     list.appendChild(row);
                 });
                 say('', false);
+                setAdminTabVisible(view, 'accounts', users.some(function (user) { return user.hasPin; }));
             })
             .catch(function () {
+                setAdminTabVisible(view, 'accounts', true);
                 say('Couldn\'t load the users.', true);
             });
     }
@@ -5301,6 +5320,7 @@ define(['baseView', 'loading', 'emby-input', 'emby-button', 'emby-checkbox', 'em
             loadMessagesList(view);
         });
         loadAdminPins(view);
+        updateDownloadsTabVisibility(view);
         loadConfig(view);
         loadActionUsers(view);
     };
