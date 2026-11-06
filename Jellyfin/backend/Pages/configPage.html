@@ -607,96 +607,8 @@
                 font-size: 0.85em;
             }
 
-            #MoonfinConfigPage .moonfinLayers {
-                display: flex;
-                flex-direction: column;
-                margin-top: 14px;
-            }
-
-            #MoonfinConfigPage .moonfinLayer {
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-                gap: 14px;
-                padding: 14px 16px;
-                border: 1px solid rgba(255, 255, 255, 0.08);
-                border-radius: 12px;
-                background: rgba(255, 255, 255, 0.04);
-            }
-
-            #MoonfinConfigPage .moonfinLayer.is-first {
-                border-color: rgba(0, 164, 220, 0.3);
-                background: rgba(0, 164, 220, 0.1);
-            }
-
-            #MoonfinConfigPage .moonfinLayerStep {
-                display: flex;
-                flex-shrink: 0;
-                align-items: center;
-                justify-content: center;
-                width: 28px;
-                height: 28px;
-                border-radius: 50%;
-                background: rgba(255, 255, 255, 0.16);
-                font-size: 0.9em;
-                font-weight: 700;
-            }
-
-            #MoonfinConfigPage .moonfinLayer.is-first .moonfinLayerStep {
-                background: #00a4dc;
-                color: #fff;
-            }
-
-            #MoonfinConfigPage .moonfinLayerText {
-                display: flex;
-                flex: 1 1 260px;
-                flex-direction: column;
-                gap: 2px;
-                min-width: 0;
-            }
-
-            #MoonfinConfigPage .moonfinLayerTitle {
-                font-weight: 600;
-            }
-
-            #MoonfinConfigPage .moonfinLayerDesc {
-                font-size: 0.92em;
-                line-height: 1.45;
-                opacity: 0.7;
-            }
-
-            #MoonfinConfigPage .moonfinLayerGap {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                padding: 4px 0 4px 29px;
-                font-size: 0.85em;
-                opacity: 0.55;
-            }
-
-            #MoonfinConfigPage .moonfinLayerGapIcon {
-                width: 16px;
-                height: 16px;
-                font-size: 16px;
-            }
-
-            #MoonfinConfigPage .moonfinLinkButton {
-                padding: 8px 4px;
-                border: 0;
-                background: transparent;
-                color: #00a4dc;
-                font: inherit;
-                font-weight: 600;
-                cursor: pointer;
-            }
-
-            #MoonfinConfigPage .moonfinLinkButton:hover {
-                text-decoration: underline;
-            }
-
             #MoonfinConfigPage.moonfin-searching .moonfinPageHead,
-            #MoonfinConfigPage.moonfin-searching .moonfinSyncDeps,
-            #MoonfinConfigPage.moonfin-searching .moonfinLayersCard {
+            #MoonfinConfigPage.moonfin-searching .moonfinSyncDeps {
                 display: none;
             }
 
@@ -1310,9 +1222,9 @@
                             <img id="MoonfinBrandLogo" class="moonfinNavLogo" alt="Moonfin" />
                             <span class="moonfinNavBrandText">Moonfin</span>
                         </div>
-                        <button type="button" class="moonfinNavItem is-active" data-tab="settingsSync">
-                            <span class="material-icons moonfinNavIcon" aria-hidden="true">sync</span>
-                            <span class="moonfinNavText"><span class="moonfinNavLabel">Settings Sync</span><span class="moonfinNavSub">Profiles and devices</span></span>
+                        <button type="button" class="moonfinNavItem is-active" data-tab="defaults">
+                            <span class="material-icons moonfinNavIcon" aria-hidden="true">tune</span>
+                            <span class="moonfinNavText"><span class="moonfinNavLabel">User defaults</span><span class="moonfinNavSub">Force client settings</span></span>
                         </button>
                         <button type="button" class="moonfinNavItem" data-tab="webClient">
                             <span class="material-icons moonfinNavIcon" aria-hidden="true">language</span>
@@ -1333,10 +1245,6 @@
                         <button type="button" class="moonfinNavItem" data-tab="smartSearch">
                             <span class="material-icons moonfinNavIcon" aria-hidden="true">manage_search</span>
                             <span class="moonfinNavText"><span class="moonfinNavLabel">Smart Search</span><span class="moonfinNavSub">Search with plain sentences</span></span>
-                        </button>
-                        <button type="button" class="moonfinNavItem" data-tab="defaults">
-                            <span class="material-icons moonfinNavIcon" aria-hidden="true">tune</span>
-                            <span class="moonfinNavText"><span class="moonfinNavLabel">User defaults</span><span class="moonfinNavSub">Force client settings</span></span>
                         </button>
                         <button type="button" class="moonfinNavItem" data-tab="themes">
                             <span class="material-icons moonfinNavIcon" aria-hidden="true">palette</span>
@@ -1368,58 +1276,6 @@
                         <span class="material-icons" aria-hidden="true">search</span>
                         <input type="search" id="MoonfinSettingsSearch" class="moonfinSearchInput" placeholder="Search settings" autocomplete="off" />
                     </div>
-                    <section class="moonfinTabPanel is-active" data-tab="settingsSync">
-                    <div class="moonfinPageHead">
-                        <h3 class="moonfinPageTitle">Settings Sync</h3>
-                        <p class="moonfinPageLead">Moonfin apps save each user's settings here and pick them up on every device that user signs in to.</p>
-                    </div>
-
-                    <div class="verticalSection moonfinSyncCard is-off" id="MoonfinSyncStatusCard">
-                        <div class="checkboxContainer moonfinSyncStatus">
-                            <span class="material-icons moonfinSyncIcon" aria-hidden="true">sync</span>
-                            <label class="emby-checkbox-label">
-                                <input type="checkbox" id="EnableSettingsSync" is="emby-checkbox" />
-                                <span><span class="moonfinSyncLines">
-                                    <span class="moonfinSyncTitle">Moonbase Sync</span>
-                                    <span class="moonfinSyncState"><span class="moonfinSyncDot" aria-hidden="true"></span><span class="moonfinSyncOnText">On for every user on this server</span><span class="moonfinSyncOffText">Off, so Moonfin apps keep their settings on each device</span></span>
-                                </span></span>
-                            </label>
-                        </div>
-                        <div class="moonfinSyncDeps">
-                            <span class="moonfinEyebrow">Also relies on sync</span>
-                            <div class="moonfinChips">
-                                <span class="moonfinChip">Seerr requests</span>
-                                <span class="moonfinChip">MDBList ratings</span>
-                                <span class="moonfinChip">TMDB ratings</span>
-                            </div>
-                            <div class="fieldDescription">Moonfin apps treat the plugin as missing while sync is off, so these stop working too.</div>
-                        </div>
-                    </div>
-
-                    <div class="verticalSection moonfinLayersCard">
-                        <h3 class="sectionTitle">Where a setting comes from</h3>
-                        <div class="fieldDescription">Each setting comes from the first layer that has it.</div>
-                        <div class="moonfinLayers">
-                            <div class="moonfinLayer is-first">
-                                <span class="moonfinLayerStep" aria-hidden="true">1</span>
-                                <span class="moonfinLayerText"><span class="moonfinLayerTitle">Device profile</span><span class="moonfinLayerDesc">A device follows its own kind until the user picks another profile in the app.</span></span>
-                                <span class="moonfinChips"><span class="moonfinChip">Desktop</span><span class="moonfinChip">Mobile</span><span class="moonfinChip">TV</span></span>
-                            </div>
-                            <div class="moonfinLayerGap"><span class="material-icons moonfinLayerGapIcon" aria-hidden="true">arrow_downward</span>falls back to</div>
-                            <div class="moonfinLayer">
-                                <span class="moonfinLayerStep" aria-hidden="true">2</span>
-                                <span class="moonfinLayerText"><span class="moonfinLayerTitle">Global</span><span class="moonfinLayerDesc">Shared by every device the user has.</span></span>
-                            </div>
-                            <div class="moonfinLayerGap"><span class="material-icons moonfinLayerGapIcon" aria-hidden="true">arrow_downward</span>falls back to</div>
-                            <div class="moonfinLayer">
-                                <span class="moonfinLayerStep" aria-hidden="true">3</span>
-                                <span class="moonfinLayerText"><span class="moonfinLayerTitle">Admin defaults</span><span class="moonfinLayerDesc">What you set for everyone under User defaults.</span></span>
-                                <button type="button" class="moonfinLinkButton" data-open-tab="defaults">Open User defaults</button>
-                            </div>
-                        </div>
-                    </div>
-                    </section>
-
                     <section class="moonfinTabPanel" data-tab="webClient">
                     <div class="moonfinPageHead">
                         <h3 class="moonfinPageTitle">Web Client</h3>
@@ -2081,7 +1937,29 @@
                         </div>
                     </div>
                     </section>
-                    <section class="moonfinTabPanel" data-tab="defaults">
+                    <section class="moonfinTabPanel is-active" data-tab="defaults">
+                    <div class="verticalSection moonfinSyncCard is-off" id="MoonfinSyncStatusCard">
+                        <div class="checkboxContainer moonfinSyncStatus">
+                            <span class="material-icons moonfinSyncIcon" aria-hidden="true">sync</span>
+                            <label class="emby-checkbox-label">
+                                <input type="checkbox" id="EnableSettingsSync" is="emby-checkbox" />
+                                <span><span class="moonfinSyncLines">
+                                    <span class="moonfinSyncTitle">Moonbase Sync</span>
+                                    <span class="moonfinSyncState"><span class="moonfinSyncDot" aria-hidden="true"></span><span class="moonfinSyncOnText">On for every user on this server</span><span class="moonfinSyncOffText">Off, so Moonfin apps keep their settings on each device</span></span>
+                                </span></span>
+                            </label>
+                        </div>
+                        <div class="moonfinSyncDeps">
+                            <span class="moonfinEyebrow">Also relies on sync</span>
+                            <div class="moonfinChips">
+                                <span class="moonfinChip">Seerr requests</span>
+                                <span class="moonfinChip">MDBList ratings</span>
+                                <span class="moonfinChip">TMDB ratings</span>
+                            </div>
+                            <div class="fieldDescription">Moonfin apps treat the plugin as missing while sync is off, so these stop working too.</div>
+                        </div>
+                    </div>
+
                     <div class="verticalSection">
                         <h3 class="sectionTitle">Default User Settings</h3>
                         <div class="fieldDescription" style="margin-bottom: 1em;">
@@ -3833,6 +3711,13 @@
                                     Hidden from the home screen for new users, the same as switching them off in Library Visibility. Jellyfin's own home screen hides them too. Users keep access and can show them again. To hide them for existing users, Save and then use Apply Defaults To All Users Now on the Actions tab.
                                 </div>
                             </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused">Hidden from recently added</label>
+                                <div id="DefaultHiddenFromLatestLibraryPicker" style="max-height:200px;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px;"></div>
+                                <div class="fieldDescription">
+                                    Left out of the recently added and recently released rows for new users, but still shown in navigation, the same as switching off "Show in recently added/released media" in Library Visibility. Jellyfin's own home screen leaves them out too. Hidden libraries above are already left out of both. To apply this to existing users, Save and then use Apply Defaults To All Users Now on the Actions tab.
+                                </div>
+                            </div>
                             <h4 style="margin: 1.5em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Library Pages</h4>
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultLibraryStyle">Video library style</label>
@@ -5467,12 +5352,6 @@
                 bindDefaultSettingsSubTabs(page);
                 initializeDefaultsCategories(page);
 
-                Array.prototype.slice.call(page.querySelectorAll('[data-open-tab]')).forEach(function(button) {
-                    button.addEventListener('click', function() {
-                        selectTab(button.getAttribute('data-open-tab'));
-                    });
-                });
-
                 var syncToggle = page.querySelector('#EnableSettingsSync');
                 if (syncToggle) {
                     syncToggle.addEventListener('change', updateSyncStatus);
@@ -5481,7 +5360,7 @@
                 var saved = null;
                 try { saved = window.localStorage.getItem('moonfinAdminActiveTab'); } catch (e) {}
                 var validSaved = saved && panels.some(function(p) { return p.getAttribute('data-tab') === saved; });
-                selectTab(validSaved ? saved : 'settingsSync');
+                selectTab(validSaved ? saved : 'defaults');
 
                 initializeSettingsSearch(page);
                 page.addEventListener('change', applyFieldDependencies);
@@ -8310,6 +8189,14 @@
                 });
             }
 
+            function setAdminTabVisible(tabId, visible) {
+                var navItem = document.querySelector('.moonfinNavItem[data-tab="' + tabId + '"]');
+                navItem.hidden = !visible;
+                if (!visible && navItem.classList.contains('is-active')) {
+                    document.querySelector('.moonfinNavItem[data-tab="defaults"]').click();
+                }
+            }
+
             function loadAdminPins() {
                 var list = document.querySelector('#AdminPinList');
                 if (!list) {
@@ -8338,8 +8225,9 @@
                     url: ApiClient.getUrl('Moonfin/Admin/Pins'),
                     dataType: 'json'
                 }).then(function(users) {
+                    users = users || [];
                     list.innerHTML = '';
-                    (users || []).forEach(function(user) {
+                    users.forEach(function(user) {
                         var row = document.createElement('div');
                         row.style.margin = '0 0 1.2em';
 
@@ -8408,7 +8296,9 @@
                         list.appendChild(row);
                     });
                     say('', false);
+                    setAdminTabVisible('accounts', users.some(function(user) { return user.hasPin; }));
                 }, function() {
+                    setAdminTabVisible('accounts', true);
                     say('Couldn\'t load the users.', true);
                 });
             }
@@ -9382,6 +9272,7 @@
                     loadMessagesList();
                 });
                 loadAdminPins();
+                updateDownloadsTabVisibility();
 
                 loadConfigBackupStatus();
 
@@ -9437,6 +9328,7 @@
                     document.querySelector('#WebEnableWebRtcScan').checked = config.WebEnableWebRtcScan !== false;
 
                     loadLibraryPicker('#DefaultHiddenLibraryPicker', 'defaultHiddenLibraryCb', config.DefaultHiddenLibraryIds || []);
+                    loadLibraryPicker('#DefaultHiddenFromLatestLibraryPicker', 'defaultHiddenFromLatestLibraryCb', config.DefaultHiddenFromLatestLibraryIds || []);
 
                     document.querySelector('#GamesEnabled').checked = config.GamesEnabled === true;
                     document.querySelector('#GamesIsolateWebApp').checked = config.GamesIsolateWebApp === true;
@@ -10392,6 +10284,12 @@
                         if (document.querySelector('.defaultHiddenLibraryCb') != null) {
                             config.DefaultHiddenLibraryIds = Array.prototype.slice.call(
                                 document.querySelectorAll('.defaultHiddenLibraryCb:checked')
+                            ).map(function (cb) { return cb.getAttribute('data-id'); });
+                        }
+
+                        if (document.querySelector('.defaultHiddenFromLatestLibraryCb') != null) {
+                            config.DefaultHiddenFromLatestLibraryIds = Array.prototype.slice.call(
+                                document.querySelectorAll('.defaultHiddenFromLatestLibraryCb:checked')
                             ).map(function (cb) { return cb.getAttribute('data-id'); });
                         }
 
@@ -11355,6 +11253,7 @@
                     return;
                 }
                 if (!navItem.classList.contains('is-active')) {
+                    stopSyncsPolling();
                     return;
                 }
                 ApiClient.getJSON(ApiClient.getUrl("Moonfin/Transcodes/Active")).then(function(jobs) {
@@ -11450,6 +11349,14 @@
                     }
                 }, function() {
                     container.innerHTML = '<div style="padding:16px; text-align:center; color:#ff5252;">Could not load active downloads. The server may be restarting.</div>';
+                });
+            }
+
+            function updateDownloadsTabVisibility() {
+                ApiClient.getJSON(ApiClient.getUrl("Moonfin/Transcodes/Active")).then(function(jobs) {
+                    setAdminTabVisible('syncs', !!(jobs && jobs.length));
+                }, function() {
+                    setAdminTabVisible('syncs', true);
                 });
             }
 
