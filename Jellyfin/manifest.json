@@ -9,6 +9,17 @@
         "imageUrl":  "https://raw.githubusercontent.com/Moonfin-Client/Plugin/master/Jellyfin/backend/assets/logo.png",
         "versions":  [
                          {
+                             "version":  "3.0.0.3",
+                             "changelog":  "Merged upstream: new Moonfin/Tmdb/StudioLogos route for the Studios home row, with dark studio logos turned white; libraries can be hidden from recently added only; user list works on Jellyfin 12.2; the Settings Sync tab is gone from the Moonbase page and its switch is at the top of User defaults. Fixed the cue sheet folder listing in game disc sets (listed once per sheet, not once per track).",
+                             "targetAbi":  "10.10.0.0",
+                             "sourceUrl":  "https://github.com/Licaa21/Plugin/releases/download/fork-v3.0.0.3/Moonfin.Server-3.0.0.3.zip",
+                             "checksum":  "C71DE81DF3BAC028D9C165D74794E008",
+                             "timestamp":  "2026-11-06T00:46:54",
+                             "dependencies":  [
+
+                                              ]
+                         },
+                         {
                              "version":  "3.0.0.2",
                              "changelog":  "Merged upstream\u0027s 2026-11-05 changes: the Sonarr and Radarr calendar with reminders and the admin calendar settings, the media bar new release banner, and the MDBList Watching Now row. The existing Seerr calendar route now keeps to the admin\u0027s days-back and days-ahead window and answers 403 to non-admins when the calendar is set to admins only. The web app is unchanged (upstream\u0027s 2.5.0).",
                              "targetAbi":  "10.10.0.0",
