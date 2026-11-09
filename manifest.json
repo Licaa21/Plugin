@@ -9,6 +9,17 @@
         "imageUrl":  "https://raw.githubusercontent.com/Moonfin-Client/Plugin/master/Jellyfin/backend/assets/logo.png",
         "versions":  [
                          {
+                             "version":  "3.0.0.6",
+                             "changelog":  "Merged upstream\u0027s watch parties (Moonbase-hosted rooms with chat, reactions, lobby voting, alerts, an invite page and an admin tab) and its fix for saving ratings on Emby. The client defaults editor follows upstream\u0027s rename of the SyncPlay category to Watch Parties. The web app inside the zip is still upstream\u0027s 2.5.0 one, which has no watch party screen yet.",
+                             "targetAbi":  "10.10.0.0",
+                             "sourceUrl":  "https://github.com/Licaa21/Plugin/releases/download/fork-v3.0.0.6/Moonfin.Server-3.0.0.6.zip",
+                             "checksum":  "9BA48CBF2D185EBEA76F2A7D3E048766",
+                             "timestamp":  "2026-11-09T23:13:28",
+                             "dependencies":  [
+
+                                              ]
+                         },
+                         {
                              "version":  "3.0.0.5",
                              "changelog":  "Smart Search index rebuilds are lighter on the CPU: the embedding now uses a quarter of the logical threads at below-normal priority instead of half of them, so the full rebuild after an index format change runs cooler (and takes longer).",
                              "targetAbi":  "10.10.0.0",
