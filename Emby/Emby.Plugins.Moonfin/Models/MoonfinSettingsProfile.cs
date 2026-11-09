@@ -13,6 +13,7 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("showSeerrAvailabilityBadges")] public bool? ShowSeerrAvailabilityBadges { get; set; }
         [JsonPropertyName("seerrBadgeStyle")] public string? SeerrBadgeStyle { get; set; }
         [JsonPropertyName("showBookDiscoverTab")] public bool? ShowBookDiscoverTab { get; set; }
+        [JsonPropertyName("bookFoldersAsSeries")] public bool? BookFoldersAsSeries { get; set; }
         [JsonPropertyName("seerrRows")] public SeerrRowsConfig? SeerrRows { get; set; }
         [JsonPropertyName("mdblistEnabled")] public bool? MdblistEnabled { get; set; }
         [JsonPropertyName("mdblistApiKey")] public string? MdblistApiKey { get; set; }
@@ -40,6 +41,7 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("customThemeId")] public string? CustomThemeId { get; set; }
         [JsonPropertyName("oledMode")] public string? OledMode { get; set; }
         [JsonPropertyName("watchedIndicator")] public string? WatchedIndicator { get; set; }
+        [JsonPropertyName("showPosterLabels")] public bool? ShowPosterLabels { get; set; }
         [JsonPropertyName("cardFocusExpansion")] public bool? CardFocusExpansion { get; set; }
         [JsonPropertyName("showShuffleButton")] public bool? ShowShuffleButton { get; set; }
         [JsonPropertyName("showGenresButton")] public bool? ShowGenresButton { get; set; }
@@ -85,6 +87,7 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("seasonalRowCountry")] public string? SeasonalRowCountry { get; set; }
         /// <summary>Holiday ids the user switched off.</summary>
         [JsonPropertyName("seasonalRowHiddenHolidays")] public List<string>? SeasonalRowHiddenHolidays { get; set; }
+        [JsonPropertyName("seasonalRowAllYear")] public bool? SeasonalRowAllYear { get; set; }
         [JsonPropertyName("homeBackdropEnabled")] public bool? HomeBackdropEnabled { get; set; }
         [JsonPropertyName("homeBackdropStyle")] public string? HomeBackdropStyle { get; set; }
         [JsonPropertyName("detailsBackdropEnabled")] public bool? DetailsBackdropEnabled { get; set; }
@@ -171,6 +174,8 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("screensaverMode")] public string? ScreensaverMode { get; set; }
         [JsonPropertyName("screensaverTimeout")] public string? ScreensaverTimeout { get; set; }
         [JsonPropertyName("screensaverDimming")] public int? ScreensaverDimming { get; set; }
+        [JsonPropertyName("screensaverDuringAudio")] public bool? ScreensaverDuringAudio { get; set; }
+        [JsonPropertyName("sleepAfterIdle")] public int? SleepAfterIdle { get; set; }
         [JsonPropertyName("screensaverClockMode")] public string? ScreensaverClockMode { get; set; }
         [JsonPropertyName("screensaverMaxAgeRating")] public string? ScreensaverMaxAgeRating { get; set; }
         [JsonPropertyName("screensaverRequireRating")] public bool? ScreensaverRequireRating { get; set; }
@@ -202,6 +207,12 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("subtitlesTextSize")] public double? SubtitlesTextSize { get; set; }
         [JsonPropertyName("subtitlesOffsetPosition")] public double? SubtitlesOffsetPosition { get; set; }
         [JsonPropertyName("subtitlesTextWeight")] public int? SubtitlesTextWeight { get; set; }
+        [JsonPropertyName("subtitlesStrokeWidth")] public int? SubtitlesStrokeWidth { get; set; }
+        [JsonPropertyName("subtitlesShadow")] public bool? SubtitlesShadow { get; set; }
+        [JsonPropertyName("subtitlesShadowIntensity")] public int? SubtitlesShadowIntensity { get; set; }
+        [JsonPropertyName("subtitlesShadowOffset")] public int? SubtitlesShadowOffset { get; set; }
+        [JsonPropertyName("subtitlesShadowBlur")] public int? SubtitlesShadowBlur { get; set; }
+        [JsonPropertyName("subtitlesFont")] public string? SubtitlesFont { get; set; }
         [JsonPropertyName("subtitlesHdrSeparate")] public bool? SubtitlesHdrSeparate { get; set; }
         [JsonPropertyName("subtitlesHdrTextColor")] public string? SubtitlesHdrTextColor { get; set; }
         [JsonPropertyName("subtitlesHdrTextStrokeColor")] public string? SubtitlesHdrTextStrokeColor { get; set; }
@@ -223,6 +234,8 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("unpauseRewindDuration")] public int? UnpauseRewindDuration { get; set; }
         [JsonPropertyName("skipBackLength")] public int? SkipBackLength { get; set; }
         [JsonPropertyName("skipForwardLength")] public int? SkipForwardLength { get; set; }
+        [JsonPropertyName("controlsHideDelay")] public int? ControlsHideDelay { get; set; }
+        [JsonPropertyName("hdrControlsDimming")] public int? HdrControlsDimming { get; set; }
         [JsonPropertyName("osdLockEnabled")] public bool? OsdLockEnabled { get; set; }
         [JsonPropertyName("showChapterMarkers")] public bool? ShowChapterMarkers { get; set; }
         [JsonPropertyName("detailButtonOrderTv")] public List<string>? DetailButtonOrderTv { get; set; }
@@ -306,9 +319,11 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("radarrCalendarShowDigital")] public bool? RadarrCalendarShowDigital { get; set; }
         [JsonPropertyName("radarrCalendarShowPhysical")] public bool? RadarrCalendarShowPhysical { get; set; }
         [JsonPropertyName("radarrCalendarShowDate")] public bool? RadarrCalendarShowDate { get; set; }
+        [JsonPropertyName("radarrCalendarHideDownloaded")] public bool? RadarrCalendarHideDownloaded { get; set; }
         [JsonPropertyName("enableSonarrCalendar")] public bool? EnableSonarrCalendar { get; set; }
         [JsonPropertyName("sonarrCalendarShowEpisodeInfo")] public bool? SonarrCalendarShowEpisodeInfo { get; set; }
         [JsonPropertyName("sonarrCalendarShowDate")] public bool? SonarrCalendarShowDate { get; set; }
+        [JsonPropertyName("sonarrCalendarHideDownloaded")] public bool? SonarrCalendarHideDownloaded { get; set; }
         [JsonPropertyName("showCalendarButton")] public bool? ShowCalendarButton { get; set; }
         [JsonPropertyName("calendarStyle")] public string? CalendarStyle { get; set; }
         [JsonPropertyName("calendarWeekStart")] public string? CalendarWeekStart { get; set; }
@@ -385,6 +400,7 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("keyboardStyle")] public string? KeyboardStyle { get; set; }
         [JsonPropertyName("clockBehavior")] public string? ClockBehavior { get; set; }
         [JsonPropertyName("use24HourClock")] public bool? Use24HourClock { get; set; }
+        [JsonPropertyName("dateFormat")] public string? DateFormat { get; set; }
         [JsonPropertyName("homeRowInfoOverlay")] public bool? HomeRowInfoOverlay { get; set; }
         [JsonPropertyName("showSeerrButton")] public bool? ShowSeerrButton { get; set; }
         [JsonPropertyName("showLiveTvButton")] public bool? ShowLiveTvButton { get; set; }
