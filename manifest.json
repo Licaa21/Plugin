@@ -9,6 +9,17 @@
         "imageUrl":  "https://raw.githubusercontent.com/Moonfin-Client/Plugin/master/Jellyfin/backend/assets/logo.png",
         "versions":  [
                          {
+                             "version":  "3.0.0.4",
+                             "changelog":  "Upstream\u0027s newest changes merged: the media bar draws the picked libraries and collections together for every source, poster badges, After Hours mini game scoreboards, Smart Search new and upcoming queries, the seasonal Show All Year setting, book folders as series, and new synced settings for subtitle stroke, shadow and font, control hide delay, HDR control dimming, sleep after idle and date format.",
+                             "targetAbi":  "10.10.0.0",
+                             "sourceUrl":  "https://github.com/Licaa21/Plugin/releases/download/fork-v3.0.0.4/Moonfin.Server-3.0.0.4.zip",
+                             "checksum":  "281D01BA40948B5E88056B94839B1072",
+                             "timestamp":  "2026-11-09T00:45:01",
+                             "dependencies":  [
+
+                                              ]
+                         },
+                         {
                              "version":  "3.0.0.3",
                              "changelog":  "Merged upstream: new Moonfin/Tmdb/StudioLogos route for the Studios home row, with dark studio logos turned white; libraries can be hidden from recently added only; user list works on Jellyfin 12.2; the Settings Sync tab is gone from the Moonbase page and its switch is at the top of User defaults. Fixed the cue sheet folder listing in game disc sets (listed once per sheet, not once per track).",
                              "targetAbi":  "10.10.0.0",
