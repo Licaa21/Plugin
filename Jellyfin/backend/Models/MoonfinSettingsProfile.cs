@@ -33,6 +33,9 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("showBookDiscoverTab")]
     public bool? ShowBookDiscoverTab { get; set; }
 
+    [JsonPropertyName("bookFoldersAsSeries")]
+    public bool? BookFoldersAsSeries { get; set; }
+
     [JsonPropertyName("seerrRows")]
     public SeerrRowsConfig? SeerrRows { get; set; }
 
@@ -141,6 +144,9 @@ public class MoonfinSettingsProfile
 
     [JsonPropertyName("watchedIndicator")]
     public string? WatchedIndicator { get; set; }
+
+    [JsonPropertyName("showPosterLabels")]
+    public bool? ShowPosterLabels { get; set; }
 
     [JsonPropertyName("cardFocusExpansion")]
     public bool? CardFocusExpansion { get; set; }
@@ -279,6 +285,9 @@ public class MoonfinSettingsProfile
     /// <summary>Holiday ids the user switched off.</summary>
     [JsonPropertyName("seasonalRowHiddenHolidays")]
     public List<string>? SeasonalRowHiddenHolidays { get; set; }
+
+    [JsonPropertyName("seasonalRowAllYear")]
+    public bool? SeasonalRowAllYear { get; set; }
 
     [JsonPropertyName("homeBackdropEnabled")]
     public bool? HomeBackdropEnabled { get; set; }
@@ -494,6 +503,12 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("screensaverDimming")]
     public int? ScreensaverDimming { get; set; }
 
+    [JsonPropertyName("screensaverDuringAudio")]
+    public bool? ScreensaverDuringAudio { get; set; }
+
+    [JsonPropertyName("sleepAfterIdle")]
+    public int? SleepAfterIdle { get; set; }
+
     [JsonPropertyName("screensaverClockMode")]
     public string? ScreensaverClockMode { get; set; }
 
@@ -581,6 +596,24 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("subtitlesTextWeight")]
     public int? SubtitlesTextWeight { get; set; }
 
+    [JsonPropertyName("subtitlesStrokeWidth")]
+    public int? SubtitlesStrokeWidth { get; set; }
+
+    [JsonPropertyName("subtitlesShadow")]
+    public bool? SubtitlesShadow { get; set; }
+
+    [JsonPropertyName("subtitlesShadowIntensity")]
+    public int? SubtitlesShadowIntensity { get; set; }
+
+    [JsonPropertyName("subtitlesShadowOffset")]
+    public int? SubtitlesShadowOffset { get; set; }
+
+    [JsonPropertyName("subtitlesShadowBlur")]
+    public int? SubtitlesShadowBlur { get; set; }
+
+    [JsonPropertyName("subtitlesFont")]
+    public string? SubtitlesFont { get; set; }
+
     [JsonPropertyName("subtitlesHdrSeparate")]
     public bool? SubtitlesHdrSeparate { get; set; }
 
@@ -637,6 +670,12 @@ public class MoonfinSettingsProfile
 
     [JsonPropertyName("skipForwardLength")]
     public int? SkipForwardLength { get; set; }
+
+    [JsonPropertyName("controlsHideDelay")]
+    public int? ControlsHideDelay { get; set; }
+
+    [JsonPropertyName("hdrControlsDimming")]
+    public int? HdrControlsDimming { get; set; }
 
     [JsonPropertyName("osdLockEnabled")]
     public bool? OsdLockEnabled { get; set; }
@@ -879,6 +918,9 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("radarrCalendarShowDate")]
     public bool? RadarrCalendarShowDate { get; set; }
 
+    [JsonPropertyName("radarrCalendarHideDownloaded")]
+    public bool? RadarrCalendarHideDownloaded { get; set; }
+
     [JsonPropertyName("enableSonarrCalendar")]
     public bool? EnableSonarrCalendar { get; set; }
 
@@ -887,6 +929,9 @@ public class MoonfinSettingsProfile
 
     [JsonPropertyName("sonarrCalendarShowDate")]
     public bool? SonarrCalendarShowDate { get; set; }
+
+    [JsonPropertyName("sonarrCalendarHideDownloaded")]
+    public bool? SonarrCalendarHideDownloaded { get; set; }
 
     [JsonPropertyName("showCalendarButton")]
     public bool? ShowCalendarButton { get; set; }
@@ -1109,6 +1154,9 @@ public class MoonfinSettingsProfile
 
     [JsonPropertyName("use24HourClock")]
     public bool? Use24HourClock { get; set; }
+
+    [JsonPropertyName("dateFormat")]
+    public string? DateFormat { get; set; }
 
     [JsonPropertyName("homeRowInfoOverlay")]
     public bool? HomeRowInfoOverlay { get; set; }
