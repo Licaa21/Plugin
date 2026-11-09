@@ -15,6 +15,16 @@ public sealed class SmartModelTests : IDisposable
 
     public SmartModelTests() => Directory.CreateDirectory(_folder);
 
+    [Theory]
+    [InlineData(1, 1)]
+    [InlineData(2, 1)]
+    [InlineData(4, 1)]
+    [InlineData(8, 2)]
+    [InlineData(16, 4)]
+    [InlineData(32, 8)]
+    public void TheIndexRebuildUsesAQuarterOfTheThreads_AtLeastOne(int threads, int workers) =>
+        Assert.Equal(workers, SmartSearchEngine.EmbedWorkers(threads));
+
     public void Dispose() => Directory.Delete(_folder, true);
 
     private UnigramTokenizer Tokenizer()

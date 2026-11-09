@@ -186,6 +186,12 @@ public sealed class SmartSearchEngine
         }
     }
 
+    /// <summary>
+    /// A quarter of the logical threads, which is about half the physical cores, so a rebuild stays
+    /// cool and never starves playback and transcodes (the fork's change; upstream used half the threads).
+    /// </summary>
+    public static int EmbedWorkers(int logicalThreads) => Math.Max(1, logicalThreads / 4);
+
     private SmartIndex Embed(IReadOnlyList<(SmartEntry Entry, string Text)> items, SmartIndex previous, IProgress<double>? progress, CancellationToken cancellationToken)
     {
         var model = _model();
@@ -195,16 +201,32 @@ public sealed class SmartSearchEngine
         var options = new ParallelOptions
         {
             CancellationToken = cancellationToken,
-            // Half the cores, so a rebuild never starves playback and transcodes.
-            MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount / 2),
+            MaxDegreeOfParallelism = EmbedWorkers(Environment.ProcessorCount),
         };
         Parallel.For(0, items.Count, options, i =>
         {
             var (entry, text) = items[i];
             entry.Hash = SmartIndex.HashText(text);
-            entry.Vector = old.TryGetValue(entry.Key, out var prior) && prior.Hash == entry.Hash
-                ? prior.Vector
-                : encoder.Embed(model.PassagePrefix + text);
+            if (old.TryGetValue(entry.Key, out var prior) && prior.Hash == entry.Hash)
+            {
+                entry.Vector = prior.Vector;
+            }
+            else
+            {
+                // Pool threads are shared, so the priority goes back. Linux ignores it.
+                var thread = Thread.CurrentThread;
+                var priority = thread.Priority;
+                thread.Priority = ThreadPriority.BelowNormal;
+                try
+                {
+                    entry.Vector = encoder.Embed(model.PassagePrefix + text);
+                }
+                finally
+                {
+                    thread.Priority = priority;
+                }
+            }
+
             var n = Interlocked.Increment(ref done);
             if (n % 100 == 0)
             {
