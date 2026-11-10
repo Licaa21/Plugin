@@ -9,6 +9,17 @@
         "imageUrl":  "https://raw.githubusercontent.com/Moonfin-Client/Plugin/master/Jellyfin/backend/assets/logo.png",
         "versions":  [
                          {
+                             "version":  "3.0.0.7",
+                             "changelog":  "Merges upstream\u0027s newest changes: a SyncPlay relay for Roku on https servers (a new admin switch, on by default; it only does anything when a Roku app asks for it), the active downloads tab rechecks while the admin page is open, excluded genres are saved by name, uploaded themes can be the default theme, and Ping now reports socketRelay. No change to the fork\u0027s own code.",
+                             "targetAbi":  "10.10.0.0",
+                             "sourceUrl":  "https://github.com/Licaa21/Plugin/releases/download/fork-v3.0.0.7/Moonfin.Server-3.0.0.7.zip",
+                             "checksum":  "197CD4FE103435E3B12EBD2961354A49",
+                             "timestamp":  "2026-11-10T13:24:29",
+                             "dependencies":  [
+
+                                              ]
+                         },
+                         {
                              "version":  "3.0.0.6",
                              "changelog":  "Merged upstream\u0027s watch parties (Moonbase-hosted rooms with chat, reactions, lobby voting, alerts, an invite page and an admin tab) and its fix for saving ratings on Emby. The client defaults editor follows upstream\u0027s rename of the SyncPlay category to Watch Parties. The web app inside the zip is still upstream\u0027s 2.5.0 one, which has no watch party screen yet.",
                              "targetAbi":  "10.10.0.0",
