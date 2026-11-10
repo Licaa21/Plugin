@@ -108,6 +108,7 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
             engine.StartTimer();
             return engine;
         });
+        serviceCollection.AddSingleton<SocketRelayManager>();
         serviceCollection.AddHttpClient();
 
         // The custom row scrapes need a browser user agent to get a normal page back, and a
@@ -151,5 +152,8 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         // Recommendations / Similar Items
         serviceCollection.AddSingleton<MoonfinSimilarItemsService>();
         serviceCollection.AddHostedService<MoonfinSimilarItemsProviderManager>();
+
+        // Sweeps idle websocket relays and closes them all on shutdown.
+        serviceCollection.AddHostedService<SocketRelaySweepService>();
     }
 }
