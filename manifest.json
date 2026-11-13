@@ -9,6 +9,17 @@
         "imageUrl":  "https://raw.githubusercontent.com/Moonfin-Client/Plugin/master/Jellyfin/backend/assets/logo.png",
         "versions":  [
                          {
+                             "version":  "3.1.0.1",
+                             "changelog":  "Merges upstream\u0027s 3.1.0: Seerr queue and grab another release for admins, notifications for stuck Radarr and Sonarr downloads, watch parties for Plex and Silo, retro games, similar items, audiobook bookmarks and My Transcodes on Emby, official MDBList lists, more Recent row options and a recent games route. The bundled web app is now upstream\u0027s 3.1.0 web app (with the watch party screens, new details styles, calendar and Smart Search), so the Moonfin button in Jellyfin web is up to date. The external list switches that upstream dropped from the admin page are gone from the Moonbase page too (their stored values still work). No change to the fork\u0027s own code, apart from two TV app settings now using upstream\u0027s properties.",
+                             "targetAbi":  "10.10.0.0",
+                             "sourceUrl":  "https://github.com/Licaa21/Plugin/releases/download/fork-v3.1.0.1/Moonfin.Server-3.1.0.1.zip",
+                             "checksum":  "97A2045B2391D56E3494EDD7E8C6BA36",
+                             "timestamp":  "2026-11-13T01:03:26",
+                             "dependencies":  [
+
+                                              ]
+                         },
+                         {
                              "version":  "3.0.0.7",
                              "changelog":  "Merges upstream\u0027s newest changes: a SyncPlay relay for Roku on https servers (a new admin switch, on by default; it only does anything when a Roku app asks for it), the active downloads tab rechecks while the admin page is open, excluded genres are saved by name, uploaded themes can be the default theme, and Ping now reports socketRelay. No change to the fork\u0027s own code.",
                              "targetAbi":  "10.10.0.0",
