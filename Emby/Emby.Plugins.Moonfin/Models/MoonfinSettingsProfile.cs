@@ -423,6 +423,7 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("playbackTimeBelowCenter")] public string? PlaybackTimeBelowCenter { get; set; }
         [JsonPropertyName("playbackTimeBelowRight")] public string? PlaybackTimeBelowRight { get; set; }
         [JsonPropertyName("collectionsRowShowEpisodes")] public bool? CollectionsRowShowEpisodes { get; set; }
+        [JsonPropertyName("hideWatchedInRecentRows")] public bool? HideWatchedInRecentRows { get; set; }
         [JsonPropertyName("mergeRecentRowsByType")] public bool? MergeRecentRowsByType { get; set; }
         [JsonPropertyName("playlistsRowShowEpisodes")] public bool? PlaylistsRowShowEpisodes { get; set; }
         [JsonPropertyName("recentlyReleasedSeriesType")] public string? RecentlyReleasedSeriesType { get; set; }
@@ -431,6 +432,12 @@ namespace Emby.Plugins.Moonfin.Models
         [JsonPropertyName("loadingAnimationPosition")] public string? LoadingAnimationPosition { get; set; }
         [JsonPropertyName("loadingAnimationSpeed")] public string? LoadingAnimationSpeed { get; set; }
         [JsonPropertyName("showLoadingAnimationText")] public bool? ShowLoadingAnimationText { get; set; }
+        [JsonPropertyName("autoDownloadEnabled")] public bool? AutoDownloadEnabled { get; set; }
+        [JsonPropertyName("autoDownloadBackgroundRefresh")] public bool? AutoDownloadBackgroundRefresh { get; set; }
+        [JsonPropertyName("autoDownloadKeepUnwatched")] public int? AutoDownloadKeepUnwatched { get; set; }
+        [JsonPropertyName("autoDownloadDeleteAfterHours")] public int? AutoDownloadDeleteAfterHours { get; set; }
+        [JsonPropertyName("detailButtonsMaxVisible")] public int? DetailButtonsMaxVisible { get; set; }
+        [JsonPropertyName("playlistsGroupByType")] public bool? PlaylistsGroupByType { get; set; }
     }
 
     /// <summary>

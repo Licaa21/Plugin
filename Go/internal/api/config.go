@@ -17,9 +17,15 @@ type Config struct {
 	MdblistAPIKey      string
 	TmdbAPIKey         string
 	SeerrDisplayName   string
+	SeerrEnabled       bool
+	// SeerrURL is the normalized Seerr address, empty when it isn't usable.
+	SeerrURL           string
 	SmartSearchEnabled bool
 	// SmartSearchModel is "english" or "multilingual".
 	SmartSearchModel string
+	// RecommendationsProviderEnabled is Moonfin Recommends for similar items, on
+	// unless the admin turned it off.
+	RecommendationsProviderEnabled bool
 	// Defaults is DefaultUserSettings, the admin's defaults for every profile.
 	Defaults M
 	// DeviceDefaults is DefaultDeviceSettings, the admin's defaults for the
@@ -36,6 +42,13 @@ type Config struct {
 	// ClientLogUpload is EnableClientLogUpload, whether the apps may send
 	// their reports to the log.
 	ClientLogUpload bool
+	// The Web Client tab: the server Moonfin Web offers or always uses, and
+	// whether it looks for servers on the network.
+	WebDefaultServerURL, WebForcedServerURL string
+	WebRtcScan                              bool
+	// Pushes go through the relay at PushRelayURL, signed with
+	// PushRelayAppKey or else the key the build carries.
+	PushRelayURL, PushRelayAppKey string
 }
 
 // DefaultsFor is the admin's defaults for one profile.
@@ -102,18 +115,26 @@ func (s *Server) config(ctx context.Context) Config {
 }
 
 func configFrom(c M) Config {
-	cfg := Config{EnableSettingsSync: true, ClientLogUpload: true}
+	cfg := Config{EnableSettingsSync: true, ClientLogUpload: true, WebRtcScan: true}
 	if v, ok := c["EnableSettingsSync"].(bool); ok {
 		cfg.EnableSettingsSync = v
 	}
 	if v, ok := c["EnableClientLogUpload"].(bool); ok {
 		cfg.ClientLogUpload = v
 	}
+	if v, ok := c["WebEnableWebRtcScan"].(bool); ok {
+		cfg.WebRtcScan = v
+	}
+	cfg.WebDefaultServerURL = strings.TrimSpace(str(c["WebDefaultServerUrl"]))
+	cfg.WebForcedServerURL = strings.TrimSpace(str(c["WebForcedServerUrl"]))
 	cfg.MdblistAPIKey = strings.TrimSpace(str(c["MdblistApiKey"]))
 	cfg.TmdbAPIKey = strings.TrimSpace(str(c["TmdbApiKey"]))
 	cfg.SeerrDisplayName = strings.TrimSpace(str(c["SeerrDisplayName"]))
+	cfg.SeerrEnabled, _ = c["SeerrEnabled"].(bool)
+	cfg.SeerrURL = normalizeSeerrURL(str(c["SeerrUrl"]))
 	cfg.SmartSearchEnabled, _ = c["SmartSearchEnabled"].(bool)
 	cfg.SmartSearchModel = str(c["SmartSearchModel"])
+	cfg.RecommendationsProviderEnabled = c["RecommendationsProviderEnabled"] != false
 	cfg.Defaults, _ = c["DefaultUserSettings"].(M)
 	cfg.DeviceDefaults, _ = c["DefaultDeviceSettings"].(M)
 	cfg.CalendarDaysBack = wholeNumber(c["CalendarDaysBack"], 14)
@@ -133,6 +154,8 @@ func configFrom(c M) Config {
 		}
 	}
 	cfg.WatchParty.MaxMembers = wholeNumber(c["WatchPartyMaxMembers"], cfg.WatchParty.MaxMembers)
+	cfg.PushRelayURL = strings.TrimSpace(str(c["PushRelayUrl"]))
+	cfg.PushRelayAppKey = strings.TrimSpace(str(c["PushRelayAppKey"]))
 	return cfg
 }
 

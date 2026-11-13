@@ -3,6 +3,7 @@ using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
 using Microsoft.Extensions.DependencyInjection;
+using Moonfin.Games;
 using Moonfin.Server.Services;
 
 namespace Moonfin.Server;
@@ -25,6 +26,8 @@ public class MoonfinPlugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
         Instance = this;
         ServiceProvider = serviceProvider;
+        GamesHost.Config = () => Instance?.Configuration;
+        GamesHost.DataFolderPath = () => Instance?.DataFolderPath;
 
         // Nothing here is allowed to throw. Jellyfin reads an exception out of this constructor
         // as the plugin malfunctioning, writes that into meta.json, and deletes the folder on the
@@ -103,7 +106,14 @@ public class MoonfinPlugin : BasePlugin<PluginConfiguration>, IHasWebPages
         var previousGamesEnabled = Configuration.GamesEnabled;
         var previousGameLibraryIds = Configuration.GameLibraryIds?.ToList() ?? new List<string>();
         var previousRomm = RommSignature(Configuration);
+        var previousHideWatched = HideWatchedDefaults(Configuration);
         base.UpdateConfiguration(configuration);
+
+        // Users who inherit a changed Hide Watched default get their HidePlayedInLatest moved to match.
+        if (HideWatchedDefaults(Configuration) != previousHideWatched)
+        {
+            _ = ServiceProvider?.GetService<MoonfinSettingsService>()?.SyncHideWatchedForAffectedUsersAsync(CancellationToken.None);
+        }
 
         // Re-provision the Seerr webhook when the public URL changes, so the new URL is
         // pushed to Seerr without waiting for a restart. The provisioning guardrail only
@@ -143,6 +153,12 @@ public class MoonfinPlugin : BasePlugin<PluginConfiguration>, IHasWebPages
             }
         }
     }
+
+    private static (bool?, bool?, bool?, bool?) HideWatchedDefaults(PluginConfiguration config) => (
+        config.DefaultUserSettings?.HideWatchedInRecentRows,
+        config.GetDefaultsFor("tv")?.HideWatchedInRecentRows,
+        config.GetDefaultsFor("desktop")?.HideWatchedInRecentRows,
+        config.GetDefaultsFor("mobile")?.HideWatchedInRecentRows);
 
     private static string RommSignature(PluginConfiguration config) =>
         config.GamesRommUrl + "\n" + config.GamesRommToken + "\n" + config.GamesRommLibraryId;

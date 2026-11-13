@@ -1225,6 +1225,9 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("collectionsRowShowEpisodes")]
     public bool? CollectionsRowShowEpisodes { get; set; }
 
+    [JsonPropertyName("hideWatchedInRecentRows")]
+    public bool? HideWatchedInRecentRows { get; set; }
+
     [JsonPropertyName("mergeRecentRowsByType")]
     public bool? MergeRecentRowsByType { get; set; }
 
@@ -1419,9 +1422,6 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("rememberRowCard")]
     public bool? RememberRowCard { get; set; }
 
-    [JsonPropertyName("playlistsGroupByType")]
-    public bool? PlaylistsGroupByType { get; set; }
-
     [JsonPropertyName("serverLogging")]
     public bool? ServerLogging { get; set; }
 
@@ -1445,9 +1445,6 @@ public class MoonfinSettingsProfile
 
     [JsonPropertyName("modernCardTransitionSpeed")]
     public string? ModernCardTransitionSpeed { get; set; }
-
-    [JsonPropertyName("detailButtonsMaxVisible")]
-    public double? DetailButtonsMaxVisible { get; set; }
 
     [JsonPropertyName("introAction")]
     public string? IntroAction { get; set; }
@@ -1568,6 +1565,24 @@ public class MoonfinSettingsProfile
 
     [JsonPropertyName("secondarySubtitleColor")]
     public string? SecondarySubtitleColor { get; set; }
+
+    [JsonPropertyName("autoDownloadEnabled")]
+    public bool? AutoDownloadEnabled { get; set; }
+
+    [JsonPropertyName("autoDownloadBackgroundRefresh")]
+    public bool? AutoDownloadBackgroundRefresh { get; set; }
+
+    [JsonPropertyName("autoDownloadKeepUnwatched")]
+    public int? AutoDownloadKeepUnwatched { get; set; }
+
+    [JsonPropertyName("autoDownloadDeleteAfterHours")]
+    public int? AutoDownloadDeleteAfterHours { get; set; }
+
+    [JsonPropertyName("detailButtonsMaxVisible")]
+    public int? DetailButtonsMaxVisible { get; set; }
+
+    [JsonPropertyName("playlistsGroupByType")]
+    public bool? PlaylistsGroupByType { get; set; }
 }
 
 

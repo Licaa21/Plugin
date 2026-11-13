@@ -8,6 +8,7 @@ using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -626,19 +627,96 @@ namespace Emby.Plugins.Moonfin.Services
 
         private async Task<SeerrProxyResponse> FetchArrCalendarFromSeerrAsync(string service, bool isSonarr, string query)
         {
+            var (server, error) = await ResolveArrServerAsync(service, isSonarr).ConfigureAwait(false);
+            if (server == null) return error!;
+
+            return await FetchArrCalendarAsync(
+                () => new HttpClient(), _logger, service, server.Bases, server.ApiKey, query).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// The queue entries for one title on the default Radarr or Sonarr, read through the same Seerr
+        /// connection as the calendar. Never cached, since a download's state is what's being asked.
+        /// </summary>
+        public async Task<SeerrProxyResponse> GetArrQueueAsync(string service, string? titleId, bool isAdmin)
+        {
+            var isSonarr = string.Equals(service, "sonarr", StringComparison.OrdinalIgnoreCase);
+            var (server, error) = await ResolveArrServerAsync(service, isSonarr).ConfigureAwait(false);
+            if (server == null) return QueueError(error!);
+
+            return ToProxyResponse(await ArrQueue.ReadAsync(ArrSender(service, server), isSonarr, titleId, isAdmin).ConfigureAwait(false));
+        }
+
+        /// <summary>Drops a stuck download, blocklists its release and lets the arr grab another.</summary>
+        public async Task<SeerrProxyResponse> RemoveArrQueueItemAsync(string service, int queueId)
+        {
+            var isSonarr = string.Equals(service, "sonarr", StringComparison.OrdinalIgnoreCase);
+            var (server, error) = await ResolveArrServerAsync(service, isSonarr).ConfigureAwait(false);
+            if (server == null) return QueueError(error!);
+
+            _logger.Info("Removing " + service + " queue entry " + queueId + " and blocklisting its release");
+            return ToProxyResponse(await ArrQueue.RemoveAsync(ArrSender(service, server), isSonarr, queueId).ConfigureAwait(false));
+        }
+
+        private ArrSend ArrSender(string service, ArrServerConnection server, CancellationToken cancellationToken = default) =>
+            async (method, pathAndQuery, body) =>
+            {
+                var response = await TrySendArrAsync(
+                    () => new HttpClient(), _logger, service, server.Bases, server.ApiKey, method, pathAndQuery, body, cancellationToken: cancellationToken).ConfigureAwait(false);
+                return response == null ? ArrAnswer.Unreachable : new ArrAnswer(response.StatusCode, response.Body);
+            };
+
+        // Seerr refusing the admin session would reach the client as its own sign-in failing.
+        private static SeerrProxyResponse QueueError(SeerrProxyResponse error) =>
+            error.StatusCode == 401 || error.StatusCode == 403
+                ? CalendarError(503, "The admin Seerr session couldn't read the arr settings")
+                : error;
+
+        private static SeerrProxyResponse ToProxyResponse(ArrAnswer answer) => new SeerrProxyResponse
+        {
+            StatusCode = answer.StatusCode,
+            Body = answer.Body,
+            ContentType = "application/json"
+        };
+
+        /// <summary>A stored Seerr session of the Seerr owner or an admin, for server-side reads.</summary>
+        public SeerrSession? FindAdminSession() => EnumerateSessions().FirstOrDefault(
+            s => s.SeerrUserId == OwnerSeerrUserId || (s.Permissions & AdminBit) != 0);
+
+        /// <summary>
+        /// The whole queue of the default Radarr or Sonarr, for the stuck download check. Null when
+        /// there's no admin session or arr, or the arr couldn't be read.
+        /// </summary>
+        public async Task<JsonArray?> ReadWholeArrQueueAsync(string service, CancellationToken cancellationToken = default)
+        {
+            var isSonarr = string.Equals(service, "sonarr", StringComparison.OrdinalIgnoreCase);
+            var (server, error) = await ResolveArrServerAsync(service, isSonarr).ConfigureAwait(false);
+            if (server == null)
+            {
+                _logger.Debug("Stuck download check skipped " + service + ": " + error?.StatusCode);
+                return null;
+            }
+
+            // Reading the arr settings is one Seerr call with its own timeout, so the token is checked after it.
+            if (cancellationToken.IsCancellationRequested) return null;
+            return await StuckDownloads.ReadQueueAsync(ArrSender(service, server, cancellationToken), isSonarr, cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>The default Sonarr or Radarr as Seerr has it, read through an admin Seerr session.</summary>
+        private async Task<(ArrServerConnection? Server, SeerrProxyResponse? Error)> ResolveArrServerAsync(string service, bool isSonarr)
+        {
             var settingsPath = isSonarr ? "settings/sonarr" : "settings/radarr";
 
-            var adminSession = EnumerateSessions().FirstOrDefault(
-                s => s.SeerrUserId == OwnerSeerrUserId || (s.Permissions & AdminBit) != 0);
+            var adminSession = FindAdminSession();
             if (adminSession == null)
             {
-                return CalendarError(503, "No admin Seerr session is available to read the arr settings");
+                return (null, CalendarError(503, "No admin Seerr session is available to read the arr settings"));
             }
 
             var settings = await ProxyRequestAsync(adminSession.JellyfinUserId, HttpMethod.Get, settingsPath).ConfigureAwait(false);
             if (settings.Body == null || settings.StatusCode != 200)
             {
-                return settings;
+                return (null, settings);
             }
 
             JsonElement server;
@@ -647,24 +725,36 @@ namespace Emby.Plugins.Moonfin.Services
                 using var doc = JsonDocument.Parse(settings.Body);
                 if (doc.RootElement.ValueKind != JsonValueKind.Array || doc.RootElement.GetArrayLength() == 0)
                 {
-                    return CalendarError(404, "No " + service + " server is configured in Seerr");
+                    return (null, CalendarError(404, "No " + service + " server is configured in Seerr"));
                 }
                 server = SelectArrServer(doc.RootElement).Clone();
             }
             catch (JsonException)
             {
-                return CalendarError(502, "Could not read the arr settings from Seerr");
+                return (null, CalendarError(502, "Could not read the arr settings from Seerr"));
             }
 
             var hostname = server.TryGetProperty("hostname", out var h) ? h.GetString() ?? string.Empty : string.Empty;
             if (hostname.Length == 0)
             {
-                return CalendarError(404, "No " + service + " host is configured in Seerr");
+                return (null, CalendarError(404, "No " + service + " host is configured in Seerr"));
             }
 
             var apiKey = server.TryGetProperty("apiKey", out var k) ? k.GetString() ?? string.Empty : string.Empty;
-            return await FetchArrCalendarAsync(
-                () => new HttpClient(), _logger, service, ArrCalendarBases(server, isSonarr), apiKey, query).ConfigureAwait(false);
+            return (new ArrServerConnection(ArrCalendarBases(server, isSonarr), apiKey), null);
+        }
+
+        private sealed class ArrServerConnection
+        {
+            public ArrServerConnection(List<string> bases, string apiKey)
+            {
+                Bases = bases;
+                ApiKey = apiKey;
+            }
+
+            public List<string> Bases { get; }
+
+            public string ApiKey { get; }
         }
 
         /// <summary>
@@ -714,10 +804,6 @@ namespace Emby.Plugins.Moonfin.Services
             return bases;
         }
 
-        /// <summary>
-        /// Asks each address in turn and returns the first answer. Only a server that can't be reached
-        /// moves on to the next address, so an error the server itself sends back is passed on as is.
-        /// </summary>
         internal static async Task<SeerrProxyResponse> FetchArrCalendarAsync(
             Func<HttpClient> createClient,
             ILogger logger,
@@ -725,7 +811,26 @@ namespace Emby.Plugins.Moonfin.Services
             IReadOnlyList<string> bases,
             string apiKey,
             string query,
-            Func<string, Task<IPAddress[]>>? resolveHost = null)
+            Func<string, Task<IPAddress[]>>? resolveHost = null) =>
+            await TrySendArrAsync(createClient, logger, service, bases, apiKey, HttpMethod.Get, "api/v3/calendar?" + query, null, resolveHost).ConfigureAwait(false)
+                ?? CalendarError(502, "Could not reach the " + service + " server");
+
+        /// <summary>
+        /// Asks each address in turn and returns the first answer. Only a server that can't be reached
+        /// moves on to the next address, so an error the server itself sends back is passed on as is.
+        /// Null when no address could be reached.
+        /// </summary>
+        internal static async Task<SeerrProxyResponse?> TrySendArrAsync(
+            Func<HttpClient> createClient,
+            ILogger logger,
+            string service,
+            IReadOnlyList<string> bases,
+            string apiKey,
+            HttpMethod method,
+            string pathAndQuery,
+            byte[]? jsonBody,
+            Func<string, Task<IPAddress[]>>? resolveHost = null,
+            CancellationToken cancellationToken = default)
         {
             Exception? lastError = null;
             for (var i = 0; i < bases.Count; i++)
@@ -733,7 +838,7 @@ namespace Emby.Plugins.Moonfin.Services
                 var baseUrl = bases[i];
                 // The External URL can point anywhere, so the API key only goes to it encrypted or on the
                 // local network.
-                if (i > 0 && !await CanSendApiKeyAsync(baseUrl, resolveHost ?? Dns.GetHostAddressesAsync).ConfigureAwait(false))
+                if (i > 0 && !await CanSendApiKeyAsync(baseUrl, resolveHost ?? (host => ResolveHostAsync(host, cancellationToken))).ConfigureAwait(false))
                 {
                     logger.Error("Skipped the " + service + " External URL " + baseUrl +
                         " because it uses plain http and isn't on the local network, so the API key would travel unencrypted");
@@ -744,9 +849,15 @@ namespace Emby.Plugins.Moonfin.Services
                 {
                     using var client = createClient();
                     client.Timeout = TimeSpan.FromSeconds(15);
-                    using var request = new HttpRequestMessage(HttpMethod.Get, baseUrl + "/api/v3/calendar?" + query);
+                    using var request = new HttpRequestMessage(method, baseUrl + "/" + pathAndQuery);
                     request.Headers.Add("X-Api-Key", apiKey);
-                    using var arrResponse = await client.SendAsync(request).ConfigureAwait(false);
+                    if (jsonBody != null)
+                    {
+                        request.Content = new ByteArrayContent(jsonBody);
+                        request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+                    }
+
+                    using var arrResponse = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
                     var arrBody = await arrResponse.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
                     return new SeerrProxyResponse
                     {
@@ -755,15 +866,33 @@ namespace Emby.Plugins.Moonfin.Services
                         ContentType = arrResponse.Content.Headers.ContentType?.ToString() ?? "application/json"
                     };
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
                 {
                     logger.Debug("Could not reach " + service + " at " + baseUrl + ": " + ex.Message);
                     lastError = ex;
                 }
             }
 
-            logger.Error("Failed to fetch " + service + " calendar: " + lastError?.Message);
-            return CalendarError(502, "Could not reach the " + service + " server");
+            logger.Error("Failed to reach " + service + ": " + lastError?.Message);
+            return null;
+        }
+
+        // .NET Standard's DNS lookup takes no cancellation, so a cancelled one is left behind and
+        // counts as not resolving, which keeps the API key from going out.
+        private static async Task<IPAddress[]> ResolveHostAsync(string host, CancellationToken cancellationToken)
+        {
+            var lookup = Dns.GetHostAddressesAsync(host);
+            if (!cancellationToken.CanBeCanceled) return await lookup.ConfigureAwait(false);
+
+            using var wait = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            if (await Task.WhenAny(lookup, Task.Delay(Timeout.Infinite, wait.Token)).ConfigureAwait(false) != lookup)
+            {
+                _ = lookup.ContinueWith(t => t.Exception, TaskContinuationOptions.OnlyOnFaulted);
+                throw new OperationCanceledException(cancellationToken);
+            }
+
+            wait.Cancel();
+            return await lookup.ConfigureAwait(false);
         }
 
         /// <summary>

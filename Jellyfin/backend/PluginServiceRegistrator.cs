@@ -4,7 +4,9 @@ using MediaBrowser.Controller.Events;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Moonfin.Bookmarks;
 using Moonfin.Calendar;
+using Moonfin.Games;
 using Moonfin.LiveTv;
 using Moonfin.MiniGames;
 using Moonfin.Pin;
@@ -99,7 +101,9 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddSingleton<RdbService>();
         serviceCollection.AddSingleton<GameThumbService>();
         serviceCollection.AddSingleton<LaunchBoxService>();
-        serviceCollection.AddSingleton<UserBookmarksService>();
+        serviceCollection.AddSingleton(_ => new UserBookmarkStore(
+            Path.Combine(MoonfinPlugin.ResolveDataFolderPath(), "Bookmarks"),
+            new JellyfinStateFile()));
         serviceCollection.AddSingleton<SmartSearchService>();
         serviceCollection.AddSingleton<WatchPartyHost>();
         serviceCollection.AddSingleton(provider =>
@@ -132,6 +136,9 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
             Path.Combine(MoonfinPlugin.ResolveDataFolderPath(), "calendar-reminders"),
             new JellyfinStateFile()));
         serviceCollection.AddHostedService<CalendarReminderNotifier>();
+        serviceCollection.AddSingleton(_ => new StuckDownloadStore(
+            Path.Combine(MoonfinPlugin.ResolveDataFolderPath(), "seerr-stuck-downloads.json"),
+            new JellyfinStateFile()));
         serviceCollection.AddHostedService(provider => provider.GetRequiredService<GameArtworkReconciliationService>());
 
         // Incomplete Live TV recordings

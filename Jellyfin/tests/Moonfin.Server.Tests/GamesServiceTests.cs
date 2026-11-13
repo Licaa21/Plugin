@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using MediaBrowser.Model.Entities;
 using Moonfin.Games;
+using Moonfin.Games.Tests;
 using Moonfin.Server.Models;
 using Moonfin.Server.Services;
 using Xunit;
@@ -238,6 +239,34 @@ public class GamesServiceTests : IDisposable
         Assert.Equal(
             expected,
             GamesService.IsPlayableFileForCore(core, fileName));
+    }
+
+    [Fact]
+    public void RecentGames_ComeNewestFirstAcrossSystems_AndReleasedSkipsUndatedGames()
+    {
+        var libraryRoot = Path.Combine(_root, "library");
+        Directory.CreateDirectory(Path.Combine(libraryRoot, "SNES"));
+        Directory.CreateDirectory(Path.Combine(libraryRoot, "GBA"));
+        var older = Path.Combine(libraryRoot, "SNES", "Older.sfc");
+        var newest = Path.Combine(libraryRoot, "GBA", "Newest.gba");
+        var middle = Path.Combine(libraryRoot, "SNES", "Middle.sfc");
+        File.WriteAllBytes(older, new byte[16]);
+        File.WriteAllBytes(newest, new byte[16]);
+        File.WriteAllBytes(middle, new byte[16]);
+        File.SetLastWriteTimeUtc(newest, DateTime.UtcNow.AddDays(2));
+        File.SetLastWriteTimeUtc(middle, DateTime.UtcNow.AddDays(1));
+
+        var libraryId = Guid.NewGuid().ToString();
+        var service = new GamesService(new FakeLibraryManager(new List<VirtualFolderInfo>
+        {
+            new() { Name = "Games", ItemId = libraryId, Locations = new[] { libraryRoot } },
+        }));
+
+        var recent = service.GetRecentGames(libraryId, null, byRelease: false, limit: 2);
+        Assert.Equal(new[] { "Newest", "Middle" }, recent.Select(g => g.Title));
+        Assert.Equal(new[] { "GBA", "SNES" }, recent.Select(g => g.System));
+        Assert.Empty(service.GetRecentGames(libraryId, null, byRelease: true, limit: 16));
+        Assert.Empty(service.GetRecentGames("missing", null, byRelease: false, limit: 16));
     }
 
     [Fact]

@@ -6,9 +6,9 @@
     <Nullable>enable</Nullable>
     <!-- One place to bump, so the three can't drift apart. The release scripts and the CI check
          read the version from here, and the scripts pass it back with -p: switches. -->
-    <MoonfinVersion>3.0.0</MoonfinVersion>
+    <MoonfinVersion>3.1.0</MoonfinVersion>
     <!-- The fork's own digit, the fourth number: 2.4.0.1, 2.4.0.2. Back to 1 when MoonfinVersion moves. -->
-    <MoonfinForkRevision>7</MoonfinForkRevision>
+    <MoonfinForkRevision>1</MoonfinForkRevision>
     <AssemblyVersion>$(MoonfinVersion).$(MoonfinForkRevision)</AssemblyVersion>
     <FileVersion>$(MoonfinVersion).$(MoonfinForkRevision)</FileVersion>
     <Version>$(MoonfinVersion).$(MoonfinForkRevision)</Version>
@@ -41,8 +41,8 @@
     <EmbeddedResource Include="Web/loader.js" LogicalName="Moonfin.Server.Web.loader.js" />
     <EmbeddedResource Include="Web/inject.html" LogicalName="Moonfin.Server.Web.inject.html" />
     <EmbeddedResource Include="Pages/configPage.html" LogicalName="Moonfin.Server.Pages.configPage.html" />
-    <EmbeddedResource Include="EmulatorJS/player.html" LogicalName="Moonfin.Server.EmulatorJS.player.html" />
-    <EmbeddedResource Include="EmulatorJS/moonfin-bridge.js" LogicalName="Moonfin.Server.EmulatorJS.moonfin-bridge.js" />
+    <EmbeddedResource Include="../../shared/EmulatorJS/player.html" LogicalName="Moonfin.Server.EmulatorJS.player.html" />
+    <EmbeddedResource Include="../../shared/EmulatorJS/moonfin-bridge.js" LogicalName="Moonfin.Server.EmulatorJS.moonfin-bridge.js" />
     <EmbeddedResource Include="assets/*.png">
       <LogicalName>Moonfin.Server.assets.%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
@@ -67,6 +67,8 @@
     <Compile Include="../../shared/Anime/*.cs" Link="Anime/%(Filename)%(Extension)" />
     <Compile Include="../../shared/Romm/*.cs" Link="Romm/%(Filename)%(Extension)" />
     <Compile Include="../../shared/Games/*.cs" Link="Games/%(Filename)%(Extension)" />
+    <Compile Include="../../shared/Bookmarks/*.cs" Link="Bookmarks/%(Filename)%(Extension)" />
+    <Compile Include="../../shared/Recommendations/*.cs" Link="Recommendations/%(Filename)%(Extension)" />
     <Compile Include="../../shared/SmartSearch/*.cs" Link="SmartSearch/%(Filename)%(Extension)" />
     <Compile Include="../../shared/PosterBadges/*.cs" Link="PosterBadges/%(Filename)%(Extension)" />
     <Compile Include="../../shared/WatchParty/*.cs" Link="WatchParty/%(Filename)%(Extension)" />
@@ -88,8 +90,8 @@
     <Error Condition="!Exists('Pages/configPage.html')" Text="Required embedded resource Pages/configPage.html was not found." />
     <Error Condition="!Exists('Web/loader.js')" Text="Required embedded resource Web/loader.js was not found." />
     <Error Condition="!Exists('Web/inject.html')" Text="Required embedded resource Web/inject.html was not found." />
-    <Error Condition="!Exists('EmulatorJS/player.html')" Text="Required embedded resource EmulatorJS/player.html was not found." />
-    <Error Condition="!Exists('EmulatorJS/moonfin-bridge.js')" Text="Required embedded resource EmulatorJS/moonfin-bridge.js was not found." />
+    <Error Condition="!Exists('../../shared/EmulatorJS/player.html')" Text="Required embedded resource shared/EmulatorJS/player.html was not found." />
+    <Error Condition="!Exists('../../shared/EmulatorJS/moonfin-bridge.js')" Text="Required embedded resource shared/EmulatorJS/moonfin-bridge.js was not found." />
     <Error Condition="!Exists('../../shared/Seasonal/seasonal-holidays.json')" Text="Required embedded resource shared/Seasonal/seasonal-holidays.json was not found." />
   </Target>
 

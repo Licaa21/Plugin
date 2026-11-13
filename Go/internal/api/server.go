@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -33,6 +34,26 @@ type Host struct {
 	// Pins serves Moonbase's own per-account PINs. Silo keeps PINs on its
 	// profiles, and the apps use those when these routes answer 404.
 	Pins bool
+	// WebPluginMode tells Moonfin Web it was served by the server it signs in
+	// to, so it connects there. WebServer is the address it offers otherwise.
+	WebPluginMode bool
+	WebServer     string
+	// Web is the Moonfin Web bundle. Nil uses the one built in.
+	Web fs.FS
+	// SeerrPlexLogin lets callers sign in to Seerr with their Plex account,
+	// since UserID is their plex.tv account id.
+	SeerrPlexLogin bool
+	// Notify holds the settings stream open and sends phone pushes. Silo
+	// buffers each plugin response, so it leaves this off.
+	Notify bool
+	// AnimeDir keeps the anime markers' caches and log. Empty, or a catalog
+	// that isn't an AnimeCatalog, leaves the markers off.
+	AnimeDir string
+	// SeasonalDir keeps the seasonal row's keywords and suggestions, and
+	// SeasonalRules is shared/Seasonal/seasonal-holidays.json. Either one
+	// empty, or a catalog that isn't a SeasonalCatalog, leaves the row off.
+	SeasonalDir   string
+	SeasonalRules string
 }
 
 var ErrSignedOut = errors.New("caller isn't signed in")
@@ -48,6 +69,11 @@ type Server struct {
 	pins     bool
 	mux      *http.ServeMux
 	ext      external
+
+	web           fs.FS
+	webTag        string
+	webServer     string
+	webPluginMode bool
 
 	// mu serializes every read-modify-write of stored settings.
 	mu sync.Mutex
@@ -65,6 +91,15 @@ type Server struct {
 	pinMu sync.Mutex
 
 	logUploads uploadBudgets
+
+	// seerrMu guards the stored Seerr sessions.
+	seerrMu        sync.Mutex
+	seerrPlexLogin bool
+
+	notify      notifier
+	remindersMu sync.Mutex
+	anime       *animeMarkers
+	seasonal    *seasonalRow
 }
 
 func NewServer(version string, h Host) *Server {
@@ -72,11 +107,28 @@ func NewServer(version string, h Host) *Server {
 		version = "0.0.0-dev"
 	}
 	s := &Server{version: version, name: h.Name, backURL: h.AdminBackURL, kv: h.KV, catalog: h.Catalog,
-		identify: h.Identify, flagsDir: h.FlagsDir, pins: h.Pins, mux: http.NewServeMux(), ext: newExternal(), arrCache: ttlCache{m: map[string]cached{}}}
+		identify: h.Identify, flagsDir: h.FlagsDir, pins: h.Pins, mux: http.NewServeMux(), ext: newExternal(), arrCache: ttlCache{m: map[string]cached{}},
+		web: h.Web, webServer: h.WebServer, webPluginMode: h.WebPluginMode, seerrPlexLogin: h.SeerrPlexLogin}
+	if s.web == nil {
+		s.web = bundledWeb()
+	}
+	s.webTag = bundleTag(s.web)
+	s.notify.on = h.Notify
 	s.smart.helper = h.SmartSearch
+	s.anime = newAnimeMarkers(h.AnimeDir, h.Catalog)
+	s.seasonal = newSeasonalRow(h.SeasonalDir, h.SeasonalRules, h.Catalog)
 	s.routes()
 	if h.SmartSearch != nil {
 		s.scheduleSmartSearch()
+	}
+	if catalog, ok := h.Catalog.(ReminderCatalog); ok {
+		go s.watchReminders(catalog)
+	}
+	if s.anime != nil {
+		s.scheduleAnimeMarkers()
+	}
+	if s.seasonal != nil {
+		s.scheduleSeasonalKeywords()
 	}
 	return s
 }
@@ -86,6 +138,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /Moonfin/Whoami", s.user(s.handleWhoami))
 	s.mux.HandleFunc("GET /Moonfin/Genres", s.user(s.handleGenres))
 	s.mux.HandleFunc("POST /Moonfin/ClientLog/Document", s.user(s.handleClientLog))
+	s.webRoutes()
 	s.mux.HandleFunc("GET /{$}", s.user(s.handleHome))
 	s.settingsRoutes()
 	s.externalRoutes()
@@ -96,8 +149,17 @@ func (s *Server) routes() {
 	s.watchPartyRoutes()
 	s.smartRoutes()
 	s.calendarRoutes()
+	s.reminderRoutes()
+	s.notificationRoutes()
+	s.customRowRoutes()
+	s.arrQueueRoutes()
+	s.seerrRoutes()
 	s.posterBadgeRoutes()
 	s.miniGameRoutes()
+	s.similarRoutes()
+	s.animeMarkerRoutes()
+	s.gameRoutes()
+	s.seasonalRoutes()
 	if s.pins {
 		s.pinRoutes()
 	}
