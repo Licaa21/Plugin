@@ -2433,6 +2433,26 @@
                     </div>
 
                     <div class="verticalSection">
+                        <h3 class="sectionTitle">Stuck downloads</h3>
+                        <div class="checkboxContainer">
+                            <label>
+                                <input type="checkbox" id="StuckDownloadNotify" is="emby-checkbox" />
+                                <span>Notify when a request gets stuck</span>
+                            </label>
+                            <div class="fieldDescription">
+                                Every 15 minutes, Moonfin checks the Radarr and Sonarr set up in Seerr. When a download is import
+                                blocked, has failed, or has stalled, the person who requested it and every Emby admin get one
+                                notification. Needs Seerr turned on above and an admin signed in to Seerr.
+                            </div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="StuckDownloadStalledHours">Stalled hours</label>
+                            <input type="number" id="StuckDownloadStalledHours" is="emby-input" min="1" max="168" step="1" />
+                            <div class="fieldDescription">How many hours a download can sit stalled before it counts as stuck.</div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
                         <h3 class="sectionTitle">MDBList Integration</h3>
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="MdblistApiKey">Server-wide MDBList API Key</label>
@@ -2483,6 +2503,20 @@
                             <div class="fieldDescription">
                                 Fetches IMDb charts (Top 250 movies/TV, Most Popular, and similar) on a schedule so clients
                                 can show them as home rows and custom rows can resolve the IMDb source. No API key required.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h3 class="sectionTitle">Recommendations</h3>
+                        <div class="checkboxContainer">
+                            <label>
+                                <input type="checkbox" id="RecommendationsProviderEnabled" is="emby-checkbox" />
+                                <span>Use Moonfin Recommends for similar items</span>
+                            </label>
+                            <div class="fieldDescription">
+                                Moonfin apps rank similar movies and shows by shared genres, tags, studios, cast and crew,
+                                release year, rating and sequel titles. Turn this off to have them show Emby's own similar items instead.
                             </div>
                         </div>
                     </div>
@@ -2596,9 +2630,9 @@
                             </div>
                             <div class="fieldDescription">
                                 Upload an EmulatorJS <code>data</code> folder zipped up (the zip must contain
-                                <code>loader.js</code> somewhere inside). Get it from
+                                <code>loader.js</code> somewhere inside). Download the <code>.7z</code> file from
                                 <a href="https://github.com/EmulatorJS/EmulatorJS/releases/latest" target="_blank">EmulatorJS releases</a>
-                                (extract the archive and zip its <code>data</code> folder). ~290&nbsp;MB.
+                                (not the Source code download, which has no cores), extract it and zip its <code>data</code> folder. ~290&nbsp;MB.
                             </div>
                         </div>
                         <div class="inputContainer">
@@ -3401,6 +3435,15 @@
                                 <div class="fieldDescription">How long a show stays in Next Up after it was last watched.</div>
                             </div>
                             <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="DefaultHideWatchedInRecentRows">Hide Watched in Recent Rows</label>
+                                <select id="DefaultHideWatchedInRecentRows" is="emby-select">
+                                    <option value="">Not set (user decides)</option>
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                                <div class="fieldDescription">Hide watched content from Recently Added and Recently Released home rows.</div>
+                            </div>
+                            <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultMergeRecentRowsByType">Merge Recent Rows by Type</label>
                                 <select id="DefaultMergeRecentRowsByType" is="emby-select">
                                     <option value="">Not set (user decides)</option>
@@ -4123,62 +4166,6 @@
                                 </select>
                             </div>
                             <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultImdbTop250MoviesEnabled">IMDb Top 250 Movies</label>
-                                <select id="DefaultImdbTop250MoviesEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultImdbTop250TvShowsEnabled">IMDb Top 250 TV Shows</label>
-                                <select id="DefaultImdbTop250TvShowsEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultImdbMostPopularMoviesEnabled">IMDb Most Popular Movies</label>
-                                <select id="DefaultImdbMostPopularMoviesEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultImdbMostPopularTvShowsEnabled">IMDb Most Popular TV Shows</label>
-                                <select id="DefaultImdbMostPopularTvShowsEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultImdbTopEnglishMoviesEnabled">IMDb Top English Movies</label>
-                                <select id="DefaultImdbTopEnglishMoviesEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultImdbLowestRatedMoviesEnabled">IMDb Lowest Rated Movies</label>
-                                <select id="DefaultImdbLowestRatedMoviesEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultMdblistWatchingNowEnabled">Watching on MDBList</label>
-                                <select id="DefaultMdblistWatchingNowEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbRowsSortBy">TMDB Rows Sorting</label>
                                 <select id="DefaultTmdbRowsSortBy" is="emby-select"></select>
                             </div>
@@ -4190,120 +4177,7 @@
                                     <option value="descending">Descending</option>
                                 </select>
                             </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbTrendingAllWeeklyEnabled">TMDB Trending This Week</label>
-                                <select id="DefaultTmdbTrendingAllWeeklyEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbTrendingMovieDailyEnabled">TMDB Trending Movies Today</label>
-                                <select id="DefaultTmdbTrendingMovieDailyEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbTrendingMovieWeeklyEnabled">TMDB Trending Movies This Week</label>
-                                <select id="DefaultTmdbTrendingMovieWeeklyEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbTrendingTvDailyEnabled">TMDB Trending TV Today</label>
-                                <select id="DefaultTmdbTrendingTvDailyEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbTrendingTvWeeklyEnabled">TMDB Trending TV This Week</label>
-                                <select id="DefaultTmdbTrendingTvWeeklyEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbPopularMoviesEnabled">TMDB Popular Movies</label>
-                                <select id="DefaultTmdbPopularMoviesEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbPopularTvEnabled">TMDB Popular TV</label>
-                                <select id="DefaultTmdbPopularTvEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbTopRatedMoviesEnabled">TMDB Top Rated Movies</label>
-                                <select id="DefaultTmdbTopRatedMoviesEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbTopRatedTvEnabled">TMDB Top Rated TV</label>
-                                <select id="DefaultTmdbTopRatedTvEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbNowPlayingMoviesEnabled">TMDB Now Playing Movies</label>
-                                <select id="DefaultTmdbNowPlayingMoviesEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbUpcomingMoviesEnabled">TMDB Upcoming Movies</label>
-                                <select id="DefaultTmdbUpcomingMoviesEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbAiringTodayTvEnabled">TMDB Airing Today</label>
-                                <select id="DefaultTmdbAiringTodayTvEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultTmdbOnTheAirTvEnabled">TMDB On The Air</label>
-                                <select id="DefaultTmdbOnTheAirTvEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
 
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultSeasonalRowEnabled">Seasonal Row</label>
-                                <select id="DefaultSeasonalRowEnabled" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">On</option>
-                                    <option value="false">Off</option>
-                                </select>
-                                <div class="fieldDescription">A Home row of holiday movies from the library, with Seerr suggestions when the user is signed in to Seerr. Emby keeps no TMDB keywords of its own, so this row needs the server-wide TMDB API key.</div>
-                            </div>
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultSeasonalRowCountry">Seasonal Row Country</label>
                                 <select id="DefaultSeasonalRowCountry" is="emby-select">
@@ -4329,22 +4203,6 @@
                                 <div class="fieldDescription">Show the row outside the holiday dates too, a different ticked holiday each day. A holiday that's in season still comes first.</div>
                             </div>
 
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultEnableRadarrCalendar">Radarr Calendar</label>
-                                <select id="DefaultEnableRadarrCalendar" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="inputContainer">
-                                <label class="inputLabel inputLabelUnfocused" for="DefaultEnableSonarrCalendar">Sonarr Calendar</label>
-                                <select id="DefaultEnableSonarrCalendar" is="emby-select">
-                                    <option value="">Not set (user decides)</option>
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
                             <div class="inputContainer">
                                 <label class="inputLabel inputLabelUnfocused" for="DefaultMergeRadarrSonarrCalendars">Merge Radarr and Sonarr Calendars</label>
                                 <select id="DefaultMergeRadarrSonarrCalendars" is="emby-select">

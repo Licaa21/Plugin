@@ -1,6 +1,6 @@
 {
   "plugin_id": "moonfin.moonbase",
-  "version": "0.6.2",
+  "version": "3.1.0",
   "checksum": "__CHECKSUM__",
   "silo_api_version": "v1",
   "presentation": {
@@ -35,6 +35,18 @@
     }
   ],
   "http_routes": [
+    {
+      "id": "web",
+      "method": "GET",
+      "path": "/Moonfin/Web",
+      "access": "public"
+    },
+    {
+      "id": "web-files",
+      "method": "GET",
+      "path": "/Moonfin/Web/*",
+      "access": "public"
+    },
     {
       "id": "moonfin",
       "method": "*",

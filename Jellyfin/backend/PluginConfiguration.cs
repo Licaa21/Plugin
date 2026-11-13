@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json.Serialization;
 using MediaBrowser.Model.Plugins;
+using Moonfin.Games;
 using Moonfin.PosterBadges;
 using Moonfin.Server.Models;
 
@@ -9,7 +10,7 @@ namespace Moonfin.Server;
 /// <summary>
 /// Admin-level plugin configuration for Moonfin.
 /// </summary>
-public class PluginConfiguration : BasePluginConfiguration
+public class PluginConfiguration : BasePluginConfiguration, IGamesConfig
 {
     /// <summary>
     /// Enable settings sync across Moonfin clients.
@@ -71,6 +72,16 @@ public class PluginConfiguration : BasePluginConfiguration
     /// How long an arr calendar answer is reused before the arr is asked again. 0 asks every time.
     /// </summary>
     public int CalendarCacheMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// Tells the requester and every admin when a Radarr or Sonarr download for a request gets stuck.
+    /// </summary>
+    public bool StuckDownloadNotify { get; set; }
+
+    /// <summary>
+    /// How many hours a download can sit stalled before it counts as stuck.
+    /// </summary>
+    public int StuckDownloadStalledHours { get; set; } = 6;
 
     /// <summary>
     /// Server-wide MDBList API key shared with all users.

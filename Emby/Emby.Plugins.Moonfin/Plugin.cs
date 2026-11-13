@@ -14,7 +14,9 @@ using MediaBrowser.Model.Globalization;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
+using Moonfin.Bookmarks;
 using Moonfin.Calendar;
+using Moonfin.Games;
 using Moonfin.MiniGames;
 using Moonfin.Pin;
 using Moonfin.Romm;
@@ -49,6 +51,11 @@ namespace Emby.Plugins.Moonfin
         public StudioLogoFetchService? StudioLogoFetch { get; private set; }
         public GameThumbService? GameThumbs { get; private set; }
 
+        public GamesService? Games { get; private set; }
+        public GameArtworkReconciliationService? GameArtwork { get; private set; }
+        public GameArtworkDeliveryLimiter? GameArtworkDelivery { get; private set; }
+        public ArcadeCompatibilityService? ArcadeCompatibility { get; private set; }
+
         /// <summary>The RomM-backed game library. It holds RomM's inventory, so it lives as long as the server.</summary>
         public RommSource? Romm { get; private set; }
 
@@ -69,6 +76,8 @@ namespace Emby.Plugins.Moonfin
         public MiniGameScoreService? MiniGames { get; private set; }
         public SmartSearchIndexService? SmartSearch { get; private set; }
         public CalendarReminderStore? CalendarReminders { get; private set; }
+        public StuckDownloadStore? StuckDownloadState { get; private set; }
+        public UserBookmarkStore? Bookmarks { get; private set; }
         public ConfigBackupService? ConfigBackup { get; private set; }
         public WatchPartyEngine? WatchParty { get; private set; }
 
@@ -76,6 +85,8 @@ namespace Emby.Plugins.Moonfin
             : base(applicationPaths, xmlSerializer)
         {
             Instance = this;
+            GamesHost.Config = () => Instance?.Configuration;
+            GamesHost.DataFolderPath = () => Instance?.DataFolderPath;
             _logger = logManager.GetLogger("Moonfin");
             _logger.Info("Moonfin plugin loaded", 0);
         }
@@ -88,8 +99,24 @@ namespace Emby.Plugins.Moonfin
         public override void UpdateConfiguration(MediaBrowser.Model.Plugins.BasePluginConfiguration configuration)
         {
             var oldUrl = Configuration?.PublicServerUrl;
+            var oldGames = GamesSignature(Configuration);
+            var oldHideWatched = HideWatchedDefaults(Configuration);
             base.UpdateConfiguration(configuration);
             var newUrl = Configuration?.PublicServerUrl;
+
+            // Users who inherit a changed Hide Watched default get their HidePlayedInLatest moved to match.
+            if (HideWatchedDefaults(Configuration) != oldHideWatched)
+            {
+                _ = SettingsService?.SyncHideWatchedForAffectedUsersAsync(CancellationToken.None);
+            }
+
+            // Re-watch and re-scan the ROM roots when the game settings change, so a newly picked
+            // library's games get artwork without waiting for a library scan or a restart.
+            if (!string.Equals(oldGames, GamesSignature(Configuration), StringComparison.Ordinal))
+            {
+                try { GameArtwork?.OnGameLibrariesChanged(); }
+                catch (Exception ex) { _logger.Debug("Moonfin game artwork re-sync after config save failed: " + ex.Message); }
+            }
 
             if (!string.Equals(oldUrl, newUrl, StringComparison.Ordinal))
             {
@@ -110,6 +137,18 @@ namespace Emby.Plugins.Moonfin
                 }
             }
         }
+
+        private static (bool?, bool?, bool?, bool?) HideWatchedDefaults(PluginConfiguration? config) => (
+            config?.DefaultUserSettings?.HideWatchedInRecentRows,
+            config?.GetDefaultsFor("tv")?.HideWatchedInRecentRows,
+            config?.GetDefaultsFor("desktop")?.HideWatchedInRecentRows,
+            config?.GetDefaultsFor("mobile")?.HideWatchedInRecentRows);
+
+        private static string GamesSignature(PluginConfiguration? config) =>
+            config == null
+                ? string.Empty
+                : config.GamesEnabled + "\n" + config.GamesRommUrl + "\n" + config.GamesRommToken + "\n" + config.GamesRommLibraryId + "\n" +
+                  string.Join(",", (config.GameLibraryIds ?? new List<string>()).Select(id => id.ToUpperInvariant()).OrderBy(id => id, StringComparer.Ordinal));
 
         public override string Name => "Moonbase";
 
@@ -158,6 +197,31 @@ namespace Emby.Plugins.Moonfin
             };
         }
 
+        private void InitializeGames(ILogManager logManager, IServerApplicationHost appHost)
+        {
+            var gamesLogger = logManager.GetLogger("MoonfinGames");
+            var http = EmbyHttpClientFactory.Instance;
+            var rdb = new RdbService(http, new EmbyLogger<RdbService>(gamesLogger));
+            ArcadeCompatibility = new ArcadeCompatibilityService(DataFolderPath);
+            Games = new GamesService(
+                new EmbyGameLibraryHost(appHost.Resolve<ILibraryManager>()),
+                rdb,
+                new LaunchBoxService(http, new EmbyLogger<LaunchBoxService>(gamesLogger)),
+                ArcadeCompatibility,
+                new ArcadeCoreOverrideService(Path.Combine(DataFolderPath, "arcade-core-overrides")),
+                new GameBackendOverrideService(Path.Combine(DataFolderPath, "game-backend-overrides")),
+                new EmbyLogger<GamesService>(gamesLogger),
+                Romm);
+            GameThumbs = new GameThumbService(http, new EmbyLogger<GameThumbService>(gamesLogger), rdb, null);
+            GameArtwork = new GameArtworkReconciliationService(
+                Games,
+                GameThumbs,
+                new GameArtworkCatalog(Path.Combine(DataFolderPath, "game-artwork-catalog"), new EmbyLogger<GameArtworkCatalog>(gamesLogger)),
+                new EmbyLogger<GameArtworkReconciliationService>(gamesLogger),
+                watchLibraryFileSystem: true);
+            GameArtworkDelivery = new GameArtworkDeliveryLimiter(new PerUserConcurrencyLimiter());
+        }
+
         internal void InitializeServices(ILogManager logManager, IServerApplicationHost appHost)
         {
             var settingsLogger = logManager.GetLogger("MoonfinSettings");
@@ -187,7 +251,6 @@ namespace Emby.Plugins.Moonfin
             SeasonalRows = new SeasonalRowService(configManager, SettingsService, RatingLimits, TmdbRatings, SeasonalKeywords, SeasonalSuggestions, SeerrAvailability, seasonalLogger);
             StudioLogoCache = new StudioLogoCacheService(mdbLogger);
             StudioLogoFetch = new StudioLogoFetchService(StudioLogoCache, mdbLogger);
-            GameThumbs = new GameThumbService(mdbLogger);
             // One client for every RomM call. A ROM stream outlives the timeout, which only covers the headers.
             var rommHttp = MoonfinHttp.CreateClient(TimeSpan.FromSeconds(100), "Moonfin/1.0");
             Romm = new RommSource(
@@ -197,9 +260,10 @@ namespace Emby.Plugins.Moonfin
                     return config == null ? null : RommSettings.From(config.GamesRommUrl, config.GamesRommToken, config.GamesRommLibraryId);
                 },
                 () => rommHttp,
-                Api.GamesScanner.RommRules,
+                GameSystemCoreResolver.RommRules,
                 accountsFolder: Path.Combine(DataFolderPath, "romm-accounts"));
             RommSaves = new RommSaveSync(Romm);
+            InitializeGames(logManager, appHost);
 
             var animeLogger = logManager.GetLogger("MoonfinAnimeMarkers");
             AnimeMarkerDiagnostics = new AnimeMarkerDiagnosticLog(animeLogger);
@@ -225,6 +289,8 @@ namespace Emby.Plugins.Moonfin
             MiniGames = new MiniGameScoreService(new FileMiniGameScoreStore(Path.Combine(DataFolderPath, "minigames"), new EmbyStateFile()));
             SmartSearch = new SmartSearchIndexService(appHost.Resolve<ILibraryManager>(), DataFolderPath, logManager.GetLogger("MoonfinSmartSearch"));
             CalendarReminders = new CalendarReminderStore(Path.Combine(DataFolderPath, "calendar-reminders"), new EmbyStateFile());
+            StuckDownloadState = new StuckDownloadStore(Path.Combine(DataFolderPath, "seerr-stuck-downloads.json"), new EmbyStateFile());
+            Bookmarks = new UserBookmarkStore(Path.Combine(DataFolderPath, "Bookmarks"), new EmbyStateFile());
             ConfigBackup = new ConfigBackupService(
                 ConfigurationFilePath,
                 Path.Combine(DataFolderPath, "config-backup", Path.GetFileName(ConfigurationFilePath)),

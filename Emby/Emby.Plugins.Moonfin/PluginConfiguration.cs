@@ -5,11 +5,12 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 using Emby.Plugins.Moonfin.Models;
 using MediaBrowser.Model.Plugins;
+using Moonfin.Games;
 using Moonfin.PosterBadges;
 
 namespace Emby.Plugins.Moonfin
 {
-    public class PluginConfiguration : BasePluginConfiguration
+    public class PluginConfiguration : BasePluginConfiguration, IGamesConfig
     {
         public bool EnableSettingsSync { get; set; } = true;
 
@@ -38,6 +39,12 @@ namespace Emby.Plugins.Moonfin
 
         /// <summary>How long an arr calendar answer is reused before the arr is asked again. 0 asks every time.</summary>
         public int CalendarCacheMinutes { get; set; } = 5;
+
+        /// <summary>Tells the requester and every admin when a Radarr or Sonarr download for a request gets stuck.</summary>
+        public bool StuckDownloadNotify { get; set; }
+
+        /// <summary>How many hours a download can sit stalled before it counts as stuck.</summary>
+        public int StuckDownloadStalledHours { get; set; } = 6;
 
         /// <summary>Firebase service-account JSON, pasted by the admin, used to mint FCM access tokens for direct push delivery. Secret: never logged. Leave empty to use the hosted relay instead.</summary>
         public string? FcmServiceAccountJson { get; set; }
@@ -123,6 +130,9 @@ namespace Emby.Plugins.Moonfin
 
         /// <summary>Fetch and cache IMDb charts (Top 250, Most Popular, etc.) on a schedule so clients can show them as home rows and custom rows can resolve the imdb source.</summary>
         public bool ImdbListsEnabled { get; set; } = true;
+
+        /// <summary>Rank the similar items Moonfin apps show with Moonfin Recommends. Off hands them back to Emby's own similar items.</summary>
+        public bool RecommendationsProviderEnabled { get; set; } = true;
 
         /// <summary>Pre-warm the studio-logo cache from TMDB on a schedule so detail screens can show production-company logos. Uses the server-wide TMDB key above.</summary>
         public bool StudioLogosEnabled { get; set; } = true;
