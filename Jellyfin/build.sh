@@ -86,10 +86,10 @@ fi
 
 # The Flutter web app (the Moonfin button in Jellyfin web, served at /Moonfin/Web/) is not in git. Upstream builds it
 # from Moonfin-Core and adds it to its zip by hand, so this build takes it from upstream's published release: a
-# pinned version, checked against its checksum (SHA-256; the file's MD5 is also upstream's own, 6B3E789A1BF33870CC938B41C0FCF324),
+# pinned version, checked against its checksum (SHA-256; the file's MD5 is also upstream's own, D6C36EAEDDFE43D4694B73D8D36D12DD),
 # unchanged. Its source is https://github.com/Moonfin-Client/Moonfin-Core. Needs curl and unzip.
-WEB_BUNDLE_URL="https://github.com/Moonfin-Client/Plugin/releases/download/2.5.0/Moonfin.Server-2.5.0.0.zip"
-WEB_BUNDLE_SHA256="37D3CBB9082331510D7CD21EAA0E879CF1E9AFD0BF658127A4F918141CBD0797"
+WEB_BUNDLE_URL="https://github.com/Moonfin-Client/Plugin/releases/download/3.1.0/Moonfin.Server-3.1.0.0.zip"
+WEB_BUNDLE_SHA256="08B50FDC23B38BE22EB3044A60D8C7DEF0A54D08D0BAE157597B2AB5E363B5FD"
 sha256_upper() {
     if command -v sha256sum &> /dev/null; then sha256sum < "$1" | awk '{print toupper($1)}'
     else shasum -a 256 < "$1" | awk '{print toupper($1)}'; fi
@@ -109,14 +109,14 @@ web_app_fail() {
 }
 if ! web_app_ready; then
     echo ""
-    echo "The web app is missing or incomplete in frontend/, taking it from upstream's 2.5.0.0 release (about 66 MB)..."
+    echo "The web app is missing or incomplete in frontend/, taking it from upstream's 3.1.0.0 release (about 68 MB)..."
     if ! command -v curl &> /dev/null || ! command -v unzip &> /dev/null; then
         web_app_fail "curl and unzip are needed to fetch the web app."
     else
         # A private folder, so nobody else can swap the file between the checksum and the unpacking.
         WEB_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/moonfin-build"
         mkdir -p "$WEB_CACHE" && chmod 700 "$WEB_CACHE"
-        WEB_ZIP="$WEB_CACHE/moonfin-upstream-2.5.0.0.zip"
+        WEB_ZIP="$WEB_CACHE/moonfin-upstream-3.1.0.0.zip"
         WEB_ZIP_OK=0
         if [ -f "$WEB_ZIP" ] && [ "$(sha256_upper "$WEB_ZIP")" = "$WEB_BUNDLE_SHA256" ]; then
             WEB_ZIP_OK=1

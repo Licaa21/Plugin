@@ -62,20 +62,20 @@ Write-Host "Build Time: ${BuildTimestamp}"
 
 # The Flutter web app (the Moonfin button in Jellyfin web, served at /Moonfin/Web/) is not in git. Upstream builds it
 # from Moonfin-Core and adds it to its zip by hand, so this build takes it from upstream's published release: a
-# pinned version, checked against its checksum (SHA-256; the file's MD5 is also upstream's own, 6B3E789A1BF33870CC938B41C0FCF324),
+# pinned version, checked against its checksum (SHA-256; the file's MD5 is also upstream's own, D6C36EAEDDFE43D4694B73D8D36D12DD),
 # unchanged. Its source is https://github.com/Moonfin-Client/Moonfin-Core.
-$WebBundleUrl = "https://github.com/Moonfin-Client/Plugin/releases/download/2.5.0/Moonfin.Server-2.5.0.0.zip"
-$WebBundleSha256 = "37D3CBB9082331510D7CD21EAA0E879CF1E9AFD0BF658127A4F918141CBD0797"
+$WebBundleUrl = "https://github.com/Moonfin-Client/Plugin/releases/download/3.1.0/Moonfin.Server-3.1.0.0.zip"
+$WebBundleSha256 = "08B50FDC23B38BE22EB3044A60D8C7DEF0A54D08D0BAE157597B2AB5E363B5FD"
 $WebBundleRequired = @("index.html", "main.dart.js", "version.json", "assets/AssetManifest.bin", "canvaskit/canvaskit.wasm")
 function Test-WebApp { -not ($WebBundleRequired | Where-Object { -not (Test-Path (Join-Path $FrontendDir $_)) }) }
 if (-not (Test-WebApp)) {
     Write-Host ""
-    Write-Host "The web app is missing or incomplete in frontend/, taking it from upstream's 2.5.0.0 release (about 66 MB)..."
+    Write-Host "The web app is missing or incomplete in frontend/, taking it from upstream's 3.1.0.0 release (about 68 MB)..."
     try {
         # A folder of the user's own, not the shared temp folder, so nobody else can swap the file after the checksum.
         $WebCache = Join-Path $env:LOCALAPPDATA "moonfin-build"
         New-Item -ItemType Directory -Path $WebCache -Force | Out-Null
-        $WebZip = Join-Path $WebCache "moonfin-upstream-2.5.0.0.zip"
+        $WebZip = Join-Path $WebCache "moonfin-upstream-3.1.0.0.zip"
         if (-not (Test-Path $WebZip) -or (Get-FileHash $WebZip -Algorithm SHA256).Hash -ne $WebBundleSha256) {
             $PreviousProgress = $ProgressPreference
             $ProgressPreference = "SilentlyContinue"
